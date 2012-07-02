@@ -21,4 +21,3 @@ class Reservation(models.Model):
 
 
 
-
