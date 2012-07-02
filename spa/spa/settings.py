@@ -1,4 +1,4 @@
-# Django settings for reserver project.
+# Django settings for spa project.
 
 DEBUG = True
 TEMPLATE_DEBUG = DEBUG
@@ -81,7 +81,7 @@ STATICFILES_FINDERS = (
 )
 
 # Make this unique, and don't share it with anybody.
-SECRET_KEY = ')3k*q^!g^s90d99i09qpyog9wa*=$-y0zgl+uz3%yg47ir#*)*'
+SECRET_KEY = 'e7rqalqc*ohez$jtr6@ibq0692p*!m793fe#7pt%s-%b&amp;$(3k^'
 
 # List of callables that know how to import templates from various sources.
 TEMPLATE_LOADERS = (
@@ -100,10 +100,10 @@ MIDDLEWARE_CLASSES = (
     # 'django.middleware.clickjacking.XFrameOptionsMiddleware',
 )
 
-ROOT_URLCONF = 'reserver.urls'
+ROOT_URLCONF = 'spa.urls'
 
 # Python dotted path to the WSGI application used by Django's runserver.
-WSGI_APPLICATION = 'reserver.wsgi.application'
+WSGI_APPLICATION = 'spa.wsgi.application'
 
 TEMPLATE_DIRS = (
     # Put strings here, like "/home/html/django_templates" or "C:/www/django/templates".
