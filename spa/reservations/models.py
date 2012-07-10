@@ -1,8 +1,9 @@
 from django.db import models
-from django.contrib.auth.models import User
 from reservable import ExclusiveReservable
 
-class Reservable(models.Model, ExclusiveReservable):
+class Reservable(ExclusiveReservable):
+    class Meta:
+        app_label = 'reservations'
     name = models.TextField(null=True, blank=True)
 
 class Reservation(models.Model):
