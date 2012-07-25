@@ -36,11 +36,10 @@ class DeferredModel(models.Model):
                 # to find DeferedField instances
                 if isinstance(field, DeferredField):
                     if field_name in kwargs:
-                        # and settle them
+                        # field name in kwargs: use implementation from kwargs
                         new_fields[field_name] = field.construct( kwargs.pop(field_name) )
-                    else: # if field_name in kwargs:
-                        # or raise error if implementation not given
-                        # TODO  fix error class
+                    else: 
+                        # field name not in kwargs: use default implementation from class
                         new_fields[field_name] = field.construct()
         if len(kwargs) > 0:
             # if to many arguments given then probably some error
