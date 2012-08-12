@@ -1,24 +1,32 @@
 from django.db import models
 
+
 class DeferredField(object):
-    def __init__(self, cls = None):
+    def __init__(self, cls=None, *args, **kwargs):
         self.cls = cls
+        self.args = args
+        self.kwargs = kwargs
 
-    def construct(self, cls = None):
-        '''When fixing defered field we give it referenced model
-        and may update it's properties'''
-
-        if cls is not None:
-            return cls
-        elif self.cls is None:
+    def construct(self):
+        if self.cls is None:
             raise TypeError("Implementation of every field is required")
         else:
-            return self.cls
+            return self.cls(*self.args, **self.kwargs)
 
 
-class DeferredForeignKey(DeferredField):
-    def __init__(self):
-        self.cls = None
+class DeferredForeignField(DeferredField):
+    def __init__(self, cls, referenced_cls=None, *args, **kwargs):
+        self.cls = cls
+        self.referenced_cls = referenced_cls
+        self.args = args
+        self.kwargs = kwargs
+
+    def construct(self, referenced_cls=None):
+        if not referenced_cls:
+            referenced_cls = self.referenced_cls
+        if not referenced_cls:
+            raise TypeError("Foreign model's class not given for ForeignField")
+        return self.cls(referenced_cls, *self.args, **self.kwargs)
 
 
 class DeferredModel(models.Model):
@@ -30,21 +38,19 @@ class DeferredModel(models.Model):
         new_fields = {}
         # for every class in hierarchy
         # ordered by python's method resoultion order
-        for c in reversed(cls.__mro__):
+        for c in cls.mro():
             # inspect all fields of that class
             for field_name, field in c.__dict__.iteritems():
                 # to find DeferedField instances
-                if isinstance(field, DeferredField):
-                    if field_name in kwargs:
-                        # field name in kwargs: use implementation from kwargs
-                        new_fields[field_name] = field.construct( kwargs.pop(field_name) )
-                    else: 
-                        # field name not in kwargs: use default implementation from class
-                        new_fields[field_name] = field.construct()
-        if len(kwargs) > 0:
-            # if to many arguments given then probably some error
-            raise TypeError("Superficient keyword arguments to settle model")
-        # when all field are extracted set them for the class
+                if (
+                    isinstance(field, DeferredField)
+                    # that are not settled yet
+                    and not field_name in new_fields
+                    # and are not members of current class
+                    and not hasattr(cls, field_name)
+                    ):
+                    new_fields[field_name] = field.construct()
+        # when all fields are extracted settle them for the class
         for k, v in new_fields.iteritems():
             #setattr(cls, k, v)
             cls.add_to_class(k, v)
