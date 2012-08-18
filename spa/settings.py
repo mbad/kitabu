@@ -137,7 +137,7 @@ INSTALLED_APPS = (
     'reserver',
 
     # project apps
-    'reservations',
+    #'reservations',
 )
 
 # A sample logging configuration. The only tangible logging
