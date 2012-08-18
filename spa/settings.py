@@ -1,11 +1,9 @@
 # Django settings for spa project.
 
 from os.path import join, normpath, dirname
-import sys
+import os
 
 PROJECT_ROOT = normpath(join(dirname(__file__), '..'))
-
-sys.path.append(normpath(join(PROJECT_ROOT, '..', 'reserver')))
 
 DEBUG = True
 TEMPLATE_DEBUG = DEBUG
@@ -18,8 +16,8 @@ MANAGERS = ADMINS
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3', # Add 'postgresql_psycopg2', 'mysql', 'sqlite3' or 'oracle'.
-        'NAME': 'dev.db',                      # Or path to database file if using sqlite3.
+        'ENGINE': 'django.db.backends.sqlite3',  # Add 'postgresql_psycopg2', 'mysql', 'sqlite3' or 'oracle'.
+        'NAME': 'dev.db',                        # Or path to database file if using sqlite3.
         'USER': '',                      # Not used with sqlite3.
         'PASSWORD': '',                  # Not used with sqlite3.
         'HOST': '',                      # Set to empty string for localhost. Not used with sqlite3.
@@ -119,6 +117,7 @@ TEMPLATE_DIRS = (
 )
 
 INSTALLED_APPS = (
+    # django apps
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
@@ -131,8 +130,13 @@ INSTALLED_APPS = (
     # 'django.contrib.admindocs',
 
 
+    # additional apps
     'django_extensions',
 
+    # the framework
+    'reserver',
+
+    # project apps
     'reservations',
 )
 
@@ -165,4 +169,9 @@ LOGGING = {
     }
 }
 
-
+# custom_settings.py can be used to override environment-specific settings
+# like database and email that differ between development and production.
+try:
+    execfile(os.path.join(PROJECT_ROOT, 'custom_settings.py'))
+except IOError:
+    pass

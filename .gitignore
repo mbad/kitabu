@@ -1,3 +1,5 @@
 *.pyc
 *.db
 *.pyo
+inheritance.py
+local_settings.py
