@@ -1,7 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import User
 
-from reserver_exceptions import OverlappingReservations
+from reserver.exceptions import OverlappingReservations
 
 
 class Reservable(models.Model):
@@ -13,7 +13,7 @@ class Reservable(models.Model):
 
     def reserve(self, start, end, owner, **kwargs):
         self.reservations.create(start=start, end=end, owner=owner, **kwargs)
-    
+
 class GroupedReservable(Reservable):
     class Meta:
         abstract = True
