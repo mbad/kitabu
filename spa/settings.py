@@ -134,10 +134,10 @@ INSTALLED_APPS = (
     'django_extensions',
 
     # the framework
-    'reserver',
+    'kitabu',
 
     # project apps
-    #'reservations',
+    'reservations',
 )
 
 # A sample logging configuration. The only tangible logging
