@@ -12,3 +12,8 @@ class BaseReservation(models.Model):
     subject = models.ForeignKey('Subject')
     start = models.DateTimeField()
     end = models.DateTimeField()
+
+    @classmethod
+    def reserve(cls, start, end, subject, owner):
+        return cls.objects.create(start=start, end=end, subject=subject,
+                                  owner=owner)
