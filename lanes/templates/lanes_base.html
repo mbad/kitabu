@@ -1,0 +1,13 @@
+{% extends 'base.html' %}
+
+{% load lanes_tags %}
+
+{% block content %}
+{% endblock %}
+
+{% block sidebar %}
+    {% lanes_list %}
+    
+    {% block sidebar_content %}
+    {% endblock %}
+{% endblock %}

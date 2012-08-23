@@ -1,0 +1,33 @@
+{% extends 'lanes_base.html' %}
+
+{% block content %}
+    <h2>{{ lane }} - {{ lane.capacity }} places</h2>
+    
+    {% if capacity_exceeded_msg %}
+        <h3 class="error">
+            {{ capacity_exceeded_msg }}
+        </h3>
+    {% endif %}
+
+    <div class="reservations">
+        <h3>Reservations</h3>
+        <ul>
+            {% for reservation in lane.reservations.all %}
+                <li>
+                    {{ reservation.start }} - {{ reservation.end }}, with {{ reservation.size }} places taken
+                </li>
+            {% endfor %}
+        </ul>
+    </div>
+
+    <div class="reserve">
+        <h3>Reserve</h3>
+        <form action="{% url lanes.views.reserve lane.id %}" method="post">
+            {% csrf_token %}
+            <ul>
+                {{ form.as_ul }}
+            </ul>
+            <input type="submit" value="Submit" />
+        </form>
+    </div>
+{% endblock %}
