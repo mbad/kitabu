@@ -14,7 +14,7 @@ class BaseSubject(models.Model):
 
     def reserve(self, **kwargs):
         Reservation = self._meta.get_field_by_name('reservations')[0].model
-        return Reservation.reserve(subject=self, **kwargs)
+        return Reservation.objects.create(subject=self, **kwargs)
 
 
 class GroupableSubject(BaseSubject):
@@ -53,10 +53,10 @@ class FiniteCapacitySubject(BaseSubject):
     class Meta:
         abstract = True
 
-    def reserve(self, start, end, desired_reservations_nr, **kwargs):
+    def reserve(self, start, end, size, **kwargs):
         overlapping_reservations = self.reservations.filter(start__lt=end,
                                                             end__gt=start)
-        if desired_reservations_nr > self.capacity:
+        if size > self.capacity:
             raise CapacityExceeded
 
         dates = defaultdict(lambda: 0)
@@ -67,8 +67,8 @@ class FiniteCapacitySubject(BaseSubject):
         balance = 0
         for date, delta in sorted(dates.iteritems()):
             balance += delta
-            if balance + desired_reservations_nr > self.capacity:
+            if balance + size > self.capacity:
                 raise CapacityExceeded
 
         super(FiniteCapacitySubject, self).reserve(start=start, end=end,
-                desired_reservations_nr=desired_reservations_nr, **kwargs)
+                size=size, **kwargs)

@@ -13,9 +13,8 @@ class BaseReservation(models.Model):
     end = models.DateTimeField()
 
     @classmethod
-    def reserve(cls, start, end, subject, owner, **kwargs):
-        return cls.objects.create(start=start, end=end, subject=subject,
-                                  owner=owner, **kwargs)
+    def make_reservation(cls, start, end, subject, owner, **kwargs):
+        return subject.reserve(start=start, end=end, owner=owner, **kwargs)
 
 
 class ReservationWithSize(BaseReservation):
@@ -25,6 +24,6 @@ class ReservationWithSize(BaseReservation):
     size = models.IntegerField()
 
     @classmethod
-    def reserve(cls, desired_reservations_nr, **kwargs):
-        return super(ReservationWithSize, cls).reserve(
-                                        size=desired_reservations_nr, **kwargs)
+    def make_reservation(cls, size, **kwargs):
+        return super(ReservationWithSize, cls).make_reservation(
+                                        size=size, **kwargs)

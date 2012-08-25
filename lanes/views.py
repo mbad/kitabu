@@ -1,8 +1,7 @@
 #-*- coding=utf-8 -*-
 
-from django.shortcuts import render, get_object_or_404, redirect
+from django.shortcuts import render, get_object_or_404
 
-from kitabu.exceptions import CapacityExceeded
 from forms import LaneReservationForm
 from models import Lane
 
@@ -15,20 +14,15 @@ def index(request):
 #@login_required
 def reserve(request, lane_id):
     lane = get_object_or_404(Lane, pk=lane_id)
-    capacity_exceeded_msg = ''
+    success_msg = ""
 
     if request.POST:
         form = LaneReservationForm(request.POST)
         if form.is_valid():
-            start = form.cleaned_data['start']
-            end = form.cleaned_data['end']
-            size = form.cleaned_data['size']
-
-            try:
-                lane.reserve(start, end, size, owner=request.user)
-                return redirect('reserve-lane', lane_id)
-            except CapacityExceeded:
-                capacity_exceeded_msg = 'Capacity exceeded'
+            reservation = form.make_reservation(owner=request.user, subject=lane)
+            if reservation:
+                form = LaneReservationForm()
+                success_msg = "Reservation successful"
     else:
         form = LaneReservationForm()
 
@@ -38,5 +32,5 @@ def reserve(request, lane_id):
             {
                 'lane': lane,
                 'form': form,
-                'capacity_exceeded_msg': capacity_exceeded_msg
+                'success_msg': success_msg,
             })

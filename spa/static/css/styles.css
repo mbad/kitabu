@@ -94,6 +94,10 @@ li {
 padding-left: 5px;
 }
 
+.errorlist {
+color: red;
+}
+
 /* nav */
 
 nav .menu {

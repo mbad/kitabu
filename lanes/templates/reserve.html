@@ -3,9 +3,9 @@
 {% block content %}
     <h2>{{ lane }} - {{ lane.capacity }} places</h2>
     
-    {% if capacity_exceeded_msg %}
-        <h3 class="error">
-            {{ capacity_exceeded_msg }}
+    {% if success_msg %}
+        <h3>
+            {{ success_msg }}
         </h3>
     {% endif %}
 
@@ -25,7 +25,7 @@
         <form action="{% url lanes.views.reserve lane.id %}" method="post">
             {% csrf_token %}
             <ul>
-                {{ form.as_ul }}
+                {{ form.as_p }}
             </ul>
             <input type="submit" value="Submit" />
         </form>

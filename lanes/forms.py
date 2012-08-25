@@ -1,7 +1,9 @@
 from django import forms
+from kitabu.reservation_forms import (
+        BaseReservationForm, ReservationWithSizeForm)
+
+from models import LaneReservation
 
 
-class LaneReservationForm(forms.Form):
-    start = forms.SplitDateTimeField()
-    end = forms.SplitDateTimeField()
-    size = forms.IntegerField(min_value=1)
+class LaneReservationForm(BaseReservationForm, ReservationWithSizeForm):
+    reservation_model = LaneReservation
