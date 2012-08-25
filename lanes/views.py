@@ -1,7 +1,6 @@
 #-*- coding=utf-8 -*-
 
-from django.http import HttpResponseRedirect
-from django.shortcuts import render, get_object_or_404
+from django.shortcuts import render, get_object_or_404, redirect
 
 from kitabu.exceptions import CapacityExceeded
 from forms import LaneReservationForm
@@ -27,7 +26,7 @@ def reserve(request, lane_id):
 
             try:
                 lane.reserve(start, end, size, owner=request.user)
-                return HttpResponseRedirect('reserve', lane_id)
+                return redirect('reserve-lane', lane_id)
             except CapacityExceeded:
                 capacity_exceeded_msg = 'Capacity exceeded'
     else:
