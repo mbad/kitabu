@@ -38,7 +38,7 @@ class ExclusiveSubject(BaseSubject):
                                                          **kwargs)
 
 
-class VariableCapacityMixin(models.Model):
+class VariableCapacitySubjectMixin(models.Model):
     class Meta:
         abstract = True
 
@@ -48,7 +48,7 @@ class VariableCapacityMixin(models.Model):
 class FiniteCapacitySubject(BaseSubject):
     '''
     This mixin requires capacity property. Available e.g. in
-    VariableCapacityMixin
+    VariableCapacitySubjectMixin
     '''
     class Meta:
         abstract = True
