@@ -21,10 +21,10 @@ class BaseReservation(models.Model):
 class ReservationWithSize(BaseReservation):
     class Meta:
         abstract = True
-        
+
     size = models.IntegerField()
-    
+
     @classmethod
-    def reserve(cls, start, end, subject, owner, desired_reservations_nr, **kwargs):
-        return super(ReservationWithSize, cls).reserve(start, end, subject, owner, 
-                                                       size=desired_reservations_nr, **kwargs)
+    def reserve(cls, desired_reservations_nr, **kwargs):
+        return super(ReservationWithSize, cls).reserve(
+                                        size=desired_reservations_nr, **kwargs)

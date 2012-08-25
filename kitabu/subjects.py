@@ -58,7 +58,7 @@ class FiniteCapacitySubject(BaseSubject):
                                                             end__gt=start)
         if desired_reservations_nr > self.capacity:
             raise CapacityExceeded
-        
+
         dates = defaultdict(lambda: 0)
         for r in overlapping_reservations:
             # mark when usage of subject changes

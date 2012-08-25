@@ -7,4 +7,4 @@ register = template.Library()
 @register.inclusion_tag('lanes_list.html')
 def lanes_list():
     lanes = Lane.objects.all()
-    return { 'lanes' : lanes }
+    return {'lanes': lanes}
