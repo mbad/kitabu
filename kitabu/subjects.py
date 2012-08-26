@@ -41,7 +41,7 @@ class ExclusiveSubject(BaseSubject):
 class FiniteCapacitySubject(BaseSubject):
     '''
     This mixin requires capacity property. Available e.g. in
-    VariableCapacitySubjectMixin
+    VariableCapacitySubject and FixedCapacitySubject
     '''
     class Meta:
         abstract = True
@@ -72,3 +72,22 @@ class VariableCapacitySubject(FiniteCapacitySubject):
         abstract = True
 
     capacity = models.PositiveIntegerField()
+
+
+class FixedCapacitySubject(FiniteCapacitySubject):
+    '''
+    You can inherit from this class like this:
+    class YourClass(FixedCapacitySubject.with_capacity(5)
+        pass
+    '''
+    class Meta:
+        abstract = True
+
+    @classmethod
+    def with_capacity(cls, capacity):
+        cls._capacity = capacity
+        return cls
+
+    @property
+    def capacity(self):
+        return self._capacity
