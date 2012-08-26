@@ -3,9 +3,8 @@
 from collections import defaultdict
 
 from django.db import models
-#from django.contrib.auth.models import User
 
-from exceptions import OverlappingReservations, CapacityExceeded
+from kitabu.exceptions import OverlappingReservations, CapacityExceeded
 
 
 class BaseSubject(models.Model):
@@ -15,13 +14,6 @@ class BaseSubject(models.Model):
     def reserve(self, **kwargs):
         Reservation = self._meta.get_field_by_name('reservations')[0].model
         return Reservation.objects.create(subject=self, **kwargs)
-
-
-class GroupableSubject(BaseSubject):
-    class Meta:
-        abstract = True
-
-    cluster = models.ForeignKey('Cluster', null=True)
 
 
 class ExclusiveSubject(BaseSubject):
