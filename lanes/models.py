@@ -1,9 +1,9 @@
-from kitabu.subjects import VariableCapacitySubjectMixin, FiniteCapacitySubject
+from kitabu.subjects import VariableCapacitySubject
 from kitabu.reservations import ReservationWithSize
 from django.db import models
 
 
-class Lane(VariableCapacitySubjectMixin, FiniteCapacitySubject):
+class Lane(VariableCapacitySubject):
     name = models.TextField()
 
     def __unicode__(self):

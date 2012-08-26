@@ -22,13 +22,13 @@ class BaseReservationForm(forms.Form):
 class ReservationWithSizeForm(forms.Form):
     size = forms.IntegerField(min_value=1)
 
-    def make_reservation(self, **kwargs):
+    def make_reservation(self, subject, **kwargs):
         if not self.is_valid():
             return None
         reservation_params = self.cleaned_data
         reservation_params.update(kwargs)
         try:
-            return self.reservation_model.make_reservation(**reservation_params)
+            return subject.reserve(**reservation_params)
         except CapacityExceeded:
             if "__all__" not in self._errors:
                 self._errors["__all__"] = ErrorList()

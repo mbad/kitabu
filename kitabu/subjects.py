@@ -38,13 +38,6 @@ class ExclusiveSubject(BaseSubject):
                                                          **kwargs)
 
 
-class VariableCapacitySubjectMixin(models.Model):
-    class Meta:
-        abstract = True
-
-    capacity = models.PositiveIntegerField()
-
-
 class FiniteCapacitySubject(BaseSubject):
     '''
     This mixin requires capacity property. Available e.g. in
@@ -72,3 +65,10 @@ class FiniteCapacitySubject(BaseSubject):
 
         super(FiniteCapacitySubject, self).reserve(start=start, end=end,
                 size=size, **kwargs)
+
+
+class VariableCapacitySubject(FiniteCapacitySubject):
+    class Meta:
+        abstract = True
+
+    capacity = models.PositiveIntegerField()
