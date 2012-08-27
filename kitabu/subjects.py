@@ -12,8 +12,12 @@ class BaseSubject(models.Model):
         abstract = True
 
     def reserve(self, **kwargs):
-        Reservation = self._meta.get_field_by_name('reservations')[0].model
+        Reservation = self.reservation_model
         return Reservation.objects.create(subject=self, **kwargs)
+
+    @classmethod
+    def get_reservation_model(cls):
+        return cls._meta.get_field_by_name('reservations')[0].model
 
 
 class ExclusiveSubject(BaseSubject):
