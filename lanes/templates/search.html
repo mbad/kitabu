@@ -1,0 +1,14 @@
+{% extends 'lanes_base.html' %}
+
+{% block content %}
+    <form method='get'>
+        {{ form.as_p }}
+        <input type='submit'>
+    </form>
+
+    {% for r in results %}
+        {{ r }}
+        <br>
+    {% endfor %}
+
+{% endblock %}            

@@ -2,7 +2,7 @@
 
 from django.shortcuts import render, get_object_or_404
 
-from forms import LaneReservationForm
+from forms import LaneReservationForm, AvailableLanesSearchForm
 from models import Lane
 
 
@@ -19,7 +19,8 @@ def reserve(request, lane_id):
     if request.POST:
         form = LaneReservationForm(request.POST)
         if form.is_valid():
-            reservation = form.make_reservation(owner=request.user, subject=lane)
+            reservation = form.make_reservation(owner=request.user,
+                    subject=lane)
             if reservation:
                 form = LaneReservationForm()
                 success_msg = "Reservation successful"
@@ -34,3 +35,13 @@ def reserve(request, lane_id):
                 'form': form,
                 'success_msg': success_msg,
             })
+
+
+def search(request):
+    if request.GET:
+        form = AvailableLanesSearchForm(request.GET)
+    else:
+        form = AvailableLanesSearchForm()
+    results = form.search() if form.is_valid() else []
+
+    return render(request, 'search.html', {'form': form, 'results': results})
