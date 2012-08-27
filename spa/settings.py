@@ -50,7 +50,7 @@ USE_I18N = True
 USE_L10N = True
 
 # If you set this to False, Django will not use timezone-aware datetimes.
-USE_TZ = True
+USE_TZ = not True
 
 # Absolute filesystem path to the directory that will hold user-uploaded files.
 # Example: "/home/media/media.lawrence.com/media/"
@@ -139,7 +139,7 @@ INSTALLED_APPS = (
     'kitabu',
 
     # project apps
-    'reservations',
+    #'reservations',
     'lanes',
     'spa'
 )
