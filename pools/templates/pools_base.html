@@ -1,0 +1,13 @@
+{% extends 'base.html' %}
+
+{% load pools_tags %}
+
+{% block content %}
+{% endblock %}
+
+{% block sidebar %}
+    {% pools_list %}
+    
+    {% block sidebar_content %}
+    {% endblock %}
+{% endblock %}

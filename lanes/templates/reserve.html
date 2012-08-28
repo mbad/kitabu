@@ -1,7 +1,7 @@
-{% extends 'lanes_base.html' %}
+{% extends 'pools_show.html' %}
 
 {% block content %}
-    <h2>{{ lane }} - {{ lane.capacity }} places</h2>
+    <h2>{{ lane.cluster }} - {{ lane }} - {{ lane.capacity }} places</h2>
     
     {% if success_msg %}
         <h3>

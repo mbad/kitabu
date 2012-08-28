@@ -1,0 +1,10 @@
+<h3>Pools</h3>
+{% if pools %}
+    <ul>
+        {% for pool in pools %}
+            <li>
+                <a href="{% url show-pool pool.id %}">{{ pool }}</a>
+            </li>
+        {% endfor %}        
+    </ul>
+{% endif %}

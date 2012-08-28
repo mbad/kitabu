@@ -3,7 +3,8 @@ from models import Lane, LaneReservation
 
 
 class LaneAdmin(admin.ModelAdmin):
-    pass
+    list_filter = ('cluster__name',)
+
 admin.site.register(Lane, LaneAdmin)
 
 

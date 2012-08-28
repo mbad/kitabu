@@ -19,6 +19,10 @@ class BaseSubject(models.Model):
     def get_reservation_model(cls):
         return cls._meta.get_field_by_name('reservations')[0].model
 
+    @property
+    def reservation_model(self):
+        return self.__class__.get_reservation_model()
+
 
 class ExclusiveSubject(BaseSubject):
     class Meta:

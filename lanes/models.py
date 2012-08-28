@@ -1,10 +1,12 @@
 from kitabu.subjects import VariableCapacitySubject
 from kitabu.reservations import ReservationWithSize
 from django.db import models
+from pools.models import Pool
 
 
 class Lane(VariableCapacitySubject):
     name = models.TextField()
+    cluster = models.ForeignKey(Pool, related_name='subjects')
 
     def __unicode__(self):
         return self.name
