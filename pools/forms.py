@@ -1,11 +1,9 @@
-from kitabu.reservation_forms import (
-        BaseReservationForm, ReservationWithSizeForm)
-
-from kitabu.availability_forms import ExclusiveAvailabilityFormForOwnedSubject
+from kitabu.availability_forms import FiniteAvailabilityForm, OneClusterAvailabilityFormMixin
 
 from lanes.models import Lane
 
 
 class AvailableLanesSearchForm(
-        ExclusiveAvailabilityFormForOwnedSubject.on_model(Lane)):
+        OneClusterAvailabilityFormMixin,
+        FiniteAvailabilityForm.on_model(Lane)):
     pass

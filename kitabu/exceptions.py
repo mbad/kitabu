@@ -1,10 +1,10 @@
 #-*- coding=utf-8 -*-
 
 
-class CapacityExceeded(Exception):
+class SizeExceeded(Exception):
     pass
 
 
-class OverlappingReservations(CapacityExceeded):
+class OverlappingReservations(SizeExceeded):
     def __init__(self, reservations):
         self.reservations = reservations

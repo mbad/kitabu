@@ -4,7 +4,7 @@ from collections import defaultdict
 
 from django.db import models
 
-from kitabu.exceptions import OverlappingReservations, CapacityExceeded
+from kitabu.exceptions import OverlappingReservations, SizeExceeded
 
 
 class BaseSubject(models.Model):
@@ -38,10 +38,10 @@ class ExclusiveSubject(BaseSubject):
                                                          **kwargs)
 
 
-class FiniteCapacitySubject(BaseSubject):
+class FiniteSizeSubject(BaseSubject):
     '''
-    This mixin requires capacity property. Available e.g. in
-    VariableCapacitySubject and FixedCapacitySubject
+    This mixin requires size property. Available e.g. in
+    VariableSizeSubject and FixedSizeSubject
     '''
     class Meta:
         abstract = True
@@ -49,8 +49,8 @@ class FiniteCapacitySubject(BaseSubject):
     def reserve(self, start, end, size, **kwargs):
         overlapping_reservations = self.reservations.filter(start__lt=end,
                                                             end__gt=start)
-        if size > self.capacity:
-            raise CapacityExceeded
+        if size > self.size:
+            raise SizeExceeded
 
         dates = defaultdict(lambda: 0)
         for r in overlapping_reservations:
@@ -60,34 +60,34 @@ class FiniteCapacitySubject(BaseSubject):
         balance = 0
         for date, delta in sorted(dates.iteritems()):
             balance += delta
-            if balance + size > self.capacity:
-                raise CapacityExceeded
+            if balance + size > self.size:
+                raise SizeExceeded
 
-        super(FiniteCapacitySubject, self).reserve(start=start, end=end,
+        super(FiniteSizeSubject, self).reserve(start=start, end=end,
                 size=size, **kwargs)
 
 
-class VariableCapacitySubject(FiniteCapacitySubject):
+class VariableSizeSubject(FiniteSizeSubject):
     class Meta:
         abstract = True
 
-    capacity = models.PositiveIntegerField()
+    size = models.PositiveIntegerField()
 
 
-class FixedCapacitySubject(FiniteCapacitySubject):
+class FixedSizeSubject(FiniteSizeSubject):
     '''
     You can inherit from this class like this:
-    class YourClass(FixedCapacitySubject.with_capacity(5)
+    class YourClass(FixedSizeSubject.with_size(5)
         pass
     '''
     class Meta:
         abstract = True
 
     @classmethod
-    def with_capacity(cls, capacity):
-        cls._capacity = capacity
+    def with_size(cls, size):
+        cls._size = size
         return cls
 
     @property
-    def capacity(self):
-        return self._capacity
+    def size(self):
+        return self._size

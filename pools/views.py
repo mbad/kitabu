@@ -19,5 +19,4 @@ def show(request, pool_id):
         form = AvailableLanesSearchForm()
     results = form.search(cluster=pool) if form.is_valid() else []
 
-    return render(request, 'pools_show.html', {'pool': pool, 'form': form,
-            'results': results})
+    return render(request, 'pools_show.html', {'pool': pool, 'form': form, 'results': results})

@@ -1,10 +1,10 @@
-from kitabu.subjects import VariableCapacitySubject
+from kitabu.subjects import VariableSizeSubject
 from kitabu.reservations import ReservationWithSize
 from django.db import models
 from pools.models import Pool
 
 
-class Lane(VariableCapacitySubject):
+class Lane(VariableSizeSubject):
     name = models.TextField()
     cluster = models.ForeignKey(Pool, related_name='subjects')
 
@@ -16,4 +16,4 @@ class LaneReservation(ReservationWithSize):
     subject = models.ForeignKey('Lane', related_name='reservations')
 
     def __unicode__(self):
-        return self.subject.name + ' - ' + str(self.size) + ' places'
+        return "%s from %s to %s (%s places)" % (self.subject.name, self.start, self.end, self.size)

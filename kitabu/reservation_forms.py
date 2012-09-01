@@ -2,7 +2,7 @@ from django import forms
 from django.forms import ValidationError
 from django.forms.util import ErrorList
 
-from kitabu.exceptions import CapacityExceeded
+from kitabu.exceptions import SizeExceeded
 
 
 class BaseReservationForm(forms.Form):
@@ -29,7 +29,7 @@ class ReservationWithSizeForm(forms.Form):
         reservation_params.update(kwargs)
         try:
             return subject.reserve(**reservation_params)
-        except CapacityExceeded:
+        except SizeExceeded:
             if "__all__" not in self._errors:
                 self._errors["__all__"] = ErrorList()
             self.errors['__all__'].append("Too many reservations")
