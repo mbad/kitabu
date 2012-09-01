@@ -17,7 +17,7 @@ def show(request, pool_id):
         form = AvailableLanesSearchForm(request.GET)
     else:
         form = AvailableLanesSearchForm()
-    results = form.search(groupping_object=pool) if form.is_valid() else []
+    results = form.search(cluster=pool) if form.is_valid() else []
 
     return render(request, 'pools_show.html', {'pool': pool, 'form': form,
             'results': results})
