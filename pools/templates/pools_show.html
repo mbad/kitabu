@@ -1,4 +1,5 @@
 {% extends 'pools_base.html' %}
+{% load crispy_forms_tags %}
 
 {% load pools_tags %}
 {% load lanes_tags %}
@@ -12,10 +13,7 @@
     <h2>{{ pool }}</h2>
 
     <h3>Search available</h3>
-    <form method='get'>
-        {{ form.as_p }}
-        <input type='submit'>
-    </form>
+    {% crispy form %}
     
     <p></p>
 

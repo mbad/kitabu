@@ -1,12 +1,22 @@
 from collections import defaultdict
+
 from django import forms
 from django.db.models import Q
 from django.forms import ValidationError
+
+from crispy_forms.helper import FormHelper
+from crispy_forms.layout import Submit
 
 
 class BaseAvailabilityForm(forms.Form):
     start = forms.SplitDateTimeField()
     end = forms.SplitDateTimeField()
+
+    def __init__(self, *args, **kwargs):
+        self.helper = FormHelper()
+        self.helper.add_input(Submit('submit', 'Search'))
+        self.helper.form_method = 'get'
+        super(BaseAvailabilityForm, self).__init__(*args, **kwargs)
 
     def _get_subject_model_manager(self):
         if not hasattr(self, '_subject_model_manager'):

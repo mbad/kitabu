@@ -1,10 +1,8 @@
 {% extends 'lanes_base.html' %}
+{% load crispy_forms_tags %}
 
 {% block content %}
-    <form method='get'>
-        {{ form.as_p }}
-        <input type='submit'>
-    </form>
+    {% crispy form %}
 
     {% for r in results %}
         {{ r }}

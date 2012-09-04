@@ -8,6 +8,7 @@ PROJECT_ROOT = normpath(join(dirname(__file__), '..'))
 
 DEBUG = True
 TEMPLATE_DEBUG = DEBUG
+CRISPY_FAIL_SILENTLY = not DEBUG
 
 ADMINS = (
     # ('Your Name', 'your_email@example.com'),
@@ -138,6 +139,7 @@ INSTALLED_APPS = (
 
     # additional apps
     'django_extensions',
+    'crispy_forms',
 
     # the framework
     'kitabu',
