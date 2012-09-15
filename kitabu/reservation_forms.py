@@ -3,28 +3,28 @@ from django.forms import ValidationError
 from django.forms.util import ErrorList
 
 from kitabu.exceptions import SizeExceeded
+from kitabu.forms import KitabuPostForm
 
 
-class BaseReservationForm(forms.Form):
+class BaseReservationForm(KitabuPostForm):
     start = forms.SplitDateTimeField()
     end = forms.SplitDateTimeField()
+
+    _submit_button_text = 'Reserve'
 
     def clean(self):
         if 'start' in self.cleaned_data and 'end' in self.cleaned_data:
             start = self.cleaned_data['start']
             end = self.cleaned_data['end']
             if not end > start:
-                raise ValidationError(
-                        'Reservation must end after it begins')
+                raise ValidationError('Reservation must end after it begins')
         return super(BaseReservationForm, self).clean()
 
 
-class ReservationWithSizeForm(forms.Form):
+class ReservationWithSizeForm(BaseReservationForm):
     size = forms.IntegerField(min_value=1)
 
     def make_reservation(self, subject, **kwargs):
-        if not self.is_valid():
-            return None
         reservation_params = self.cleaned_data
         reservation_params.update(kwargs)
         try:

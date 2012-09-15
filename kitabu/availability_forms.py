@@ -4,19 +4,12 @@ from django import forms
 from django.db.models import Q
 from django.forms import ValidationError
 
-from crispy_forms.helper import FormHelper
-from crispy_forms.layout import Submit
+from kitabu.forms import KitabuSearchForm
 
 
-class BaseAvailabilityForm(forms.Form):
+class BaseAvailabilityForm(KitabuSearchForm):
     start = forms.SplitDateTimeField()
     end = forms.SplitDateTimeField()
-
-    def __init__(self, *args, **kwargs):
-        self.helper = FormHelper()
-        self.helper.add_input(Submit('submit', 'Search'))
-        self.helper.form_method = 'get'
-        super(BaseAvailabilityForm, self).__init__(*args, **kwargs)
 
     def _get_subject_model_manager(self):
         if not hasattr(self, '_subject_model_manager'):
@@ -74,13 +67,13 @@ class ExclusiveAvailabilityForm(BaseAvailabilityForm):
 
 
 class FiniteAvailabilityForm(BaseAvailabilityForm):
-    size = forms.IntegerField(required=False)
+    size = forms.IntegerField(initial=1)
 
     def search(self):
 
         start = self.cleaned_data['start']
         end = self.cleaned_data['end']
-        needed_size = self.cleaned_data.get('size', 1)
+        needed_size = self.cleaned_data.get('size')
 
         colliding_reservations = self.reservation_model.objects.filter(
             (

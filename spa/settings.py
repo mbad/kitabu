@@ -16,7 +16,7 @@ ADMINS = (
 
 MANAGERS = ADMINS
 
-if bool(os.environ.get('HEROKU_DEV', False)):
+if os.environ.get('HEROKU_DEV', False):
     DATABASES = {'default': dj_database_url.config(default='postgres://localhost')}
 else:
     DATABASES = {
@@ -117,6 +117,7 @@ ROOT_URLCONF = 'spa.urls'
 WSGI_APPLICATION = 'spa.wsgi.application'
 
 TEMPLATE_DIRS = (
+    join(PROJECT_ROOT, 'spa', 'templates'),
     # Put strings here, like "/home/html/django_templates"
     #  or "C:/www/django/templates".
     # Always use forward slashes, even on Windows.

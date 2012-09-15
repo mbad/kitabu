@@ -1,11 +1,10 @@
-from kitabu.reservation_forms import (
-        BaseReservationForm, ReservationWithSizeForm)
+from kitabu.reservation_forms import ReservationWithSizeForm
 from kitabu.availability_forms import ExclusiveAvailabilityForm
 
 from models import LaneReservation, Lane
 
 
-class LaneReservationForm(BaseReservationForm, ReservationWithSizeForm):
+class LaneReservationForm(ReservationWithSizeForm):
     reservation_model = LaneReservation
 
 

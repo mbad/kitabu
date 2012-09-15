@@ -1,5 +1,7 @@
 {% extends 'pools_show.html' %}
 
+{% load crispy_forms_tags %}
+
 {% block content %}
     <h2>{{ lane.cluster }} - {{ lane }} - {{ lane.size }} places</h2>
     
@@ -22,12 +24,6 @@
 
     <div class="reserve">
         <h3>Reserve</h3>
-        <form action="{% url lanes.views.reserve lane.id %}" method="post">
-            {% csrf_token %}
-            <ul>
-                {{ form.as_p }}
-            </ul>
-            <input type="submit" value="Submit" />
-        </form>
+        {% crispy form %}
     </div>
 {% endblock %}
