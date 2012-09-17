@@ -7,8 +7,8 @@ from kitabu.forms import KitabuPostForm
 
 
 class BaseReservationForm(KitabuPostForm):
-    start = forms.SplitDateTimeField()
-    end = forms.SplitDateTimeField()
+    start = forms.DateTimeField(widget=forms.DateTimeInput(attrs={'class': 'kitabu-datetime-field'}))
+    end = forms.DateTimeField(widget=forms.DateTimeInput(attrs={'class': 'kitabu-datetime-field'}))
 
     _submit_button_text = 'Reserve'
 

@@ -35,8 +35,8 @@ class Timeline(list):
 
 
 class BaseAvailabilityForm(KitabuSearchForm):
-    start = forms.SplitDateTimeField()
-    end = forms.SplitDateTimeField()
+    start = forms.DateTimeField(widget=forms.DateTimeInput(attrs={'class': 'kitabu-datetime-field'}))
+    end = forms.DateTimeField(widget=forms.DateTimeInput(attrs={'class': 'kitabu-datetime-field'}))
 
     def _get_subject_model_manager(self):
         if not hasattr(self, '_subject_model_manager'):
