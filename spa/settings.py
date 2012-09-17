@@ -150,6 +150,9 @@ INSTALLED_APPS = (
     'pools',
     'lanes',
     'spa',
+
+    # south
+    'south',
 )
 
 # A sample logging configuration. The only tangible logging
