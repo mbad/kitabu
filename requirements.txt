@@ -3,3 +3,4 @@ psycopg2==2.4.5
 dj-database-url==0.2.1
 django-extensions==0.9
 django-crispy-forms==1.1.4
+South==0.7.3
