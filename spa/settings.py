@@ -146,7 +146,6 @@ INSTALLED_APPS = (
     'kitabu',
 
     # project apps
-    #'reservations',
     'pools',
     'lanes',
     'spa',
