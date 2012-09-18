@@ -10,5 +10,5 @@ class AvailableLanesSearchForm(
     pass
 
 
-class PoolReservationSearchForm(SingleClusterReservationSearchMixin, BaseReservationSearchForm):
+class PoolReservationsSearchForm(SingleClusterReservationSearchMixin, BaseReservationSearchForm):
     reservation_model = LaneReservation

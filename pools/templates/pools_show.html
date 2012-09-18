@@ -11,7 +11,7 @@
 
 {% block content %}
     <h2>{{ pool }}</h2>
-
+    
     <h3>Search available</h3>
     {% crispy form %}
     
@@ -27,4 +27,23 @@
     {% else %}
         <p>No results</p>
     {% endif %}
+
+    <hr>
+
+    <h3>Search reservations</h3>
+    <div class="reservations-search">
+        {% crispy reservations_form %}
+    </div>
+    <p></p>
+    <h3>Reservations</h3>
+    {% if reservations %}
+        <ul>
+            {% for reservation in reservations %}
+                <li><a href="{% url reserve-lane reservation.subject_id %}">{{ reservation }}</a></li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p>No reservations</p>
+    {% endif %}
+    
 {% endblock %}

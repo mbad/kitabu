@@ -2,7 +2,7 @@
 
 from django.shortcuts import render, get_object_or_404
 from models import Pool
-from forms import AvailableLanesSearchForm
+from forms import AvailableLanesSearchForm, PoolReservationsSearchForm
 
 
 def index(request):
@@ -13,10 +13,22 @@ def index(request):
 def show(request, pool_id):
     pool = get_object_or_404(Pool, pk=pool_id)
 
-    if request.GET:
-        form = AvailableLanesSearchForm(request.GET)
+    if 'reservations-start' in request.GET:
+        reservations_form = PoolReservationsSearchForm(request.GET, prefix='reservations')
+        form = AvailableLanesSearchForm(prefix='available_subjects')
+    elif 'available_subjects-start' in request.GET:
+        form = AvailableLanesSearchForm(request.GET, prefix='available_subjects')
+        reservations_form = PoolReservationsSearchForm(prefix='reservations')
     else:
-        form = AvailableLanesSearchForm()
-    results = form.search(cluster=pool) if form.is_valid() else []
+        reservations_form = PoolReservationsSearchForm(prefix='reservations')
+        form = AvailableLanesSearchForm(prefix='available_subjects')
 
-    return render(request, 'pools_show.html', {'pool': pool, 'form': form, 'results': results})
+    results = form.search(cluster=pool) if form.is_valid() else []
+    reservations = reservations_form.search(subject_model_manager=pool.subjects) if reservations_form.is_valid() else []
+
+    return render(request, 'pools_show.html', {
+                                               'reservations': reservations,
+                                               'pool': pool,
+                                               'form': form,
+                                               'reservations_form': reservations_form,
+                                               'results': results})
