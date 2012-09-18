@@ -1,6 +1,6 @@
-from kitabu.reservation_forms import ReservationWithSizeForm
-from kitabu.availability_forms import ExclusiveAvailabilityForm
-from kitabu.form_validators import FullHourValidator, FullMinuteValidator
+from kitabu.forms.reservation import ReservationWithSizeForm
+from kitabu.forms.availability import ExclusiveAvailabilityForm
+from kitabu.forms.validators import FullHourValidator, FullMinuteValidator
 
 from models import LaneReservation, Lane
 

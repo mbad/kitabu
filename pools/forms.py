@@ -1,5 +1,5 @@
-from kitabu.availability_forms import FiniteAvailabilityForm, OneClusterAvailabilityFormMixin
-from kitabu.reservation_search_forms import SingleClusterReservationSearchMixin, BaseReservationSearchForm
+from kitabu.forms.availability import FiniteAvailabilityForm, OneClusterAvailabilityFormMixin
+from kitabu.forms.reservation_search import SingleClusterReservationSearchMixin, BaseReservationSearchForm
 
 from lanes.models import Lane, LaneReservation
 

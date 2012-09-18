@@ -1,5 +1,5 @@
-from kitabu.subjects import VariableSizeSubject
-from kitabu.reservations import ReservationWithSize
+from kitabu.models.subjects import VariableSizeSubject
+from kitabu.models.reservations import ReservationWithSize
 from django.db import models
 from pools.models import Pool
 

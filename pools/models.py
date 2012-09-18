@@ -1,6 +1,6 @@
 #-*- coding=utf-8 -*-
 
-from kitabu.clusters import BaseCluster
+from kitabu.models.clusters import BaseCluster
 
 
 class Pool(BaseCluster):

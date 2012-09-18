@@ -1,6 +1,6 @@
 from django.db import models
-from kitabu.subjects import ExclusiveSubject, FixedSizeSubject, VariableSizeSubject
-from kitabu.reservations import BaseReservation, ReservationWithSize
+from kitabu.models.subjects import ExclusiveSubject, FixedSizeSubject, VariableSizeSubject
+from kitabu.models.reservations import BaseReservation, ReservationWithSize
 
 
 class TennisCourt(ExclusiveSubject):
