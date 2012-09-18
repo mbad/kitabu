@@ -7,10 +7,19 @@ from crispy_forms.layout import Submit
 class KitabuBaseForm(forms.Form):
     error_css_class = 'error'
 
+    validators = {}
+
     def __init__(self, *args, **kwargs):
         self.helper = FormHelper()
         self.html5_required = True
         super(KitabuBaseForm, self).__init__(*args, **kwargs)
+
+        for field_name in self.validators:
+            if field_name in self.fields:
+                field = self.fields[field_name]
+                if not hasattr(field, 'validators'):
+                    field.validators = []
+                field.validators.extend(self.validators[field_name])
 
 
 class KitabuSearchForm(KitabuBaseForm):
