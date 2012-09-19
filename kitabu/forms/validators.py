@@ -10,27 +10,39 @@ class BaseValidator(object):
         if not self.validate(value):
             raise ValidationError(self.message)
 
+    def validate(self, value):
+        raise NotImplementedError('Abstract method')
 
-class FullSecondValidator(BaseValidator):
+
+class FullTimeIntervalValidator(BaseValidator):
     def __init__(self, interval=1, *args, **kwargs):
-        super(FullSecondValidator, self).__init__(*args, **kwargs)
+        super(FullTimeIntervalValidator, self).__init__(*args, **kwargs)
         self.interval = interval
 
+    def _validate_datetime(self, main_part, must_be_null_parts):
+        for part in must_be_null_parts:
+            if part != 0:
+                return False
+
+        return main_part % self.interval == 0
+
+
+class FullSecondValidator(FullTimeIntervalValidator):
     def validate(self, datetime):
-        timestamp = int(time.mktime(datetime.timetuple()))
-        return (timestamp % self.interval) == 0
+        return self._validate_datetime(datetime.second, [datetime.microsecond])
 
 
-class FullMinuteValidator(FullSecondValidator):
-    def __init__(self, interval=1, *args, **kwargs):
-        super(FullMinuteValidator, self).__init__(interval=interval * 60, *args, **kwargs)
+class FullMinuteValidator(FullTimeIntervalValidator):
+    def validate(self, datetime):
+        return self._validate_datetime(datetime.minute, [datetime.second, datetime.microsecond])
 
 
-class FullHourValidator(FullMinuteValidator):
-    def __init__(self, interval=1, *args, **kwargs):
-        super(FullHourValidator, self).__init__(interval=interval * 60, *args, **kwargs)
+class FullHourValidator(FullTimeIntervalValidator):
+    def validate(self, datetime):
+        return self._validate_datetime(datetime.hour, [datetime.minute, datetime.second, datetime.microsecond])
 
 
-class FullDayValidator(FullHourValidator):
-    def __init__(self, interval=1, *args, **kwargs):
-        super(FullDayValidator, self).__init__(interval=interval * 24, *args, **kwargs)
+class FullDayValidator(FullTimeIntervalValidator):
+    def validate(self, datetime):
+        return self._validate_datetime(datetime.day, [datetime.hour, datetime.minute, datetime.second,
+                                                       datetime.microsecond])

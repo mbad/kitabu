@@ -7,9 +7,14 @@ from models import LaneReservation, Lane
 
 class LaneReservationForm(ReservationWithSizeForm):
     reservation_model = LaneReservation
-    validators = {
-                  'start': [FullHourValidator(message=u'Bad start time (full hours allowed)')],
-                  'end': [FullMinuteValidator(message=u'Bad end time (full minutes allowed)')]}
+
+    def clean_start(self):
+        if 'start' in self.cleaned_data:
+            FullHourValidator(message='Only full hours allowed')(self.cleaned_data['start'])
+
+    def clean_end(self):
+        if 'end' in self.cleaned_data:
+            FullMinuteValidator(message='Only full minutes allowed')(self.cleaned_data['end'])
 
 
 class AvailableLanesSearchForm(ExclusiveAvailabilityForm.on_model(Lane)):
