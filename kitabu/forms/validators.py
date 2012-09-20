@@ -1,5 +1,4 @@
 from django.core.exceptions import ValidationError
-import time
 
 
 class BaseValidator(object):
