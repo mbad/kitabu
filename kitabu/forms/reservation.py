@@ -10,7 +10,7 @@ class BaseReservationForm(KitabuPostForm):
     start = forms.DateTimeField(widget=forms.DateTimeInput(attrs={'class': 'kitabu-datetime-field'}))
     end = forms.DateTimeField(widget=forms.DateTimeInput(attrs={'class': 'kitabu-datetime-field'}))
 
-    _submit_button_text = 'Reserve'
+    submit_button_text = 'Reserve'
 
     def clean(self):
         if 'start' in self.cleaned_data and 'end' in self.cleaned_data:

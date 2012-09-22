@@ -26,10 +26,13 @@ class KitabuPostForm(KitabuBaseForm):
     '''
     Base class for post forms.
     Customisation of submit button text can be done via
-    _submit_button_text field of either class of instance
+    submit_button_text field of either class or instance
     '''
+
+    submit_button_text = "Submit"
+
     def __init__(self, *args, **kwargs):
         super(KitabuPostForm, self).__init__(*args, **kwargs)
         self.helper.form_method = 'post'  # this is default, but for explicity it's here
-        submit_button_text = getattr(self, '_submit_button_text', 'Submit')
+        submit_button_text = self.submit_button_text
         self.helper.add_input(Submit('submit', submit_button_text))
