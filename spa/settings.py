@@ -1,8 +1,8 @@
 # Django settings for spa project.
 
 from os.path import join, normpath, dirname
+import sys
 import os
-import dj_database_url
 
 PROJECT_ROOT = normpath(join(dirname(__file__), '..'))
 
@@ -16,20 +16,17 @@ ADMINS = (
 
 MANAGERS = ADMINS
 
-if os.environ.get('HEROKU_DEV', False):
-    DATABASES = {'default': dj_database_url.config(default='postgres://localhost')}
-else:
-    DATABASES = {
-        'default': {
-            # Add 'postgresql_psycopg2', 'mysql', 'sqlite3' or 'oracle'.
-            'ENGINE': 'django.db.backends.sqlite3',
-            'NAME': 'dev.db',
-            'USER': '',
-            'PASSWORD': '',
-            'HOST': '',       # Set to empty string for localhost
-            'PORT': '',       # Set to empty string for default
-        }
+DATABASES = {
+    'default': {
+        # Add 'postgresql_psycopg2', 'mysql', 'sqlite3' or 'oracle'.
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': 'dev.db',
+        'USER': '',
+        'PASSWORD': '',
+        'HOST': '',       # Set to empty string for localhost
+        'PORT': '',       # Set to empty string for default
     }
+}
 
 # Local time zone for this installation. Choices can be found here:
 # http://en.wikipedia.org/wiki/List_of_tz_zones_by_name
@@ -185,9 +182,17 @@ LOGGING = {
 
 SOUTH_TESTS_MIGRATE = False
 
-# custom_settings.py can be used to override environment-specific settings
+# spa/settings_local.py can be used to override environment-specific settings
 # like database and email that differ between development and production.
 try:
-    execfile(os.path.join(PROJECT_ROOT, 'custom_settings.py'))
+    execfile(os.path.join(PROJECT_ROOT, 'spa', 'settings_local.py'))
 except IOError:
-    pass
+    print "settings_local not found"
+
+# spacial settings for heroku:
+if os.environ.get('HEROKU_DEV'):
+    execfile(os.path.join(PROJECT_ROOT, 'spa', 'settings_heroku.py'))
+
+# special settings for testing kitabu application
+if 'test' in sys.argv and 'kitabu' in sys.argv:
+    execfile(os.path.join(PROJECT_ROOT, 'kitabu', 'tests', 'settings.py'))

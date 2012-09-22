@@ -2,4 +2,4 @@
 *.db
 *.pyo
 inheritance.py
-custom_settings.py
+settings_local.py

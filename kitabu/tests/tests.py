@@ -1,7 +1,5 @@
-import settings
-
 from django.test import SimpleTestCase
-from models import TennisCourt, Room
+from kitabu.tests.models import TennisCourt, Room
 from kitabu.exceptions import OverlappingReservations, SizeExceeded
 
 
