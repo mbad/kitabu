@@ -3,16 +3,33 @@ from django import forms
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Submit
 
+from kitabu.forms.validators import BaseValidator
+
 
 class KitabuBaseForm(forms.Form):
     error_css_class = 'error'
 
-    validators = {}
+    extra_field_validators = {}
+    extra_form_validators = []
 
     def __init__(self, *args, **kwargs):
+        super(KitabuBaseForm, self).__init__(*args, **kwargs)
         self.helper = FormHelper()
         self.helper.html5_required = True
-        super(KitabuBaseForm, self).__init__(*args, **kwargs)
+
+        for validator_name, validator in self.extra_field_validators.iteritems():
+            if validator_name in self.fields:
+                if  isinstance(validator, BaseValidator):
+                    self.base_fields[validator_name].append(validator)
+                elif isinstance(validator, list):
+                    self.base_fields[validator_name].extend(validator)
+                else:
+                    assert False, "Only Validators derived from BaseValidator or Lists of them are allowed"
+
+    def clean(self):
+        for validator in self.extra_form_validators:
+            validator(self)
+        return super(KitabuBaseForm, self).clean()
 
 
 class KitabuSearchForm(KitabuBaseForm):
