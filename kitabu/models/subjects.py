@@ -5,9 +5,10 @@ from collections import defaultdict
 from django.db import models
 
 from kitabu.exceptions import OverlappingReservations, SizeExceeded
+from kitabu.utils import EnsureSize
 
 
-class BaseSubject(models.Model):
+class BaseSubject(models.Model, EnsureSize):
     class Meta:
         abstract = True
 

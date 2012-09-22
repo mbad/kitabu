@@ -27,3 +27,13 @@ class Timeline(list):
             timeline[min(reservation.end, end)] -= reservation.size
 
         return super(Timeline, self).__init__(sorted(timeline.iteritems()))
+
+
+class EnsureSize(object):
+    def __getattribute__(self, name, *args):
+        if name != 'size':
+            return super(EnsureSize, self).__getattribute__(name, *args)
+        try:
+            return super(EnsureSize, self).__getattribute__(name, *args)
+        except AttributeError:
+            return 1

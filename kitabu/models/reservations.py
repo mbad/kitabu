@@ -3,8 +3,10 @@
 from django.db import models
 from django.contrib.auth.models import User
 
+from kitabu.utils import EnsureSize
 
-class BaseReservation(models.Model):
+
+class BaseReservation(models.Model, EnsureSize):
     class Meta:
         abstract = True
 
