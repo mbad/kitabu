@@ -11,7 +11,7 @@ class KitabuBaseForm(forms.Form):
 
     def __init__(self, *args, **kwargs):
         self.helper = FormHelper()
-        self.html5_required = True
+        self.helper.html5_required = True
         super(KitabuBaseForm, self).__init__(*args, **kwargs)
 
 
