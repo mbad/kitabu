@@ -24,7 +24,7 @@ class KitabuBaseForm(forms.Form):
                 elif isinstance(validator, list):
                     self.base_fields[validator_name].extend(validator)
                 else:
-                    assert False, "Only Validators derived from BaseValidator or Lists of them are allowed"
+                    assert False, "Only Validators derived from BaseValidator or lists of them are allowed"
 
     def clean(self):
         for validator in self.extra_form_validators:

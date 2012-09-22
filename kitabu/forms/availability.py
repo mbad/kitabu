@@ -6,32 +6,7 @@ from django.db.models import Q
 from django.forms import ValidationError
 
 from kitabu.forms import KitabuSearchForm
-
-
-class Timeline(list):
-    def __init__(self, subject, start, end):
-        self.start = start
-        self.end = end
-        self.subject = subject
-
-        colliding_reservations = subject.reservation_model.objects.filter(
-            (
-                Q(start__gte=start, start__lt=end)   # start in scope
-                | Q(end__gt=start, end__lte=end)     # end in scope
-                | Q(start__lte=start, end__gte=end)  # covers whole scope
-            ),
-            subject=subject,
-        ).select_related('subject')
-
-        timeline = defaultdict(lambda: 0)
-
-        for reservation in colliding_reservations:
-            reservation_start = start if reservation.start < start else reservation.start
-            timeline[reservation_start] += reservation.size
-
-            timeline[min(reservation.end, end)] -= reservation.size
-
-        return super(Timeline, self).__init__(sorted(timeline.iteritems()))
+from kitabu.utils import Timeline
 
 
 class BaseAvailabilityForm(KitabuSearchForm):
@@ -140,25 +115,48 @@ class FiniteAvailabilityForm(BaseAvailabilityForm):
 
 
 class VaryingDateAvailabilityForm(BaseAvailabilityForm):
-    forms.IntegerField(min_value=1)
+    '''
+    TODO
+    '''
+    duration = forms.IntegerField(min_value=1)
 
     def get_duration(self):
         '''
         This method is supposed to somehow figure out for how long reservation needs to be done.
         Must return timedelta.
+        This default implementation gets integer named 'duration' from cleaned_data and treats it as
+        duration in days
         '''
-        return timedelta(1)
-        raise NotImplementedError
+        return timedelta(self.cleaned_data['duration'])
 
     def get_size(self):
         '''
         This method is supposed to somehow figure out how big reservation needs to be.
         Must return integer.
+
+        This not very smart implementation simply returns 1
+
+        Another simple implementation could be adding size field to inheriting class:
+            size = forms.IntegerField(min_value=1)
+        and returning its value:
+            def get_size():
+                return self.cleaned_data['size']
         '''
         return 1
+
+    def get_subject(self):
+        '''
+        This method must return subject on which the search is about to be performed
+
+        It only needs to be implemented if search method is to be used without providing
+        subject, e.g. when subject is to be retrieved basing on cleaned_data like subject_id
+        '''
         raise NotImplementedError
 
-    def search(self, subject):
+    def search(self, subject=None):
+        if not subject:
+            subject = self.get_subject()
+
         start = self.cleaned_data['start']
         end = self.cleaned_data['end']
         required_duration = self.get_duration()
@@ -166,10 +164,7 @@ class VaryingDateAvailabilityForm(BaseAvailabilityForm):
 
         timeline = Timeline(subject, start, end)
 
-        return self.find_available_dates(timeline, required_duration, required_size)
-
-    def find_available_dates(self, timeline, required_duration, required_size):
-        available_size = getattr(timeline.subject, 'size', 1)
+        available_size = timeline.subject.size
         available_dates = []
         potential_start = timeline.start
         current_size = 0
