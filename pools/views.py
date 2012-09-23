@@ -7,13 +7,13 @@ from forms import AvailableLanesSearchForm, PoolReservationsSearchForm
 
 def index(request):
     pools = Pool.objects.all()
-    return render(request, 'pools_index.html', {'pools': pools})
+    return render(request, 'pools/index.html', {'pools': pools})
 
 
 def show(request, pool_id):
     pool = get_object_or_404(Pool, pk=pool_id)
 
-    return render(request, 'pools_show.html', {'pool': pool})
+    return render(request, 'pools/show.html', {'pool': pool})
 
 
 def availability(request, pool_id):
@@ -27,7 +27,7 @@ def availability(request, pool_id):
 
     return render(
         request,
-        'pools_availability.html',
+        'pools/availability.html',
         {
             'pool': pool,
             'form': form,
@@ -47,7 +47,7 @@ def reservations(request, pool_id):
 
     return render(
         request,
-        'pools_reservations.html',
+        'pools/reservations.html',
         {
             'reservations': reservations,
             'pool': pool,

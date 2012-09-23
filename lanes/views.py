@@ -9,7 +9,7 @@ from models import Lane
 
 def index(request):
     lanes = Lane.objects.all()
-    return render(request, 'lanes_index.html', {'lanes': lanes})
+    return render(request, 'lanes/index.html', {'lanes': lanes})
 
 
 @login_required
@@ -29,7 +29,7 @@ def reserve(request, lane_id):
 
     return render(
         request,
-        'reserve.html',
+        'lanes/reserve.html',
         {
             'lane': lane,
             'pool': lane.cluster,
@@ -46,4 +46,4 @@ def search(request):
         form = AvailableLanesSearchForm()
     results = form.search() if form.is_valid() else []
 
-    return render(request, 'search.html', {'form': form, 'results': results})
+    return render(request, 'lanes/search.html', {'form': form, 'results': results})

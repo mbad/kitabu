@@ -6,7 +6,7 @@ from pools.models import Pool
 register = template.Library()
 
 
-@register.inclusion_tag('pools_list.html')
+@register.inclusion_tag('pools/list.html')
 def pools_list():
     pools = Pool.objects.all()
     return {'pools': pools}

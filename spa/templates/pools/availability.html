@@ -1,0 +1,31 @@
+{% extends 'pools/base.html' %}
+{% load crispy_forms_tags %}
+
+{% load pools_tags %}
+{% load lanes_tags %}
+
+
+{% block sidebar_content %}
+    {% lanes_list pool %}
+{% endblock %}
+
+{% block content %}
+    <h2>{{ pool }}</h2>
+    
+    <h3>Search available</h3>
+    {% crispy form %}
+    
+    <p></p>
+
+    <h3>Results</h3>
+    {% if available_lanes %}
+        <ul>
+            {% for lane in available_lanes %}
+                <li><a href="{% url reserve-lane lane.id %}">{{ lane }}</a></li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p>No results</p>
+    {% endif %}
+
+{% endblock %}

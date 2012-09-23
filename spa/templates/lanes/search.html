@@ -1,0 +1,12 @@
+{% extends 'lanes/base.html' %}
+{% load crispy_forms_tags %}
+
+{% block content %}
+    {% crispy form %}
+
+    {% for r in results %}
+        {{ r }}
+        <br>
+    {% endfor %}
+
+{% endblock %}            
