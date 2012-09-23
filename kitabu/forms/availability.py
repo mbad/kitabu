@@ -115,15 +115,12 @@ class FiniteAvailabilityForm(BaseAvailabilityForm):
 
 
 class VaryingDateAvailabilityForm(BaseAvailabilityForm):
-    '''
-    TODO
-    '''
     duration = forms.IntegerField(min_value=1)
 
     def get_duration(self):
         '''
         This method is supposed to somehow figure out for how long reservation needs to be done.
-        Must return timedelta.
+        Must return datetime.timedelta.
         This default implementation gets integer named 'duration' from cleaned_data and treats it as
         duration in days
         '''
@@ -134,13 +131,7 @@ class VaryingDateAvailabilityForm(BaseAvailabilityForm):
         This method is supposed to somehow figure out how big reservation needs to be.
         Must return integer.
 
-        This not very smart implementation simply returns 1
-
-        Another simple implementation could be adding size field to inheriting class:
-            size = forms.IntegerField(min_value=1)
-        and returning its value:
-            def get_size():
-                return self.cleaned_data['size']
+        This very simple implementation is suitable for Exclusive subjects and reservations
         '''
         return 1
 
@@ -167,6 +158,7 @@ class VaryingDateAvailabilityForm(BaseAvailabilityForm):
         available_size = timeline.subject.size
         available_dates = []
         potential_start = timeline.start
+        current_date = timeline.end
         current_size = 0
 
         for current_date, delta in timeline:
@@ -174,14 +166,21 @@ class VaryingDateAvailabilityForm(BaseAvailabilityForm):
             if current_size + required_size <= available_size:
                 if potential_start is None:
                     potential_start = current_date
-            else:
+            elif potential_start:
                 if current_date - potential_start >= required_duration:
                     available_dates.append((potential_start, current_date))
                 potential_start = None
         if (
             potential_start is not None
             and current_size + required_size <= available_size
-            and current_date - potential_start >= required_duration
+            and end - potential_start >= required_duration
         ):
-            available_dates.append((potential_start, current_date))
+            available_dates.append((potential_start, end))
         return available_dates
+
+
+class VaryingDateAndSizeAvailabilityForm(VaryingDateAvailabilityForm):
+    size = forms.IntegerField(min_value=1)
+
+    def get_size(self):
+        return self.cleaned_data['size']
