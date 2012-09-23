@@ -11,39 +11,20 @@
 
 {% block content %}
     <h2>{{ pool }}</h2>
-    
-    <h3>Search available</h3>
-    {% crispy form %}
-    
-    <p></p>
-
-    <h3>Results</h3>
-    {% if results %}
+    <div>
         <ul>
-            {% for result in results %}
-                <li><a href="{% url reserve-lane result.id %}">{{ result }}</a></li>
-            {% endfor %}
+            See more:
+            <li>
+                <a href="{% url show-pool-availability pool.id %}">
+                    Search available dates
+                </a>
+            </li>
+            <li>
+                <a href="{% url show-pool-reservations pool.id %}">
+                    See reservations on the pool
+                </a>
+            </li>
         </ul>
-    {% else %}
-        <p>No results</p>
-    {% endif %}
-
-    <hr>
-
-    <h3>Search reservations</h3>
-    <div class="reservations-search">
-        {% crispy reservations_form %}
     </div>
-    <p></p>
-    <h3>Reservations</h3>
-    {% if reservations %}
-        <ul>
-            {% for reservation in reservations %}
-                <li><a href="{% url reserve-lane reservation.subject_id %}">{{ reservation }}</a></li>
-            {% endfor %}
-        </ul>
-    {% else %}
-        <p>No reservations</p>
-    {% endif %}
     
 {% endblock %}

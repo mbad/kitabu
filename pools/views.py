@@ -13,22 +13,44 @@ def index(request):
 def show(request, pool_id):
     pool = get_object_or_404(Pool, pk=pool_id)
 
-    if 'reservations-start' in request.GET:
-        reservations_form = PoolReservationsSearchForm(request.GET, prefix='reservations')
-        form = AvailableLanesSearchForm(prefix='available_subjects')
-    elif 'available_subjects-start' in request.GET:
-        form = AvailableLanesSearchForm(request.GET, prefix='available_subjects')
-        reservations_form = PoolReservationsSearchForm(prefix='reservations')
-    else:
-        reservations_form = PoolReservationsSearchForm(prefix='reservations')
-        form = AvailableLanesSearchForm(prefix='available_subjects')
+    return render(request, 'pools_show.html', {'pool': pool})
 
-    results = form.search(cluster=pool) if form.is_valid() else []
-    reservations = reservations_form.search(subject_model_manager=pool.subjects) if reservations_form.is_valid() else []
 
-    return render(request, 'pools_show.html', {
-                                               'reservations': reservations,
-                                               'pool': pool,
-                                               'form': form,
-                                               'reservations_form': reservations_form,
-                                               'results': results})
+def availability(request, pool_id):
+    pool = get_object_or_404(Pool, pk=pool_id)
+
+    Form = AvailableLanesSearchForm
+
+    form = Form(request.GET) if request.GET else Form()
+
+    available_lanes = form.search(cluster=pool) if form.is_valid() else []
+
+    return render(
+        request,
+        'pools_availability.html',
+        {
+            'pool': pool,
+            'form': form,
+            'available_lanes': available_lanes
+        }
+    )
+
+
+def reservations(request, pool_id):
+    pool = get_object_or_404(Pool, pk=pool_id)
+
+    Form = PoolReservationsSearchForm
+
+    form = Form(request.GET) if request.GET else Form()
+
+    reservations = form.search(subject_model_manager=pool.subjects) if form.is_valid() else []
+
+    return render(
+        request,
+        'pools_reservations.html',
+        {
+            'reservations': reservations,
+            'pool': pool,
+            'form': form,
+        }
+    )
