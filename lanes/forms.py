@@ -10,6 +10,8 @@ from spa.forms import PostForm, SearchForm
 class LaneReservationForm(ReservationWithSizeForm, PostForm):
     reservation_model = LaneReservation
 
+    submit_button_text = 'Reserve'
+
     def clean_start(self):
         if 'start' in self.cleaned_data:
             FullHourValidator(message='Only full hours allowed')(self.cleaned_data['start'])
