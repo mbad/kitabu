@@ -5,11 +5,11 @@ from django import forms
 from django.db.models import Q
 from django.forms import ValidationError
 
-from kitabu.forms import KitabuSearchForm
+from kitabu.forms import KitabuForm
 from kitabu.utils import Timeline
 
 
-class BaseAvailabilityForm(KitabuSearchForm):
+class BaseAvailabilityForm(KitabuForm):
     start = forms.DateTimeField(widget=forms.DateTimeInput(attrs={'class': 'kitabu-datetime-field'}))
     end = forms.DateTimeField(widget=forms.DateTimeInput(attrs={'class': 'kitabu-datetime-field'}))
 

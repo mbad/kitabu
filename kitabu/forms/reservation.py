@@ -3,17 +3,17 @@ from django.forms import ValidationError
 from django.forms.util import ErrorList
 
 from kitabu.exceptions import SizeExceeded
-from kitabu.forms import KitabuPostForm
+from kitabu.forms import KitabuForm
 
 
-class BaseReservationForm(KitabuPostForm):
+class BaseReservationForm(KitabuForm):
     start = forms.DateTimeField(widget=forms.DateTimeInput(attrs={'class': 'kitabu-datetime-field'}))
     end = forms.DateTimeField(widget=forms.DateTimeInput(attrs={'class': 'kitabu-datetime-field'}))
 
     submit_button_text = 'Reserve'
 
     def clean(self):
-        if 'start' in self.cleaned_data and 'end' in self.cleaned_data:
+        if self.cleaned_data.get('start') and self.cleaned_data.get('end'):
             start = self.cleaned_data['start']
             end = self.cleaned_data['end']
             if not end > start:

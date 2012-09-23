@@ -2,10 +2,10 @@ from django import forms
 from django.forms import ValidationError
 from django.db.models import Q
 
-from kitabu.forms import KitabuSearchForm
+from kitabu.forms import KitabuForm
 
 
-class BaseReservationSearchForm(KitabuSearchForm):
+class BaseReservationSearchForm(KitabuForm):
     start = forms.DateTimeField(widget=forms.DateTimeInput(attrs={'class': 'kitabu-datetime-field'}))
     end = forms.DateTimeField(widget=forms.DateTimeInput(attrs={'class': 'kitabu-datetime-field'}))
 

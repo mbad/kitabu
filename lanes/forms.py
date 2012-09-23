@@ -4,8 +4,10 @@ from kitabu.forms.validators import FullHourValidator, FullMinuteValidator
 
 from models import LaneReservation, Lane
 
+from spa.forms import PostForm, SearchForm
 
-class LaneReservationForm(ReservationWithSizeForm):
+
+class LaneReservationForm(ReservationWithSizeForm, PostForm):
     reservation_model = LaneReservation
 
     def clean_start(self):
@@ -17,5 +19,5 @@ class LaneReservationForm(ReservationWithSizeForm):
             FullMinuteValidator(message='Only full minutes allowed')(self.cleaned_data['end'])
 
 
-class AvailableLanesSearchForm(ExclusiveAvailabilityForm.on_model(Lane)):
+class AvailableLanesSearchForm(ExclusiveAvailabilityForm.on_model(Lane), SearchForm):
     pass
