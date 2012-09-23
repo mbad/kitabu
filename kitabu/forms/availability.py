@@ -98,7 +98,7 @@ class FiniteAvailabilityForm(BaseAvailabilityForm):
             res_start = start if res.start < start else res.start
             timelines[res.subject][res_start] += res.size
             if res.end < end:
-                timelines[res.end] -= res.size
+                timelines[res.subject][res.end] -= res.size
 
         disqualified_subjects = []
         for subject, timeline in timelines.iteritems():
