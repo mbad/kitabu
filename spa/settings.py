@@ -28,6 +28,8 @@ DATABASES = {
     }
 }
 
+LOGIN_REDIRECT_URL = '/'
+
 # Local time zone for this installation. Choices can be found here:
 # http://en.wikipedia.org/wiki/List_of_tz_zones_by_name
 # although not all choices may be available on all operating systems.
@@ -122,6 +124,7 @@ TEMPLATE_DIRS = (
 )
 
 INSTALLED_APPS = (
+    'registration_defaults',  # this is here so that admin can use its templates
     # django apps
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -136,8 +139,10 @@ INSTALLED_APPS = (
 
 
     # additional apps
+    #'registration_defaults',  # this is moved up so that admin can use its templates
     'django_extensions',
     'crispy_forms',
+    'registration',
 
     # the framework
     'kitabu',
@@ -181,6 +186,9 @@ LOGGING = {
 }
 
 SOUTH_TESTS_MIGRATE = False
+
+# For django registration:
+ACCOUNT_ACTIVATION_DAYS = 2
 
 # spa/settings_local.py can be used to override environment-specific settings
 # like database and email that differ between development and production.

@@ -2,7 +2,11 @@
 <html lang="en">
 <head>
     <meta charset="utf-8" />
-    <title>SPA</title>
+    <title>
+        {% block title %}
+            SPA
+        {% endblock title %}
+    </title>
     <link rel="stylesheet" href="{{ STATIC_URL }}css/styles.css" type="text/css" />
     <link rel="stylesheet" href="{{ STATIC_URL }}css/uni-form.css" media="all" />
     <!--[if IE]><script src="http://html5shiv.googlecode.com/svn/trunk/html5.js"></script><![endif]-->
@@ -24,6 +28,11 @@
             <ul>
                 <li><a href="/">Home</a></li>
                 <li><a href="{% url list-pools %}">Pools</a></li>
+                {% if user.is_authenticated %}
+                    <li><a href="{% url auth_logout %}">Log out</a></li>
+                {% else %}
+                    <li><a href="{% url auth_login %}">Log in</a></li>
+                {% endif %}
             </ul>
         </div>
     </nav><!-- end of top nav -->
