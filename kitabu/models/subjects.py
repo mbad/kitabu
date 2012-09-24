@@ -7,8 +7,12 @@ from django.db import models
 from kitabu.exceptions import OverlappingReservations, SizeExceeded
 from kitabu.utils import EnsureSize
 
+from managers import SubjectManager
+
 
 class BaseSubject(models.Model, EnsureSize):
+    objects = SubjectManager()
+
     class Meta:
         abstract = True
 
@@ -64,7 +68,7 @@ class FiniteSizeSubject(BaseSubject):
             if balance + size > self.size:
                 raise SizeExceeded
 
-        super(FiniteSizeSubject, self).reserve(start=start, end=end,
+        return super(FiniteSizeSubject, self).reserve(start=start, end=end,
                 size=size, **kwargs)
 
 

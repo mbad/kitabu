@@ -8,3 +8,7 @@ class SizeExceeded(Exception):
 class OverlappingReservations(SizeExceeded):
     def __init__(self, reservations):
         self.reservations = reservations
+
+
+class AtomicReserveError(Exception):
+    pass
