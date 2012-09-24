@@ -6,8 +6,8 @@ from kitabu.forms import KitabuForm
 
 
 class BaseReservationSearchForm(KitabuForm):
-    start = forms.DateTimeField(widget=forms.DateTimeInput(attrs={'class': 'kitabu-datetime-field'}))
-    end = forms.DateTimeField(widget=forms.DateTimeInput(attrs={'class': 'kitabu-datetime-field'}))
+    start = forms.DateTimeField()
+    end = forms.DateTimeField()
 
     def clean(self):
         if 'start' in self.cleaned_data and 'end' in self.cleaned_data:

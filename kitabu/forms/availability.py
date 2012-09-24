@@ -10,8 +10,8 @@ from kitabu.utils import Timeline
 
 
 class BaseAvailabilityForm(KitabuForm):
-    start = forms.DateTimeField(widget=forms.DateTimeInput(attrs={'class': 'kitabu-datetime-field'}))
-    end = forms.DateTimeField(widget=forms.DateTimeInput(attrs={'class': 'kitabu-datetime-field'}))
+    start = forms.DateTimeField()
+    end = forms.DateTimeField()
 
     def _get_subject_model_manager(self):
         if not hasattr(self, '_subject_model_manager'):

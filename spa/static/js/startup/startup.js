@@ -1,4 +1,4 @@
 jQuery(document).ready(function() {
     
-    $('.kitabu-datetime-field').datetimepicker();
+    $('input.datetimeinput').datetimepicker();
 })
