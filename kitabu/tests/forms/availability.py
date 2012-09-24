@@ -3,11 +3,12 @@ import datetime
 from django.test import SimpleTestCase
 from django.contrib.auth.models import User
 
-from kitabu.tests.models import Room, RoomReservation
+from kitabu.tests.models import Room, RoomReservation, Hotel, HotelRoom, HotelRoomReservation
 from kitabu.tests.utils import parse_date
 from kitabu.forms.availability import (
     #VaryingDateAvailabilityForm,
     VaryingDateAndSizeAvailabilityForm,
+    ClusterFiniteAvailabilityForm
 )
 
 # Base VaryingDateAvailabilityForm class in not tested as the only difference
@@ -190,3 +191,85 @@ class VaryingDateAndSizeAvailabilityFormTest(SimpleTestCase):
             form.search(subject=self.room3),
             []
         )
+
+
+class ClusterFiniteAvailabilityFormTest(SimpleTestCase):
+    def setUp(self):
+        '''
+        All rooms in hotel1 have size of 5. Size of 10 in hotel2.
+        '''
+        Hotel.objects.all().delete()
+        HotelRoom.objects.all().delete()
+        HotelRoomReservation.objects.all().delete()
+        User.objects.all().delete()
+
+        self.hotel1 = Hotel.objects.create(name='Hotel 1')
+        self.hotel2 = Hotel.objects.create(name='Hotel 2')
+
+        self.room1 = HotelRoom.objects.create(name='Room 1', size=5, cluster=self.hotel1)
+        self.room2 = HotelRoom.objects.create(name='Room 2', size=5, cluster=self.hotel1)
+        self.room3 = HotelRoom.objects.create(name='Room 3', size=10, cluster=self.hotel2)
+        self.room4 = HotelRoom.objects.create(name='Room 3', size=10, cluster=self.hotel2)
+
+    def test_empty_clusters(self):
+        start = '2001-01-01'
+        end = '2001-01-31'
+        data = {
+            'start': start,
+            'end': end,
+            'size': 11,
+        }
+        formClass = ClusterFiniteAvailabilityForm.on_models(HotelRoom, Hotel, 'rooms')
+        form = formClass(data)
+        self.assertTrue(form.is_valid(), 'Form should be valid')
+
+        results = form.search()
+        self.assertEqual(len(results), 1, 'There should be one hotel returned')
+        self.assertEqual(results[0].name, 'Hotel 2', 'Hotel 2 should be returned')
+
+    def test_all_reservations_overlapping(self):
+        self.room1.reserve(start='2000-12-30', end='2001-01-22', size=1)
+        self.room1.reserve(start='2000-11-30', end='2001-01-21', size=1)
+        self.room2.reserve(start='2001-01-20', end='2001-02-11', size=2)
+
+        self.room3.reserve(start='2001-01-05', end='2001-01-14', size=4)
+        self.room3.reserve(start='2001-01-10', end='2001-01-17', size=4)
+        self.room4.reserve(start='2000-12-20', end='2001-02-18', size=7)
+
+        start = '2001-01-01'
+        end = '2001-01-31'
+        data = {
+            'start': start,
+            'end': end,
+            'size': 6,
+        }
+        formClass = ClusterFiniteAvailabilityForm.on_models(HotelRoom, Hotel, 'rooms')
+        form = formClass(data)
+        self.assertTrue(form.is_valid(), 'Form should be valid')
+
+        results = form.search()
+        self.assertEqual(len(results), 1, 'There should be one hotel returned')
+        self.assertEqual(results[0].name, 'Hotel 1', 'Hotel 1 should be returned')
+
+    def test_the_need_to_switch_room(self):
+        self.room3.reserve(start='2001-01-01', end='2001-01-15', size=5)
+        self.room4.reserve(start='2001-01-01', end='2001-01-15', size=7)
+
+        self.room3.reserve(start='2001-01-16', end='2001-01-25', size=7)
+        self.room4.reserve(start='2001-01-16', end='2001-01-25', size=5)
+
+        start = '2001-01-01'
+        end = '2001-01-31'
+        data = {
+            'start': start,
+            'end': end,
+            'size': 7,
+        }
+        formClass = ClusterFiniteAvailabilityForm.on_models(HotelRoom, Hotel, 'rooms')
+        form = formClass(data)
+        self.assertTrue(form.is_valid(), 'Form should be valid')
+
+        results = form.search()
+        length = len(results)
+        self.assertEqual(length, 1, 'There should be one hotel returned. ' + str(length) + ' hotels returned instead')
+        self.assertEqual(results[0].name, 'Hotel 1', 'Hotel 1 should be returned')

@@ -2,7 +2,7 @@ from collections import defaultdict
 from datetime import timedelta
 
 from django import forms
-from django.db.models import Q
+from django.db.models import Q, Sum
 from django.forms import ValidationError
 
 from kitabu.forms import KitabuForm
@@ -39,6 +39,38 @@ class BaseAvailabilityForm(KitabuForm):
         '''
         cls.subject_model = model
         cls.reservation_model = model.get_reservation_model()
+        return cls
+
+
+class BaseClusterAvailabilityForm(KitabuForm):
+    start = forms.DateTimeField()
+    end = forms.DateTimeField()
+
+    def _get_cluster_model_manager(self):
+        if not hasattr(self, '_cluster_model_manager'):
+            self._cluster_model_manager = self.cluster_model.objects
+        return self._cluster_model_manager
+
+    def _set_cluster_model_manager(self, value):
+        self._cluster_model_manager = value
+
+    cluster_model_manager = property(_get_cluster_model_manager, _set_cluster_model_manager)
+
+    def clean(self):
+        if 'start' in self.cleaned_data and 'end' in self.cleaned_data:
+            start = self.cleaned_data['start']
+            end = self.cleaned_data['end']
+            if not end > start:
+                raise ValidationError('Make sure end date is later than start date')
+        return super(BaseClusterAvailabilityForm, self).clean()
+
+    @classmethod
+    def on_models(cls, subject_model, cluster_model, association_name):
+        cls.subject_model = subject_model
+        cls.reservation_model = subject_model.get_reservation_model()
+        cls.cluster_model = cluster_model
+        cls.association_name = association_name
+
         return cls
 
 
@@ -184,3 +216,53 @@ class VaryingDateAndSizeAvailabilityForm(VaryingDateAvailabilityForm):
 
     def get_size(self):
         return self.cleaned_data['size']
+
+
+class ClusterFiniteAvailabilityForm(BaseClusterAvailabilityForm):
+    '''
+    Form for searching subjects available in certain time period.
+    Finite availablity means only certain number of reservations at a time is possible.
+    '''
+    size = forms.IntegerField(initial=1)
+
+    def search(self):
+        start = self.cleaned_data['start']
+        end = self.cleaned_data['end']
+        required_size = self.cleaned_data.get('size')
+
+        clusters_with_size = self.cluster_model.objects.annotate(size=Sum(self.association_name + '__size'))
+        clusters_with_size_dict = dict((cluster.id, cluster) for cluster in clusters_with_size)
+
+        colliding_reservations = self.reservation_model.objects.filter(
+            (
+                Q(start__gte=start, start__lt=end)   # start in scope
+                | Q(end__gt=start, end__lte=end)     # end in scope
+                | Q(start__lte=start, end__gte=end)  # covers whole scope
+            ),
+            subject__cluster_id__in=self.cluster_model_manager.all(),
+        ).select_related('subject')
+
+        timelines = defaultdict(lambda: defaultdict(lambda: 0))
+
+        disqualified_clusters = []
+
+        for res in colliding_reservations:
+            res_start = start if res.start < start else res.start
+            timelines[res.subject][res_start] += res.size
+            if res.end < end:
+                timelines[res.subject][res.end] -= res.size
+
+        for subject, timeline in timelines.iteritems():
+            reservations_cnt = 0
+            max_reservations = 0
+            for moment in sorted(timeline.keys()):
+                reservations_cnt += timeline[moment]
+                if reservations_cnt > max_reservations:
+                    max_reservations = reservations_cnt
+
+            cluster = clusters_with_size_dict[subject.cluster_id]
+            cluster.size -= max_reservations
+            if cluster.size < required_size:
+                disqualified_clusters.append(subject.cluster_id)
+
+        return clusters_with_size.filter(~Q(id__in=disqualified_clusters), size__gte=required_size)
