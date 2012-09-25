@@ -1,1 +1,16 @@
 {% extends 'pools/base.html' %}
+{% load crispy_forms_tags %}
+
+{% block content %}
+    <h2>Find pool</h2>
+    
+
+    <div class="pool-search">
+        {% crispy form %}
+    </div>
+    <div>
+        {% for pool in available_pools %}
+            {{ pool }}<br />
+        {% endfor %}
+    </div>
+{% endblock %}

@@ -2,12 +2,24 @@
 
 from django.shortcuts import render, get_object_or_404
 from models import Pool
-from forms import AvailableLanesSearchForm, PoolReservationsSearchForm
+from forms import AvailableLanesSearchForm, PoolReservationsSearchForm, ClusterSearchForm
 
 
 def index(request):
-    pools = Pool.objects.all()
-    return render(request, 'pools/index.html', {'pools': pools})
+    Form = ClusterSearchForm
+    form = Form(request.GET) if request.GET else Form()
+    if form.is_valid():
+        results = form.search()
+    else:
+        results = None
+    return render(
+        request,
+        'pools/index.html',
+        {
+            'form': form,
+            'available_pools': results,
+        }
+    )
 
 
 def show(request, pool_id):
