@@ -147,6 +147,10 @@ class FiniteAvailabilityForm(BaseAvailabilityForm):
 
 
 class VaryingDateAvailabilityForm(BaseAvailabilityForm):
+    '''
+    Form to search on certain for a period when it is available.
+    E.g. to search for 7 days availability during May 2012.
+    '''
     duration = forms.IntegerField(min_value=1)
 
     def get_duration(self):
