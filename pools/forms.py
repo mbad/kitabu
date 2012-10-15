@@ -1,9 +1,11 @@
+from django import forms
+
 from kitabu.forms.availability import (
     FiniteAvailabilityForm,
     OneClusterAvailabilityFormMixin,
     ClusterFiniteAvailabilityForm,
 )
-from kitabu.forms.reservation_search import SingleClusterReservationSearchMixin, BaseReservationSearchForm
+from kitabu.search.reservations import SingleSubjectManagerReservationSearch
 
 from lanes.models import Lane, LaneReservation
 from pools.models import Pool
@@ -17,11 +19,14 @@ class AvailableLanesSearchForm(
     pass
 
 
-class PoolReservationsSearchForm(
-        SingleClusterReservationSearchMixin,
-        BaseReservationSearchForm,
-        SearchForm):
-    reservation_model = LaneReservation
+class PoolReservationsSearchForm(SearchForm):
+    start = forms.DateTimeField()
+    end = forms.DateTimeField()
+
+    def search(self, subject_manager):
+        search = SingleSubjectManagerReservationSearch(reservation_model=LaneReservation,
+                                                       subject_manager=subject_manager)
+        return search.search(self.cleaned_data['start'], self.cleaned_data['end'])
 
 
 class ClusterSearchForm(

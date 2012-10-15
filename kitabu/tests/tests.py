@@ -71,7 +71,7 @@ class AtomicReserveTest(SimpleTestCase):
         self.assertEqual(RoomReservation.objects.count(), initial_count + 3,
                          'There should be 3 reservation objects added to the database')
 
-    def test_unproper_atomic_reservation(self):
+    def test_improper_atomic_reservation(self):
         initial_count = RoomReservation.objects.count()
         with self.assertRaises(AtomicReserveError):
             Room.objects.atomic_reserve(

@@ -55,7 +55,7 @@ def reservations(request, pool_id):
 
     form = Form(request.GET) if request.GET else Form()
 
-    reservations = form.search(subject_model_manager=pool.subjects) if form.is_valid() else []
+    reservations = form.search(subject_manager=pool.subjects) if form.is_valid() else []
 
     return render(
         request,

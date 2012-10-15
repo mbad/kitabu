@@ -58,5 +58,3 @@ class Timeline(list):
             current_max = max(current, current_max)
 
         return current_max
-
-
