@@ -1,15 +1,23 @@
 #-*- coding=utf-8 -*-
 
 from django.shortcuts import render, get_object_or_404
+
+from kitabu.search.available import ClusterFiniteAvailability, FiniteAvailability
+from kitabu.search.reservations import SingleSubjectManagerReservationSearch
+from lanes.models import Lane, LaneReservation
 from models import Pool
-from forms import AvailableLanesSearchForm, PoolReservationsSearchForm, ClusterSearchForm
+from forms import PoolReservationsSearchForm, ClusterSearchForm
+
+
+cluster_searcher = ClusterFiniteAvailability(subject_model=Lane,
+                                             cluster_model=Pool,
+                                             )
 
 
 def index(request):
-    Form = ClusterSearchForm
-    form = Form(request.GET) if request.GET else Form()
+    form = ClusterSearchForm(request.GET or None)
     if form.is_valid():
-        results = form.search()
+        results = cluster_searcher.search(**form.cleaned_data)
     else:
         results = None
     return render(
@@ -31,11 +39,11 @@ def show(request, pool_id):
 def availability(request, pool_id):
     pool = get_object_or_404(Pool, pk=pool_id)
 
-    Form = AvailableLanesSearchForm
+    form = ClusterSearchForm(request.GET or None)
 
-    form = Form(request.GET) if request.GET else Form()
+    searcher = FiniteAvailability(Lane, pool.subjects)
 
-    available_lanes = form.search(cluster=pool) if form.is_valid() else []
+    available_lanes = searcher.search(**form.cleaned_data) if form.is_valid() else []
 
     return render(
         request,
@@ -55,7 +63,10 @@ def reservations(request, pool_id):
 
     form = Form(request.GET) if request.GET else Form()
 
-    reservations = form.search(subject_manager=pool.subjects) if form.is_valid() else []
+    searcher = SingleSubjectManagerReservationSearch(
+        reservation_model=LaneReservation, subject_manager=pool.subjects)
+
+    reservations = searcher.search(**form.cleaned_data) if form.is_valid() else []
 
     return render(
         request,

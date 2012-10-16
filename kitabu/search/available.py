@@ -9,9 +9,11 @@ from kitabu.search.utils import overlapping_reservations_Q, Timeline
 
 class Subjects(object):
 
-    def __init__(self, model, *args, **kwargs):
-        self.subject_model = model
-        self.reservation_model = model.get_reservation_model()
+    def __init__(self, subject_model, subject_manager=None):
+        self.subject_model = subject_model
+        self.reservation_model = subject_model.get_reservation_model()
+        if subject_manager:
+            self._subject_manager = subject_manager
 
     def _get_subject_manager(self):
         if not hasattr(self, '_subject_manager'):
