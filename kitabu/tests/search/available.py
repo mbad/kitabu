@@ -35,10 +35,10 @@ class VaryingDateAndSizeSearchTest(TestCase):
             'required_size': 1,
             'subject': self.room1
         }
-        search = FindPeriod()
+        searcher = FindPeriod()
 
         self.assertEqual(
-            search(**data),
+            searcher.search(**data),
             [(start, end)]
         )
 
@@ -59,9 +59,9 @@ class VaryingDateAndSizeSearchTest(TestCase):
             'required_size': 1,
             'subject': self.room1,
         }
-        search = FindPeriod()
+        searcher = FindPeriod()
         self.assertEqual(
-            search(**data),
+            searcher.search(**data),
             [(reservation.end, end)]
         )
 
@@ -82,9 +82,9 @@ class VaryingDateAndSizeSearchTest(TestCase):
             'required_size': 1,
             'subject': self.room1,
         }
-        search = FindPeriod()
+        searcher = FindPeriod()
         self.assertEqual(
-            search(**data),
+            searcher.search(**data),
             [
                 (start, reservation.start),
                 (reservation.end, end)
@@ -108,9 +108,9 @@ class VaryingDateAndSizeSearchTest(TestCase):
             'required_size': 1,
             'subject': self.room2,
         }
-        search = FindPeriod()
+        searcher = FindPeriod()
         self.assertEqual(
-            search(**data),
+            searcher.search(**data),
             [
                 (start, end)
             ]
@@ -141,9 +141,9 @@ class VaryingDateAndSizeSearchTest(TestCase):
             'required_size': 2,
             'subject': self.room3,
         }
-        search = FindPeriod()
+        searcher = FindPeriod()
         self.assertEqual(
-            search(**data),
+            searcher.search(**data),
             [
                 (start, reservation.start),
                 (reservation.end, end)
@@ -175,9 +175,9 @@ class VaryingDateAndSizeSearchTest(TestCase):
             'required_size': 2,
             'subject': self.room3
         }
-        search = FindPeriod()
+        searcher = FindPeriod()
         self.assertEqual(
-            search(**data),
+            searcher.search(**data),
             []
         )
 
@@ -203,8 +203,8 @@ class ClusterFiniteAvailabilitySearchTest(TestCase):
             'end': end,
             'required_size': 11,
         }
-        search = ClusterFiniteAvailability.on_models(HotelRoom, Hotel, 'rooms')()
-        results = search(**data)
+        searcher = ClusterFiniteAvailability(HotelRoom, Hotel, 'rooms')
+        results = searcher.search(**data)
         self.assertEqual(len(results), 1, 'There should be one hotel returned')
         self.assertEqual(results[0].name, 'Hotel 2', 'Hotel 2 should be returned')
 
@@ -224,8 +224,8 @@ class ClusterFiniteAvailabilitySearchTest(TestCase):
             'end': end,
             'required_size': 6,
         }
-        search = ClusterFiniteAvailability.on_models(HotelRoom, Hotel, 'rooms')()
-        results = search(**data)
+        searcher = ClusterFiniteAvailability(HotelRoom, Hotel, 'rooms')
+        results = searcher.search(**data)
 
         self.assertEqual(len(results), 1, 'There should be one hotel returned')
         self.assertEqual(results[0].name, 'Hotel 1', 'Hotel 1 should be returned')
@@ -244,9 +244,9 @@ class ClusterFiniteAvailabilitySearchTest(TestCase):
             'end': end,
             'required_size': 7,
         }
-        search = ClusterFiniteAvailability.on_models(HotelRoom, Hotel, 'rooms')()
+        searcher = ClusterFiniteAvailability(HotelRoom, Hotel, 'rooms')
 
-        results = search(**data)
+        results = searcher.search(**data)
         length = len(results)
         self.assertEqual(length, 1, 'There should be one hotel returned. ' + str(length) + ' hotels returned instead')
         self.assertEqual(results[0].name, 'Hotel 1', 'Hotel 1 should be returned')

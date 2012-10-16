@@ -8,6 +8,11 @@ from kitabu.search.utils import overlapping_reservations_Q, Timeline
 
 
 class Subjects(object):
+
+    def __init__(self, model, *args, **kwargs):
+        self.subject_model = model
+        self.reservation_model = model.get_reservation_model()
+
     def _get_subject_manager(self):
         if not hasattr(self, '_subject_manager'):
             self._subject_manager = self.subject_model.objects
@@ -18,26 +23,6 @@ class Subjects(object):
 
     subject_manager = property(_get_subject_manager, _set_subject_manager)
 
-    @classmethod
-    def factory(cls, **kwargs):
-        '''Create and return new class with kwargs set as fields'''
-        class Searcher(cls):
-            pass
-        for key, value in kwargs.iteritems():
-            setattr(Searcher, key, value)
-        return Searcher
-
-    @classmethod
-    def on_model(cls, model):
-        '''Give subject model and inherit. E.g.
-        class YourSearchForm(SearchAvailableSubjectsForm.on_model(YourModel)):
-            pass
-        '''
-        return cls.factory(
-            subject_model=model,
-            reservation_model=model.get_reservation_model()
-        )
-
 
 class ExclusivelyAvailableSubjects(Subjects):
     '''
@@ -45,7 +30,7 @@ class ExclusivelyAvailableSubjects(Subjects):
     Exclusive means only one reservation at a time is possible.
     '''
 
-    def __call__(self, start, end):
+    def search(self, start, end):
         colliding_reservations = self.reservation_model.objects.filter(
             overlapping_reservations_Q(start, end),
             subject__in=self.subject_manager.all()
@@ -55,6 +40,12 @@ class ExclusivelyAvailableSubjects(Subjects):
 
 
 class SubjectsInCluster(Subjects):
+
+    def __init__(self, subject_model, cluster_model, subject_related_name='subjects', *args, **kwargs):
+        self.subject_model = subject_model
+        self.reservation_model = subject_model.get_reservation_model()
+        self.cluster_model = cluster_model
+        self.subject_related_name = subject_related_name
 
     def _get_cluster_manager(self):
         if not hasattr(self, '_cluster_model_manager'):
@@ -66,15 +57,6 @@ class SubjectsInCluster(Subjects):
 
     cluster_manager = property(_get_cluster_manager, _set_cluster_manager)
 
-    @classmethod
-    def on_models(cls, subject_model, cluster_model, subject_related_name='subjects'):
-        return cls.factory(
-            subject_model=subject_model,
-            reservation_model=subject_model.get_reservation_model(),
-            cluster_model=cluster_model,
-            subject_related_name=subject_related_name
-        )
-
 
 class FiniteAvailability(Subjects):
     '''
@@ -82,7 +64,7 @@ class FiniteAvailability(Subjects):
     Finite availablity means only certain number of reservations at a time is possible.
     '''
 
-    def __call__(self, start, end, required_size):
+    def search(self, start, end, required_size):
 
         colliding_reservations = self.reservation_model.objects.filter(
             overlapping_reservations_Q(start, end),
@@ -117,14 +99,14 @@ class FindPeriod(object):
     E.g. to search for 7 days availability during May 2012.
     '''
 
-    def __call__(self,
-                 start,
-                 end,
-                 required_duration=timedelta(1),
-                 subject=None,
-                 required_size=0,
-                 reservations=None
-                 ):
+    def search(self,
+               start,
+               end,
+               required_duration=timedelta(1),
+               subject=None,
+               required_size=0,
+               reservations=None
+               ):
         timeline = Timeline(start, end, subject, reservations)
 
         available_size = subject.size if subject else 1
@@ -158,9 +140,9 @@ class ClusterFiniteAvailability(SubjectsInCluster):
     Form for searching clusters available in certain time period.
     Finite availablity means only certain number of reservations at a time is possible.
     '''
-    def __call__(self, start, end, required_size):
+    def search(self, start, end, required_size):
 
-        clusters_with_size = self.cluster_model.objects.annotate(size=Sum(self.subject_related_name + '__size'))
+        clusters_with_size = self.cluster_manager.annotate(size=Sum(self.subject_related_name + '__size'))
         clusters_with_size_dict = dict((cluster.id, cluster) for cluster in clusters_with_size)
 
         colliding_reservations = self.reservation_model.objects.filter(
