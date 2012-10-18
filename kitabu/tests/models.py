@@ -1,6 +1,6 @@
 from django.db import models
 from kitabu.models.subjects import ExclusiveSubject, FixedSizeSubject, VariableSizeSubject
-from kitabu.models.reservations import BaseReservation, ReservationWithSize
+from kitabu.models.reservations import BaseReservation, ReservationWithSize, ReservationGroup
 from kitabu.models.clusters import BaseCluster
 
 
@@ -27,8 +27,13 @@ class Room(VariableSizeSubject):
     name = models.TextField()
 
 
+class RoomReservationGroup(ReservationGroup):
+    pass
+
+
 class RoomReservation(ReservationWithSize):
     subject = models.ForeignKey(Room, related_name='reservations')
+    group = models.ForeignKey(RoomReservationGroup, related_name='reservations', blank=True, null=True)
 
 
 class Hotel(BaseCluster):

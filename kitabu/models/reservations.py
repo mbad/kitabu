@@ -1,9 +1,10 @@
 #-*- coding=utf-8 -*-
 
-from django.db import models
+from django.db import models, transaction
 from django.contrib.auth.models import User
 
-from kitabu.utils import EnsureSize
+from kitabu.utils import EnsureSize, AtomicReserver
+from kitabu.exceptions import AtomicReserveError
 
 
 class BaseReservation(models.Model, EnsureSize):
@@ -20,3 +21,20 @@ class ReservationWithSize(BaseReservation):
         abstract = True
 
     size = models.IntegerField()
+
+
+class ReservationGroup(models.Model):
+    class Meta:
+        abstract = True
+
+    @classmethod
+    @transaction.commit_manually
+    def reserve(cls, *args, **kwargs):
+        group = cls.objects.create()
+        try:
+            AtomicReserver._non_transactional_reserve(*args, group=group, **kwargs)
+            transaction.commit()
+            return group
+        except AtomicReserveError:
+            transaction.rollback()
+            raise

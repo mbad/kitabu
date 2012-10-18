@@ -1,5 +1,5 @@
 from django.test import SimpleTestCase
-from kitabu.tests.models import TennisCourt, Room, RoomReservation
+from kitabu.tests.models import TennisCourt, Room, RoomReservation, RoomReservationGroup
 from kitabu.exceptions import OverlappingReservations, SizeExceeded, AtomicReserveError
 from kitabu.utils import AtomicReserver
 
@@ -79,3 +79,44 @@ class AtomicReserveTest(SimpleTestCase):
                                 )
         self.assertEqual(RoomReservation.objects.count(), initial_count,
                          'There should be no reservation objects added to the database')
+
+
+class GroupReservationTest(SimpleTestCase):
+    def setUp(self):
+        self.room5 = Room.objects.create(name="room", size=5)
+        self.room1 = Room.objects.create(name="room", size=1)
+        self.room3 = Room.objects.create(name="room", size=3)
+
+    def test_proper_group_reservation(self):
+        initial_reservation_count = RoomReservation.objects.count()
+        initial_group_count = RoomReservationGroup.objects.count()
+
+        group = RoomReservationGroup.reserve(
+                                             (self.room5, {'start': '2012-04-01', 'end': '2012-05-12', 'size': 3}),
+                                             (self.room1, {'start': '2012-04-01', 'end': '2012-05-12', 'size': 1}),
+                                             (self.room3, {'start': '2012-04-01', 'end': '2012-05-12', 'size': 2})
+                                             )
+        reservations = group.reservations.all()
+
+        self.assertEqual(len(reservations), 3, 'There should be 3 reservation objects in the returned group')
+        self.assertEqual(reservations[0].size, 3, 'First reservation should have size equal to 3')
+        self.assertEqual(RoomReservation.objects.count(), initial_reservation_count + 3,
+                         'There should be 3 reservation objects added to the database')
+        self.assertEqual(RoomReservationGroup.objects.count(), initial_group_count + 1,
+                         'There should be 1 group object added to the database')
+
+    def test_improper_group_reservation(self):
+        initial_reservation_count = RoomReservation.objects.count()
+        initial_group_count = RoomReservationGroup.objects.count()
+
+        with self.assertRaises(AtomicReserveError):
+            RoomReservationGroup.reserve(
+                                (self.room5, {'start': '2012-04-01', 'end': '2012-05-12', 'size': 3}),
+                                (self.room1, {'start': '2012-04-01', 'end': '2012-05-12', 'size': 1}),
+                                (self.room3, {'start': '2012-04-01', 'end': '2012-05-12', 'size': 5})
+                                )
+
+        self.assertEqual(RoomReservation.objects.count(), initial_reservation_count,
+                         'There should be no reservation objects added to the database')
+        self.assertEqual(RoomReservationGroup.objects.count(), initial_group_count,
+                         'There should be no group objects added to the database')
