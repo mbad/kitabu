@@ -7,12 +7,8 @@ from django.db import models
 from kitabu.exceptions import OverlappingReservations, SizeExceeded
 from kitabu.utils import EnsureSize
 
-from managers import SubjectManager
-
 
 class BaseSubject(models.Model, EnsureSize):
-    objects = SubjectManager()
-
     class Meta:
         abstract = True
 

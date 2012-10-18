@@ -1,6 +1,7 @@
 from django.test import SimpleTestCase
 from kitabu.tests.models import TennisCourt, Room, RoomReservation
 from kitabu.exceptions import OverlappingReservations, SizeExceeded, AtomicReserveError
+from kitabu.utils import AtomicReserver
 
 
 class TennisCourtTest(SimpleTestCase):
@@ -58,14 +59,11 @@ class AtomicReserveTest(SimpleTestCase):
 
     def test_proper_atomic_reservation(self):
         initial_count = RoomReservation.objects.count()
-        reservations = Room.objects.atomic_reserve(
-                                                   (self.room5, {'start': '2012-04-01', 'end': '2012-05-12',
-                                                                 'size': 3}),
-                                                   (self.room1, {'start': '2012-04-01', 'end': '2012-05-12',
-                                                                 'size': 1}),
-                                                   (self.room3, {'start': '2012-04-01', 'end': '2012-05-12',
-                                                                 'size': 2})
-                                                   )
+        reservations = AtomicReserver.reserve(
+                                           (self.room5, {'start': '2012-04-01', 'end': '2012-05-12', 'size': 3}),
+                                           (self.room1, {'start': '2012-04-01', 'end': '2012-05-12', 'size': 1}),
+                                           (self.room3, {'start': '2012-04-01', 'end': '2012-05-12', 'size': 2})
+                                           )
         self.assertEqual(len(reservations), 3, 'There should be 3 reservation objects returned')
         self.assertEqual(reservations[0].size, 3, 'First reservation should have size equal to 3')
         self.assertEqual(RoomReservation.objects.count(), initial_count + 3,
@@ -74,10 +72,10 @@ class AtomicReserveTest(SimpleTestCase):
     def test_improper_atomic_reservation(self):
         initial_count = RoomReservation.objects.count()
         with self.assertRaises(AtomicReserveError):
-            Room.objects.atomic_reserve(
-                                        (self.room5, {'start': '2012-04-01', 'end': '2012-05-12', 'size': 3}),
-                                        (self.room1, {'start': '2012-04-01', 'end': '2012-05-12', 'size': 1}),
-                                        (self.room3, {'start': '2012-04-01', 'end': '2012-05-12', 'size': 5})
-                                        )
+            AtomicReserver.reserve(
+                                (self.room5, {'start': '2012-04-01', 'end': '2012-05-12', 'size': 3}),
+                                (self.room1, {'start': '2012-04-01', 'end': '2012-05-12', 'size': 1}),
+                                (self.room3, {'start': '2012-04-01', 'end': '2012-05-12', 'size': 5})
+                                )
         self.assertEqual(RoomReservation.objects.count(), initial_count,
                          'There should be no reservation objects added to the database')

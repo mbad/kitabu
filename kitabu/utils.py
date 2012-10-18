@@ -1,6 +1,8 @@
 from collections import defaultdict
 
 from django.db.models import Q
+from django.db import transaction
+from kitabu.exceptions import AtomicReserveError
 
 
 class Timeline(list):
@@ -37,3 +39,23 @@ class EnsureSize(object):
             return super(EnsureSize, self).__getattribute__(name, *args)
         except AttributeError:
             return 1
+
+
+class AtomicReserver(object):
+    @classmethod
+    @transaction.commit_manually
+    def reserve(cls, *args, **common_kwargs):
+        reservations = []
+
+        try:
+            for (subject, specific_kwargs) in args:
+                reserve_kwargs = common_kwargs.copy()
+                reserve_kwargs.update(specific_kwargs)
+                reservation = subject.reserve(**reserve_kwargs)
+                reservations.append(reservation)
+
+            transaction.commit()
+            return reservations
+        except:
+            transaction.rollback()
+            raise AtomicReserveError
