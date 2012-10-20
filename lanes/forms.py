@@ -1,9 +1,8 @@
 from kitabu.forms.reservation import ReservationWithSizeForm
-from kitabu.forms.availability import ExclusiveAvailabilityForm
 
-from models import LaneReservation, Lane
+from models import LaneReservation
 
-from spa.forms import PostForm, SearchForm
+from spa.forms import PostForm, SearchForm, PeriodForm
 
 
 class LaneReservationForm(ReservationWithSizeForm, PostForm):
@@ -12,5 +11,5 @@ class LaneReservationForm(ReservationWithSizeForm, PostForm):
     submit_button_text = 'Reserve'
 
 
-class AvailableLanesSearchForm(ExclusiveAvailabilityForm.on_model(Lane), SearchForm):
+class AvailableLanesSearchForm(SearchForm, PeriodForm):
     pass

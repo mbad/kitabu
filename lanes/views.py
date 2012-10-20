@@ -3,6 +3,8 @@
 from django.shortcuts import render, get_object_or_404
 from django.contrib.auth.decorators import login_required
 
+from kitabu.search.available import ExclusivelyAvailableSubjects
+
 from forms import LaneReservationForm, AvailableLanesSearchForm
 from models import Lane
 
@@ -39,11 +41,15 @@ def reserve(request, lane_id):
     )
 
 
+available_lane_searcher = ExclusivelyAvailableSubjects(Lane)
+
+
 def search(request):
-    if request.GET:
-        form = AvailableLanesSearchForm(request.GET)
-    else:
-        form = AvailableLanesSearchForm()
-    results = form.search() if form.is_valid() else []
+    form = AvailableLanesSearchForm(request.GET or None)
+    results = (
+        available_lane_searcher.search(**form.cleaned_data)
+        if form.is_valid()
+        else []
+    )
 
     return render(request, 'lanes/search.html', {'form': form, 'results': results})
