@@ -2,8 +2,10 @@
 
 from django.shortcuts import render, get_object_or_404
 from django.contrib.auth.decorators import login_required
+from django.forms.util import ErrorList
 
 from kitabu.search.available import ExclusivelyAvailableSubjects
+from kitabu.exceptions import ReservationError
 
 from forms import LaneReservationForm, AvailableLanesSearchForm
 from models import Lane
@@ -22,9 +24,13 @@ def reserve(request, lane_id):
     if request.POST:
         form = LaneReservationForm(request.POST)
         if form.is_valid():
-            reservation = form.make_reservation(owner=request.user, subject=lane)
-            if reservation:
-                form = LaneReservationForm()
+            try:
+                lane.reserve(owner=request.user, **form.cleaned_data)
+            except ReservationError as e:
+                if "__all__" not in form._errors:
+                    form._errors["__all__"] = ErrorList()
+                form.errors['__all__'].append(e.message)
+            else:
                 success_msg = "Reservation successful"
     else:
         form = LaneReservationForm()
