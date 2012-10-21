@@ -9,6 +9,5 @@ if 'test' in sys.argv and 'kitabu' in sys.argv:
     #call_command('syncdb', interactive=False, verbosity=0)
 
     from kitabu.tests.tests import *
-    from kitabu.tests.forms.availability import *
     from kitabu.tests.search.available import *
     from kitabu.tests.search.reservations import *
