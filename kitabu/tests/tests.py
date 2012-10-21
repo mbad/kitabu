@@ -1,6 +1,6 @@
 from django.test import SimpleTestCase
 from kitabu.tests.models import TennisCourt, Room, RoomReservation, RoomReservationGroup
-from kitabu.exceptions import OverlappingReservations, SizeExceeded, AtomicReserveError
+from kitabu.exceptions import OverlappingReservations, SizeExceeded, ReservationError
 from kitabu.utils import AtomicReserver
 
 
@@ -71,7 +71,7 @@ class AtomicReserveTest(SimpleTestCase):
 
     def test_improper_atomic_reservation(self):
         initial_count = RoomReservation.objects.count()
-        with self.assertRaises(AtomicReserveError):
+        with self.assertRaises(ReservationError):
             AtomicReserver.reserve(
                                 (self.room5, {'start': '2012-04-01', 'end': '2012-05-12', 'size': 3}),
                                 (self.room1, {'start': '2012-04-01', 'end': '2012-05-12', 'size': 1}),
@@ -109,7 +109,7 @@ class GroupReservationTest(SimpleTestCase):
         initial_reservation_count = RoomReservation.objects.count()
         initial_group_count = RoomReservationGroup.objects.count()
 
-        with self.assertRaises(AtomicReserveError):
+        with self.assertRaises(ReservationError):
             RoomReservationGroup.reserve(
                                 (self.room5, {'start': '2012-04-01', 'end': '2012-05-12', 'size': 3}),
                                 (self.room1, {'start': '2012-04-01', 'end': '2012-05-12', 'size': 1}),

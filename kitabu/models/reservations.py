@@ -4,7 +4,6 @@ from django.db import models, transaction
 from django.contrib.auth.models import User
 
 from kitabu.utils import EnsureSize, AtomicReserver
-from kitabu.exceptions import AtomicReserveError
 
 
 class BaseReservation(models.Model, EnsureSize):
@@ -35,6 +34,6 @@ class ReservationGroup(models.Model):
             AtomicReserver._non_transactional_reserve(*args, group=group, **kwargs)
             transaction.commit()
             return group
-        except AtomicReserveError:
+        except:
             transaction.rollback()
             raise
