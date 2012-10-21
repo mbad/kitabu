@@ -1,8 +1,14 @@
 #-*- coding=utf-8 -*-
 
 
-class SizeExceeded(Exception):
+class ReservationError(Exception):
+    ''' Error class to be thrown when reservation can't be made '''
     pass
+
+
+class SizeExceeded(ReservationError):
+    def __init__(self, message="Too many reservations"):
+        super(SizeExceeded, self).__init__(message)
 
 
 class OverlappingReservations(SizeExceeded):
@@ -10,5 +16,5 @@ class OverlappingReservations(SizeExceeded):
         self.reservations = reservations
 
 
-class AtomicReserveError(Exception):
+class AtomicReserveError(ReservationError):
     pass
