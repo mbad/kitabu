@@ -31,7 +31,7 @@ class ReservationGroup(models.Model):
     def reserve(cls, *args, **kwargs):
         group = cls.objects.create()
         try:
-            AtomicReserver._non_transactional_reserve(*args, group=group, **kwargs)
+            AtomicReserver.non_transactional_reserve(*args, group=group, **kwargs)
             transaction.commit()
             return group
         except:

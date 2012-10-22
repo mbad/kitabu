@@ -42,7 +42,7 @@ class EnsureSize(object):
 
 class AtomicReserver(object):
     @classmethod
-    def _non_transactional_reserve(cls, *args, **common_kwargs):
+    def non_transactional_reserve(cls, *args, **common_kwargs):
         reservations = []
         for (subject, specific_kwargs) in args:
             reserve_kwargs = common_kwargs.copy()
@@ -56,7 +56,7 @@ class AtomicReserver(object):
     @transaction.commit_manually
     def reserve(cls, *args, **kwargs):
         try:
-            reservations = cls._non_transactional_reserve(*args, **kwargs)
+            reservations = cls.non_transactional_reserve(*args, **kwargs)
             transaction.commit()
             return reservations
         except:
