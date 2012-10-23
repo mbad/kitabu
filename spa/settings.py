@@ -204,3 +204,6 @@ if os.environ.get('HEROKU_DEV'):
 # special settings for testing kitabu application
 if 'test' in sys.argv and 'kitabu' in sys.argv:
     execfile(os.path.join(PROJECT_ROOT, 'kitabu', 'tests', 'settings.py'))
+
+# Maximum number of lane reservations made in one atomic reservation
+MAX_LANE_RESERVATIONS_NR = 5

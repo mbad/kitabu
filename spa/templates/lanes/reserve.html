@@ -16,7 +16,10 @@
         <ul>
             {% for reservation in lane.reservations.all %}
                 <li>
-                    {{ reservation.start }} - {{ reservation.end }}, with {{ reservation.size }} places taken
+                    {{ reservation.start }} - {{ reservation.end }}, with {{ reservation.size }} places taken.
+                    {% if reservation.group %}
+                        Reservation group: {{ reservation.group.id }}
+                    {% endif %}
                 </li>
             {% endfor %}
         </ul>
@@ -24,6 +27,11 @@
 
     <div class="reserve">
         <h3>Reserve</h3>
-        {% crispy form %}
+        {% crispy formset formset.form.helper %}
+    </div>
+    
+    <div class="lane-reservations-nr-form">
+        <h3>Number of reservation forms</h3>
+        {% crispy lane_reservations_nr_form %}
     </div>
 {% endblock %}

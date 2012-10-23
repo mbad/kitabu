@@ -234,3 +234,17 @@ color: #fff;
 footer p {
 margin-top: -15px;
 }
+
+.reservation-form {
+    display: inline-block;
+    zoom: 1;
+    *display: inline;
+    margin: 0 50px 40px 0;
+}
+.reservation-form h4 {
+    margin: 0 0 5px 0;
+}
+
+div.reserve {
+    padding-bottom: 30px;
+}
