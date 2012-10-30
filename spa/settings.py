@@ -151,6 +151,7 @@ INSTALLED_APPS = (
     'pools',
     'lanes',
     'spa',
+    't',
 
     # south
     'south',

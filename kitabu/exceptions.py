@@ -14,3 +14,7 @@ class SizeExceeded(ReservationError):
 class OverlappingReservations(SizeExceeded):
     def __init__(self, reservations):
         self.reservations = reservations
+
+
+class ValidationError(Exception):
+    pass

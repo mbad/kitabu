@@ -13,7 +13,6 @@ from spa.settings import MAX_LANE_RESERVATIONS_NR
 
 from forms import LaneReservationForm, AvailableLanesSearchForm, LaneReservationsNrForm
 from models import Lane, LaneReservationGroup
-from django.views.generic.simple import redirect_to
 
 
 def index(request):
