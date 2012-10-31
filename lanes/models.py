@@ -1,7 +1,12 @@
 from kitabu.models.subjects import VariableSizeSubject
 from kitabu.models.reservations import ReservationWithSize, ReservationGroup
+from kitabu.models.validators import FullTimeValidator
 from django.db import models
 from pools.models import Pool
+
+
+class LaneFullTimeValidator(FullTimeValidator):
+    pass
 
 
 class Lane(VariableSizeSubject):
@@ -21,4 +26,8 @@ class LaneReservation(ReservationWithSize):
 
 
 class LaneReservationGroup(ReservationGroup):
+    pass
+
+
+class Validator():
     pass
