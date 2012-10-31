@@ -27,7 +27,3 @@ class LaneReservation(ReservationWithSize):
 
 class LaneReservationGroup(ReservationGroup):
     pass
-
-
-class Validator():
-    pass
