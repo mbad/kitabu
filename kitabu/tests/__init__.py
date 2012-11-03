@@ -11,3 +11,4 @@ if 'test' in sys.argv and 'kitabu' in sys.argv:
     from kitabu.tests.tests import *
     from kitabu.tests.search.available import *
     from kitabu.tests.search.reservations import *
+    from kitabu.tests.validators import *

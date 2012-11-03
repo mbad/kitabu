@@ -53,7 +53,9 @@ class FullTimeValidator(Validator):
                 time_value = getattr(date, time_unit)
 
                 if self.interval_type == time_unit:
-                    if time_value % self.interval > 0:
+                    if self.interval == 0 and time_value > 0:
+                        raise ValidationError("%ss must be 0 (%s is not)" % (time_unit, time_value))
+                    if self.interval > 0 and time_value % self.interval > 0:
                         raise ValidationError("%ss must by divisible by %s (%s is not)" %
                                               (time_unit, self.interval, time_value))
                     break  # don't validate any greater time units than this one
