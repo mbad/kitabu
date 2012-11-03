@@ -1,3 +1,4 @@
-from validators import ReservationValidator
+from validators import Validator
 
-__all__ = ['ReservationValidator']
+# models:
+Validator
