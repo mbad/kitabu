@@ -1,8 +1,11 @@
 from django.test import TestCase
 
 from kitabu.tests.models import Hotel, HotelRoom, HotelRoomReservation
-from kitabu.search.reservations import (ReservationSearch, SingleSubjectReservationSearch,
-    SingleSubjectManagerReservationSearch)
+from kitabu.search.reservations import (
+    ReservationSearch,
+    SingleSubjectReservationSearch,
+    SingleSubjectManagerReservationSearch
+)
 
 
 class ReservationSearchTest(TestCase):

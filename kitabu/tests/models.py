@@ -49,5 +49,6 @@ class HotelRoom(VariableSizeSubject):
 class HotelRoomReservation(ReservationWithSize):
     subject = models.ForeignKey(HotelRoom, related_name='reservations')
 
+
 class FullTimeValidator(KitabuFullTimeValidator):
     pass

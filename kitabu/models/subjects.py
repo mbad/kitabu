@@ -64,8 +64,7 @@ class FiniteSizeSubject(BaseSubject):
             if balance + size > self.size:
                 raise SizeExceeded
 
-        return super(FiniteSizeSubject, self).reserve(start=start, end=end,
-                size=size, **kwargs)
+        return super(FiniteSizeSubject, self).reserve(start=start, end=end, size=size, **kwargs)
 
 
 class VariableSizeSubject(FiniteSizeSubject):

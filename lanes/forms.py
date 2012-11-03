@@ -11,8 +11,7 @@ class LaneReservationForm(PeriodForm, PostForm):
 
     def __init__(self, *args, **kwargs):
         super(LaneReservationForm, self).__init__(*args, **kwargs)
-        self.helper.layout = Layout(
-                                    Div(HTML('<h4>Reservation</h4>'), 'start', 'end', 'size',
+        self.helper.layout = Layout(Div(HTML('<h4>Reservation</h4>'), 'start', 'end', 'size',
                                         css_class='reservation-form')
                                     )
 

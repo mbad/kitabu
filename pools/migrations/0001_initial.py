@@ -1,8 +1,6 @@
 # -*- coding: utf-8 -*-
-import datetime
 from south.db import db
 from south.v2 import SchemaMigration
-from django.db import models
 
 
 class Migration(SchemaMigration):
@@ -15,11 +13,9 @@ class Migration(SchemaMigration):
         ))
         db.send_create_signal('pools', ['Pool'])
 
-
     def backwards(self, orm):
         # Deleting model 'Pool'
         db.delete_table('pools_pool')
-
 
     models = {
         'pools.pool': {

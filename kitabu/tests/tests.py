@@ -60,10 +60,10 @@ class AtomicReserveTest(SimpleTestCase):
     def test_proper_atomic_reservation(self):
         initial_count = RoomReservation.objects.count()
         reservations = AtomicReserver.reserve(
-                                           (self.room5, {'start': '2012-04-01', 'end': '2012-05-12', 'size': 3}),
-                                           (self.room1, {'start': '2012-04-01', 'end': '2012-05-12', 'size': 1}),
-                                           (self.room3, {'start': '2012-04-01', 'end': '2012-05-12', 'size': 2})
-                                           )
+            (self.room5, {'start': '2012-04-01', 'end': '2012-05-12', 'size': 3}),
+            (self.room1, {'start': '2012-04-01', 'end': '2012-05-12', 'size': 1}),
+            (self.room3, {'start': '2012-04-01', 'end': '2012-05-12', 'size': 2})
+        )
         self.assertEqual(len(reservations), 3, 'There should be 3 reservation objects returned')
         self.assertEqual(reservations[0].size, 3, 'First reservation should have size equal to 3')
         self.assertEqual(RoomReservation.objects.count(), initial_count + 3,
@@ -73,10 +73,10 @@ class AtomicReserveTest(SimpleTestCase):
         initial_count = RoomReservation.objects.count()
         with self.assertRaises(ReservationError):
             AtomicReserver.reserve(
-                                (self.room5, {'start': '2012-04-01', 'end': '2012-05-12', 'size': 3}),
-                                (self.room1, {'start': '2012-04-01', 'end': '2012-05-12', 'size': 1}),
-                                (self.room3, {'start': '2012-04-01', 'end': '2012-05-12', 'size': 5})
-                                )
+                (self.room5, {'start': '2012-04-01', 'end': '2012-05-12', 'size': 3}),
+                (self.room1, {'start': '2012-04-01', 'end': '2012-05-12', 'size': 1}),
+                (self.room3, {'start': '2012-04-01', 'end': '2012-05-12', 'size': 5})
+            )
         self.assertEqual(RoomReservation.objects.count(), initial_count,
                          'There should be no reservation objects added to the database')
 
@@ -92,10 +92,10 @@ class GroupReservationTest(SimpleTestCase):
         initial_group_count = RoomReservationGroup.objects.count()
 
         group = RoomReservationGroup.reserve(
-                                             (self.room5, {'start': '2012-04-01', 'end': '2012-05-12', 'size': 3}),
-                                             (self.room1, {'start': '2012-04-01', 'end': '2012-05-12', 'size': 1}),
-                                             (self.room3, {'start': '2012-04-01', 'end': '2012-05-12', 'size': 2})
-                                             )
+            (self.room5, {'start': '2012-04-01', 'end': '2012-05-12', 'size': 3}),
+            (self.room1, {'start': '2012-04-01', 'end': '2012-05-12', 'size': 1}),
+            (self.room3, {'start': '2012-04-01', 'end': '2012-05-12', 'size': 2})
+        )
         reservations = group.reservations.all()
 
         self.assertEqual(len(reservations), 3, 'There should be 3 reservation objects in the returned group')
@@ -111,10 +111,10 @@ class GroupReservationTest(SimpleTestCase):
 
         with self.assertRaises(ReservationError):
             RoomReservationGroup.reserve(
-                                (self.room5, {'start': '2012-04-01', 'end': '2012-05-12', 'size': 3}),
-                                (self.room1, {'start': '2012-04-01', 'end': '2012-05-12', 'size': 1}),
-                                (self.room3, {'start': '2012-04-01', 'end': '2012-05-12', 'size': 5})
-                                )
+                (self.room5, {'start': '2012-04-01', 'end': '2012-05-12', 'size': 3}),
+                (self.room1, {'start': '2012-04-01', 'end': '2012-05-12', 'size': 1}),
+                (self.room3, {'start': '2012-04-01', 'end': '2012-05-12', 'size': 5})
+            )
 
         self.assertEqual(RoomReservation.objects.count(), initial_reservation_count,
                          'There should be no reservation objects added to the database')

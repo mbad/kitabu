@@ -1,8 +1,6 @@
 # -*- coding: utf-8 -*-
-import datetime
 from south.db import db
 from south.v2 import SchemaMigration
-from django.db import models
 
 
 class Migration(SchemaMigration):
@@ -19,14 +17,12 @@ class Migration(SchemaMigration):
                       self.gf('django.db.models.fields.related.ForeignKey')(blank=True, related_name='reservations', null=True, to=orm['lanes.LaneReservationGroup']),
                       keep_default=False)
 
-
     def backwards(self, orm):
         # Deleting model 'LaneReservationGroup'
         db.delete_table('lanes_lanereservationgroup')
 
         # Deleting field 'LaneReservation.group'
         db.delete_column('lanes_lanereservation', 'group_id')
-
 
     models = {
         'auth.group': {

@@ -43,5 +43,5 @@ class FullHourValidator(FullTimeIntervalValidator):
 
 class FullDayValidator(FullTimeIntervalValidator):
     def validate(self, datetime):
-        return self._validate_datetime(datetime.day, [datetime.hour, datetime.minute, datetime.second,
-                                                       datetime.microsecond])
+        return self._validate_datetime(datetime.day,
+                                       [datetime.hour, datetime.minute, datetime.second, datetime.microsecond])

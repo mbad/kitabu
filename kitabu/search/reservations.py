@@ -28,5 +28,5 @@ class SingleSubjectManagerReservationSearch(ReservationSearch):
         self.subject_manager = subject_manager
 
     def search(self, *args, **kwargs):
-        return super(SingleSubjectManagerReservationSearch, self).search(subject__in=self.subject_manager.all(), *args,
-                                                                  **kwargs)
+        return super(SingleSubjectManagerReservationSearch, self).search(
+            subject__in=self.subject_manager.all(), *args, **kwargs)
