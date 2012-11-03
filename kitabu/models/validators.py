@@ -5,10 +5,6 @@ from django.db import models
 
 from kitabu.exceptions import ValidationError
 
-from collections import namedtuple
-
-Container = namedtuple('Container', ['name', 'value'])
-
 
 class Validator(models.Model):
     class Meta:
