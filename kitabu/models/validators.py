@@ -38,33 +38,28 @@ class FullTimeValidator(Validator):
     class Meta:
         abstract = True
 
-    INTERVAL_TYPES = ['second', 'minute', 'hour', 'day']
+    TIME_UNITS = ['microsecond', 'second', 'minute', 'hour', 'day']
 
     interval = models.PositiveSmallIntegerField()
-    interval_type = models.CharField(max_length=6, choices=[(x, x) for x in INTERVAL_TYPES])
+    interval_type = models.CharField(max_length=6, choices=[(x, x) for x in TIME_UNITS[1:]])
 
     def _perform_validation(self, reservation):
-        date_fields = self._get_date_fields()
-        assert all([isinstance(getattr(reservation, date_field))
-                    for date_field in date_fields]), "FullTimeValidator requires 'date' " \
-                                                     "keyword argument which is datetime instance"
+        date_field_names = self._get_date_field_names()
+        dates = [getattr(reservation, field_name) for field_name in date_field_names]
+        assert all([isinstance(date, datetime) for date in dates])
 
-        def _validate_one(date, interval_type, interval):
-            if self.interval_type == interval_type:
-                if getattr(date, interval_type) % self.interval > 0:
-                    raise ValidationError("%ss must by divisible by %s (%s is not)" %
-                                          (interval_type, self.interval, interval))
-            elif getattr(date, interval_type) > 0:
-                raise ValidationError("%ss must by 0 (got %s)" %
-                                      (interval_type, interval))
+        for date in dates:
+            for time_unit in self.TIME_UNITS:
+                time_value = getattr(date, time_unit)
 
-        for date_field in date_fields:
-            date = getattr(reservation, date_field)
-            for param in ['microsecond'] + self.INTERVAL_TYPES:
-                interval = getattr(date, param)
-                _validate_one(date, param, interval)
-                if param == self.interval_type:
-                    break
+                if self.interval_type == time_unit:
+                    if time_value % self.interval > 0:
+                        raise ValidationError("%ss must by divisible by %s (%s is not)" %
+                                              (time_unit, self.interval, time_value))
+                    break  # don't validate any greater time units than this one
+                elif time_value > 0:
+                    raise ValidationError("%ss must by 0 (got %s)" %
+                                          (time_unit, time_value))
 
-    def _get_date_fields(self):
+    def _get_date_field_names(self):
         return ['start']
