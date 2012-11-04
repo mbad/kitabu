@@ -1,6 +1,8 @@
 #-*- coding=utf-8 -*-
 
+from importlib import import_module
 from datetime import datetime
+
 from django.db import models
 
 from kitabu.exceptions import ValidationError
@@ -65,3 +67,26 @@ class FullTimeValidator(Validator):
 
     def _get_date_field_names(self):
         return ['start']
+
+
+class StaticValidator(Validator):
+    class Meta:
+        abstract = True
+
+    validator_function_absolute_name = models.CharField(max_length=200, unique=True)
+
+    def save(self, *args, **kwargs):
+        if not kwargs.pop('force_validation_function_name', False):
+            # raise AttributeError if validator_function_absolute_name cannot
+            # be imported:
+            self._get_validation_function()
+        return super(StaticValidator, self).save(*args, **kwargs)
+
+    def _perform_validation(self, reservation):
+        self._get_validation_function()(reservation)
+
+    def _get_validation_function(self):
+        path = self.validator_function_absolute_name.split('.')
+        base_module = import_module(path[0])
+
+        return reduce(getattr, path[1:], base_module)

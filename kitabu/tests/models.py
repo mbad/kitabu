@@ -2,7 +2,10 @@ from django.db import models
 from kitabu.models.subjects import ExclusiveSubject, FixedSizeSubject, VariableSizeSubject
 from kitabu.models.reservations import BaseReservation, ReservationWithSize, ReservationGroup
 from kitabu.models.clusters import BaseCluster
-from kitabu.models.validators import FullTimeValidator as KitabuFullTimeValidator
+from kitabu.models.validators import (
+    FullTimeValidator as KitabuFullTimeValidator,
+    StaticValidator as KitabuStaticValidator,
+)
 
 
 class TennisCourt(ExclusiveSubject):
@@ -51,4 +54,8 @@ class HotelRoomReservation(ReservationWithSize):
 
 
 class FullTimeValidator(KitabuFullTimeValidator):
+    pass
+
+
+class StaticValidator(KitabuStaticValidator):
     pass

@@ -6,7 +6,7 @@ from django.test import TestCase
 
 from kitabu.exceptions import ValidationError
 
-from kitabu.tests.models import FullTimeValidator
+from kitabu.tests.models import FullTimeValidator, StaticValidator
 
 
 class FullTimeValidatorTest(TestCase):
@@ -88,3 +88,59 @@ class FullTimeValidatorTest(TestCase):
             reservation.start = datetime(2000, 01, 01, 15, 0, 0, 0)
             reservation.end = datetime(2000, 01, 01, 17, 0, 0, 0)
             validator.validate(reservation)
+
+
+class StaticValidatorTest(TestCase):
+
+    def test_failing_validator(self):
+        reservation = Mock()
+        validator = StaticValidator.objects.create(
+            validator_function_absolute_name='kitabu.tests.validators.StaticValidatorTest.fail')
+
+        with self.assertRaises(ValidationError):
+            validator.validate(reservation)
+
+    def test_passing_validator(self):
+        reservation = Mock()
+        validator = StaticValidator.objects.create(
+            validator_function_absolute_name='kitabu.tests.validators.StaticValidatorTest.pass_')
+
+        validator.validate(reservation)
+
+    def test_fail_for_a_reason_validator(self):
+        reservation = Mock()
+        validator = StaticValidator.objects.create(
+            validator_function_absolute_name='kitabu.tests.validators.StaticValidatorTest.fail_for_a_reason')
+
+        validator.validate(None)
+        reservation.reason = Mock(return_value=False)
+        validator.validate(reservation)
+        reservation.reason.assert_called_once_with()
+        reservation.reason = Mock(return_value=True)
+        with self.assertRaises(ValidationError):
+            validator.validate(reservation)
+        reservation.reason.assert_called_once_with()
+
+    def test_incorrect_validator_function_path(self):
+        with self.assertRaises(AttributeError):
+            StaticValidator.objects.create(validator_function_absolute_name=
+                                           'kitabu.tests.validators.StaticValidatorTest.non_existant_func')
+
+    def test_incorrect_validator_function_path_forced(self):
+        validator = StaticValidator(validator_function_absolute_name=
+                                    'kitabu.tests.validators.StaticValidatorTest.non_existant_func')
+        validator.save(force_validation_function_name=True)
+
+    @staticmethod
+    def fail(reservation):
+        raise ValidationError()
+
+    @staticmethod
+    def pass_(reservation):
+        pass
+
+    @staticmethod
+    def fail_for_a_reason(reservation):
+        if hasattr(reservation, 'reason'):
+            if reservation.reason():
+                raise ValidationError()
