@@ -16,7 +16,7 @@ if [ $warnings_status -eq 1 ]; then
     echo "No style warnings"  # zero lines (grep exit status 1) means no warnings
 fi
 
-echo 
+echo
 echo "============="
 echo "RUNNING TESTS"
 echo "============="

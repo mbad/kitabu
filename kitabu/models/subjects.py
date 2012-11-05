@@ -6,15 +6,20 @@ from django.db import models
 
 from kitabu.exceptions import OverlappingReservations, SizeExceeded
 from kitabu.utils import EnsureSize
+from kitabu.models.validators import Validator
 
 
 class BaseSubject(models.Model, EnsureSize):
     class Meta:
         abstract = True
 
+    validators = models.ManyToManyField(Validator)
+
     def reserve(self, **kwargs):
-        Reservation = self.reservation_model
-        return Reservation.objects.create(subject=self, **kwargs)
+        reservation = self.reservation_model(subject=self, **kwargs)
+        self._validate_reservation(reservation)
+        reservation.save()
+        return reservation
 
     @classmethod
     def get_reservation_model(cls):
@@ -23,6 +28,12 @@ class BaseSubject(models.Model, EnsureSize):
     @property
     def reservation_model(self):
         return self.__class__.get_reservation_model()
+
+    # Private
+
+    def _validate_reservation(self, reservation):
+        for validator in self.validators.all():
+            validator.validate(reservation)
 
 
 class ExclusiveSubject(BaseSubject):

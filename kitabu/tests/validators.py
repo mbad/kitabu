@@ -6,7 +6,36 @@ from django.test import TestCase
 
 from kitabu.exceptions import ValidationError
 
-from kitabu.tests.models import FullTimeValidator, StaticValidator
+from kitabu.tests.models import FullTimeValidator, StaticValidator, Room
+
+
+class SubjectWithValidatorTest(TestCase):
+    def setUp(self):
+        self.room = Room.objects.create(name="room", size=200)
+        self.three_minutes_validator = FullTimeValidator.objects.create(interval_type='minute', interval=3)
+        self.room.validators.add(self.three_minutes_validator)
+
+    def test_proper_reservation(self):
+        initial_count = self.room.reservations.count()
+
+        start = datetime(2000, 01, 01, 16, 06)
+        end = datetime(2000, 01, 01, 16, 21)
+        self.room.reserve(start=start, end=end, size=1)
+
+        current_count = self.room.reservations.count()
+        self.assertEqual(current_count, initial_count + 1,
+                         'There should be one reservation object added to the database')
+
+    def test_improper_reservation(self):
+        initial_count = self.room.reservations.count()
+
+        start = datetime(2000, 01, 01, 16, 07)
+        end = datetime(2000, 01, 01, 16, 21)
+        with self.assertRaises(ValidationError):
+            self.room.reserve(start=start, end=end, size=1)
+
+        current_count = self.room.reservations.count()
+        self.assertEqual(current_count, initial_count, 'There should be no reservation objects added to the database')
 
 
 class FullTimeValidatorTest(TestCase):
