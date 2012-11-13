@@ -7,6 +7,9 @@ from django.db import models
 
 from kitabu.exceptions import ValidationError
 
+# using datetime.now in this way allows to mock it with mock.patch and test nicely
+now = datetime.now
+
 
 class Validator(models.Model):
     class Meta:
@@ -90,3 +93,63 @@ class StaticValidator(Validator):
         base_module = import_module(path[0])
 
         return reduce(getattr, path[1:], base_module)
+
+
+class NotSoonerThanValidator(Validator):
+    class Meta:
+        abstract = True
+
+    date = models.DateTimeField()
+
+    def _perform_validation(self, reservation):
+        date_field_names = self._get_date_field_names()
+        dates = [getattr(reservation, field_name) for field_name in date_field_names]
+        assert all([isinstance(date, datetime) for date in dates])
+
+        for (date, field_name) in zip(dates, date_field_names):
+            if date < self.date:
+                raise ValidationError("Reservation %s must not be earlier than %s" %
+                                      (field_name, self.date))
+
+    def _get_date_field_names(self):
+        return ['start']
+
+
+class FarEnoughValidator(Validator):
+    class Meta:
+        abstract = True
+
+    TIME_UNITS = ['second', 'minute', 'hour', 'day']
+
+    time_value = models.PositiveSmallIntegerField(default=1)
+    time_unit = models.CharField(max_length=6, choices=[(x, x) for x in TIME_UNITS], default='second')
+
+    def _perform_validation(self, reservation):
+        date_field_names = self._get_date_field_names()
+        dates = [getattr(reservation, field_name) for field_name in date_field_names]
+        assert all([isinstance(date, datetime) for date in dates])
+
+        for (date, field_name) in zip(dates, date_field_names):
+            delta = date - now()
+
+            too_soon = False
+
+            if self.time_unit == 'second':
+                if delta.total_seconds() < self.time_value:
+                    too_soon = True
+            elif self.time_unit == 'minute':
+                if delta.total_seconds() < self.time_value * 60:
+                    too_soon = True
+            elif self.time_unit == 'hour':
+                if delta.total_seconds() < self.time_value * 3600:
+                    too_soon = True
+            elif self.time_unit == 'day':
+                if delta.days < self.time_value:
+                    too_soon = True
+
+            if too_soon:
+                raise ValidationError("Reservation %s must by at least %s %ss in the future" %
+                                      (field_name, self.time_value, self.time_unit))
+
+    def _get_date_field_names(self):
+        return ['start']
