@@ -197,3 +197,32 @@ class WithinPeriodValidator(Validator):
 
     def _get_date_field_names(self):
         return ['start']
+
+
+class NotWithinPeriodValidator(Validator):
+    '''
+    This validator expects only reservations that have "start" and "end" fields.
+    This way it can assure not only that all field are not in period, but also
+    that reservation period does not cover whole validator period.
+    '''
+    class Meta:
+        abstract = True
+
+    start = models.DateTimeField()
+    end = models.DateTimeField()
+
+    def _perform_validation(self, reservation):
+        assert self.start <= self.end
+
+        date_field_names = ['start', 'end']
+        dates = [getattr(reservation, field_name) for field_name in date_field_names]
+
+        assert all([isinstance(date, datetime) for date in dates])
+
+        for (date, field_name) in zip(dates, date_field_names):
+            if self.start <= date <= self.end:
+                raise ValidationError("Reservation %s must not be between %s and %s" %
+                                      (field_name, self.start, self.end))
+            if reservation.start <= self.start <= self.end <= reservation.end:
+                raise ValidationError("Reservation cannot cover period between %s and %s" %
+                                      (self.start, self.end))
