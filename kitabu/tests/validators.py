@@ -522,3 +522,9 @@ class NotWithinPeriodTest(TestCase):
         reservation.end = datetime(2001, 1, 14)
 
         validator.validate(reservation)
+
+
+class MaxDurationValidatorTest(TestCase):
+    def test_max_len(self):
+        pass
+        # TODO
