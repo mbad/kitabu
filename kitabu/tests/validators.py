@@ -57,6 +57,7 @@ class FullTimeValidatorTest(TestCase):
     def test_half_a_minute(self):
         reservation = Mock()
         validator = FullTimeValidator.objects.create(interval_type='second', interval=30)
+        FullTimeValidator._get_date_field_names = Mock(return_value=['start'])
 
         reservation.start = datetime(2000, 1, 1, 16, 40)
         validator.validate(reservation)
@@ -78,6 +79,7 @@ class FullTimeValidatorTest(TestCase):
     def test_full_hour_zero_minures(self):
         reservation = Mock()
         validator = FullTimeValidator.objects.create(interval_type='minute', interval=0)
+        FullTimeValidator._get_date_field_names = Mock(return_value=['start'])
 
         reservation.start = datetime(2000, 1, 1, 16, 0)
         validator.validate(reservation)
@@ -93,6 +95,7 @@ class FullTimeValidatorTest(TestCase):
     def test_full_hour_60_minutes(self):
         reservation = Mock()
         validator = FullTimeValidator.objects.create(interval_type='minute', interval=60)
+        FullTimeValidator._get_date_field_names = Mock(return_value=['start'])
 
         reservation.start = datetime(2000, 1, 1, 16, 0)
         validator.validate(reservation)
@@ -273,7 +276,7 @@ class FarEnoughValidatorTest(TestCase):
     def test_a_quarter_too_soon_start(self):
         self.reservation = Mock()
         self.validator = LateEnoughValidator.objects.create(time_unit='minute', time_value=45)
-        self.validator._get_date_field_names = Mock(return_value=['start'])
+        LateEnoughValidator._get_date_field_names = Mock(return_value=['start'])
 
         with patch('kitabu.models.validators.now') as dtmock:
             dtmock.return_value = datetime(2000, 1, 1)

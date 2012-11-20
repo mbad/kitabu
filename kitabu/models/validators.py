@@ -69,7 +69,7 @@ class FullTimeValidator(Validator):
                                           (time_unit, time_value))
 
     def _get_date_field_names(self):
-        return ['start']
+        return ['start', 'end']
 
 
 class StaticValidator(Validator):
@@ -112,7 +112,7 @@ class NotSoonerThanValidator(Validator):
                                       (field_name, self.date))
 
     def _get_date_field_names(self):
-        return ['start']
+        return ['start', 'end']
 
 
 class NotLaterThanValidator(Validator):
@@ -132,7 +132,7 @@ class NotLaterThanValidator(Validator):
                                       (field_name, self.date))
 
     def _get_date_field_names(self):
-        return ['start']
+        return ['start', 'end']
 
 
 class LateEnoughValidator(Validator):
@@ -172,7 +172,7 @@ class LateEnoughValidator(Validator):
                                       (field_name, self.time_value, self.time_unit))
 
     def _get_date_field_names(self):
-        return ['start']
+        return ['start', 'end']
 
 
 class WithinPeriodValidator(Validator):
@@ -196,7 +196,7 @@ class WithinPeriodValidator(Validator):
                                       (field_name, self.start))
 
     def _get_date_field_names(self):
-        return ['start']
+        return ['start', 'end']
 
 
 class NotWithinPeriodValidator(Validator):
@@ -226,3 +226,8 @@ class NotWithinPeriodValidator(Validator):
             if reservation.start <= self.start <= self.end <= reservation.end:
                 raise ValidationError("Reservation cannot cover period between %s and %s" %
                                       (self.start, self.end))
+
+
+class MaxDurationValidator(Validator):
+    class Meta:
+        abstract = True
