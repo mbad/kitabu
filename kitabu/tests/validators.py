@@ -11,12 +11,13 @@ from kitabu.tests.models import (
     StaticValidator,
     LateEnoughValidator,
     NotSoonerThanValidator,
-    Room
+    NotLaterThanValidator,
+    Room,
 )
 
 # TODO:
 # NotSoonerThanValidator._get_date_field_names = Mock(return_value=['begin'])
-# patching this way is evil as it is permanent and may affect following tests.
+# patching this way is evil as it is permanent and may affect proceeding tests.
 # Maybe this can be done better.
 
 
@@ -332,3 +333,45 @@ class NotSoonerThanValidatorTest(TestCase):
 
         reservation.start = datetime(2000, 1, 1, 16)
         reservation.end = datetime(2000, 1, 4)
+
+
+class NotLaterThanValidatorTest(TestCase):
+
+    def test_with_begin_field(self):
+        validator = NotLaterThanValidator.objects.create(date=datetime(2000, 1, 2))
+        NotLaterThanValidator._get_date_field_names = Mock(return_value=['begin'])
+        reservation = Mock()
+
+        reservation.begin = datetime(2000, 1, 2)
+        validator.validate(reservation)
+
+        with self.assertRaises(ValidationError):
+            reservation.begin = datetime(2000, 1, 3)
+            validator.validate(reservation)
+
+    def test_with_start_end_fields(self):
+        validator = NotLaterThanValidator.objects.create(date=datetime(2000, 1, 2))
+        NotLaterThanValidator._get_date_field_names = Mock(return_value=['start', 'end'])
+        reservation = Mock()
+
+        reservation.start = datetime(2000, 1, 1)
+        reservation.end = datetime(2000, 1, 3)
+
+        with self.assertRaises(ValidationError):
+            validator.validate(reservation)
+
+        reservation.start = datetime(2000, 1, 3)
+        reservation.end = datetime(2000, 1, 1)
+
+        with self.assertRaises(ValidationError):
+            validator.validate(reservation)
+
+        reservation.start = datetime(2000, 1, 3)
+        reservation.end = datetime(2000, 1, 4)
+
+        with self.assertRaises(ValidationError):
+            validator.validate(reservation)
+
+        reservation.start = datetime(2000, 1, 1, 16)
+        reservation.end = datetime(2000, 1, 1)
+        validator.validate(reservation)
