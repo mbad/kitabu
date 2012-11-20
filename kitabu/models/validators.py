@@ -115,7 +115,7 @@ class NotSoonerThanValidator(Validator):
         return ['start']
 
 
-class FarEnoughValidator(Validator):
+class LateEnoughValidator(Validator):
     class Meta:
         abstract = True
 

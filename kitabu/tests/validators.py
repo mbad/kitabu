@@ -9,7 +9,7 @@ from kitabu.exceptions import ValidationError
 from kitabu.tests.models import (
     FullTimeValidator,
     StaticValidator,
-    FarEnoughValidator,
+    LateEnoughValidator,
     NotSoonerThanValidator,
     Room
 )
@@ -198,8 +198,8 @@ class FarEnoughValidatorTest(TestCase):
         '''
         def new_method(self):
             self.reservation = Mock()
-            self.validator = FarEnoughValidator.objects.create(time_unit='day', time_value=5)
-            FarEnoughValidator._get_date_field_names = Mock(return_value=['start', 'end'])
+            self.validator = LateEnoughValidator.objects.create(time_unit='day', time_value=5)
+            LateEnoughValidator._get_date_field_names = Mock(return_value=['start', 'end'])
 
             with patch('kitabu.models.validators.now') as dtmock:
                 dtmock.return_value = datetime(2000, 1, 1)
@@ -255,7 +255,7 @@ class FarEnoughValidatorTest(TestCase):
 
     def test_an_hour_too_soon_start(self):
         self.reservation = Mock()
-        self.validator = FarEnoughValidator.objects.create(time_unit='minute', time_value=15)
+        self.validator = LateEnoughValidator.objects.create(time_unit='minute', time_value=15)
         self.validator._get_date_field_names = Mock(return_value=['start'])
 
         with patch('kitabu.models.validators.now') as dtmock:
@@ -269,7 +269,7 @@ class FarEnoughValidatorTest(TestCase):
 
     def test_a_quarter_too_soon_start(self):
         self.reservation = Mock()
-        self.validator = FarEnoughValidator.objects.create(time_unit='minute', time_value=45)
+        self.validator = LateEnoughValidator.objects.create(time_unit='minute', time_value=45)
         self.validator._get_date_field_names = Mock(return_value=['start'])
 
         with patch('kitabu.models.validators.now') as dtmock:
@@ -282,8 +282,8 @@ class FarEnoughValidatorTest(TestCase):
 
     def test_just_in_time(self):
         self.reservation = Mock()
-        self.validator = FarEnoughValidator.objects.create(time_unit='minute', time_value=30)
-        FarEnoughValidator._get_date_field_names = Mock(return_value=['start'])
+        self.validator = LateEnoughValidator.objects.create(time_unit='minute', time_value=30)
+        LateEnoughValidator._get_date_field_names = Mock(return_value=['start'])
 
         with patch('kitabu.models.validators.now') as dtmock:
             dtmock.now = Mock(return_value=datetime(2000, 1, 1))
