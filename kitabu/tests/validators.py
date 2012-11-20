@@ -12,6 +12,7 @@ from kitabu.tests.models import (
     LateEnoughValidator,
     NotSoonerThanValidator,
     NotLaterThanValidator,
+    WithinPeriodValidator,
     Room,
 )
 
@@ -375,3 +376,89 @@ class NotLaterThanValidatorTest(TestCase):
         reservation.start = datetime(2000, 1, 1, 16)
         reservation.end = datetime(2000, 1, 1)
         validator.validate(reservation)
+
+
+class WithinPeriodTest(TestCase):
+
+    def test_with_begin_field(self):
+        validator = WithinPeriodValidator.objects.create(start=datetime(2000, 1, 2),
+                                                         end=datetime(2000, 1, 4))
+        WithinPeriodValidator._get_date_field_names = Mock(return_value=['begin'])
+        reservation = Mock()
+
+        reservation.begin = datetime(2000, 1, 2)
+        validator.validate(reservation)
+
+        reservation.begin = datetime(2000, 1, 3)
+        validator.validate(reservation)
+
+        reservation.begin = datetime(2000, 1, 4)
+        validator.validate(reservation)
+
+        with self.assertRaises(ValidationError):
+            reservation.begin = datetime(2000, 1, 1)
+            validator.validate(reservation)
+
+        with self.assertRaises(ValidationError):
+            reservation.begin = datetime(2000, 1, 5)
+            validator.validate(reservation)
+
+        with self.assertRaises(ValidationError):
+            reservation.begin = datetime(2002, 1, 5)
+            validator.validate(reservation)
+
+        with self.assertRaises(ValidationError):
+            reservation.begin = datetime(1998, 1, 3)
+            validator.validate(reservation)
+
+    def test_with_start_end_fields(self):
+        validator = WithinPeriodValidator.objects.create(start=datetime(2000, 1, 2),
+                                                         end=datetime(2000, 1, 4))
+        WithinPeriodValidator._get_date_field_names = Mock(return_value=['start', 'end'])
+        reservation = Mock()
+
+        reservation.start = datetime(2000, 1, 2)
+        reservation.end = datetime(2000, 1, 4)
+
+        validator.validate(reservation)
+
+        reservation.start = datetime(2000, 1, 3)
+        reservation.end = datetime(2000, 1, 1)
+
+        with self.assertRaises(ValidationError):
+            validator.validate(reservation)
+
+        reservation.start = datetime(2000, 1, 4)
+        reservation.end = datetime(2000, 1, 3)
+
+        validator.validate(reservation)
+
+        reservation.start = datetime(2000, 1, 1, 16)
+        reservation.end = datetime(2000, 1, 2)
+
+        with self.assertRaises(ValidationError):
+            validator.validate(reservation)
+
+        reservation.start = datetime(2000, 1, 3)
+        reservation.end = datetime(2000, 1, 1)
+
+        with self.assertRaises(ValidationError):
+            validator.validate(reservation)
+
+        reservation.start = datetime(2000, 1, 6)
+        reservation.end = datetime(2000, 1, 4)
+
+        with self.assertRaises(ValidationError):
+            validator.validate(reservation)
+
+        reservation.start = datetime(2000, 1, 1)
+        reservation.end = datetime(2000, 1, 14)
+
+        with self.assertRaises(ValidationError):
+            validator.validate(reservation)
+
+        reservation.start = datetime(2001, 1, 1)
+        reservation.end = datetime(2001, 1, 14)
+
+        with self.assertRaises(ValidationError):
+            validator.validate(reservation)

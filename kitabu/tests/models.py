@@ -8,6 +8,7 @@ from kitabu.models.validators import (
     LateEnoughValidator as KitabuFarEnoughValidator,
     NotSoonerThanValidator as KitabuNotSoonerThanValidator,
     NotLaterThanValidator as KitabuNotLaterThanValidator,
+    WithinPeriodValidator as KitabuWithinPeriodValidator,
 )
 
 
@@ -73,4 +74,8 @@ class NotSoonerThanValidator(KitabuNotSoonerThanValidator):
 
 
 class NotLaterThanValidator(KitabuNotLaterThanValidator):
+    pass
+
+
+class WithinPeriodValidator(KitabuWithinPeriodValidator):
     pass

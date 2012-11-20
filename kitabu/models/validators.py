@@ -173,3 +173,27 @@ class LateEnoughValidator(Validator):
 
     def _get_date_field_names(self):
         return ['start']
+
+
+class WithinPeriodValidator(Validator):
+    class Meta:
+        abstract = True
+
+    start = models.DateTimeField()
+    end = models.DateTimeField()
+
+    def _perform_validation(self, reservation):
+        date_field_names = self._get_date_field_names()
+        dates = [getattr(reservation, field_name) for field_name in date_field_names]
+        assert all([isinstance(date, datetime) for date in dates])
+
+        for (date, field_name) in zip(dates, date_field_names):
+            if date > self.end:
+                raise ValidationError("Reservation %s must not be later than %s" %
+                                      (field_name, self.end))
+            if date < self.start:
+                raise ValidationError("Reservation %s must not be earlier than %s" %
+                                      (field_name, self.start))
+
+    def _get_date_field_names(self):
+        return ['start']
