@@ -6,6 +6,7 @@ from datetime import datetime
 from django.db import models
 
 from kitabu.exceptions import ValidationError
+from kitabu import managers
 
 # using datetime.now in this way allows to mock it with mock.patch and test nicely
 now = datetime.now
@@ -15,8 +16,12 @@ class Validator(models.Model):
     class Meta:
         app_label = 'kitabu'
 
-    actual_validator_related_name = models.CharField(max_length=200)
     actual_validator_related_name = models.CharField(max_length=200, editable=False)
+
+    apply_to_all = models.BooleanField(default=False)
+
+    objects = models.Manager()
+    universal = managers.Universal()
 
     def validate(self, reservation):
         getattr(self, self.actual_validator_related_name)._perform_validation(reservation)

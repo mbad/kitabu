@@ -32,6 +32,9 @@ class BaseSubject(models.Model, EnsureSize):
     # Private
 
     def _validate_reservation(self, reservation):
+        for validator in Validator.universal.all():
+            validator.validate(reservation)
+
         for validator in self.validators.all():
             validator.validate(reservation)
 
