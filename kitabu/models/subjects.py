@@ -13,7 +13,7 @@ class BaseSubject(models.Model, EnsureSize):
     class Meta:
         abstract = True
 
-    validators = models.ManyToManyField(Validator)
+    validators = models.ManyToManyField(Validator, blank=True)
 
     def reserve(self, **kwargs):
         reservation = self.reservation_model(subject=self, **kwargs)

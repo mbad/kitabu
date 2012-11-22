@@ -16,6 +16,7 @@ class Validator(models.Model):
         app_label = 'kitabu'
 
     actual_validator_related_name = models.CharField(max_length=200)
+    actual_validator_related_name = models.CharField(max_length=200, editable=False)
 
     def validate(self, reservation):
         getattr(self, self.actual_validator_related_name)._perform_validation(reservation)
