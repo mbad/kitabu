@@ -1,11 +1,31 @@
 from kitabu.models.subjects import VariableSizeSubject
 from kitabu.models.reservations import ReservationWithSize, ReservationGroup
-from kitabu.models.validators import FullTimeValidator
+from kitabu.models import validators
 from django.db import models
 from pools.models import Pool
 
 
-class LaneFullTimeValidator(FullTimeValidator):
+class LaneFullTimeValidator(validators.FullTimeValidator):
+    pass
+
+
+class LaneNotSoonerThanValidator(validators.NotSoonerThanValidator):
+    pass
+
+
+class LaneNotLaterThanValidator(validators.NotLaterThanValidator):
+    pass
+
+
+class LaneLateEnoughValidator(validators.LateEnoughValidator):
+    pass
+
+
+class LaneWithinPeriodValidator(validators.WithinPeriodValidator):
+    pass
+
+
+class LaneNotWithinPeriodValidator(validators.NotWithinPeriodValidator):
     pass
 
 
