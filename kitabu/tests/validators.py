@@ -292,7 +292,7 @@ class FarEnoughValidatorTest(TestCase):
         LateEnoughValidator._get_date_field_names = Mock(return_value=['start'])
 
         with patch('kitabu.models.validators.now') as dtmock:
-            dtmock.now = Mock(return_value=datetime(2000, 1, 1))
+            dtmock.return_value = datetime(2000, 1, 1)
 
             self.reservation.start = datetime(2000, 1, 1, 0, 30)
 
