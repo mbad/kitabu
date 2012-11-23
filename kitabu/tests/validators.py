@@ -197,12 +197,12 @@ class StaticValidatorTest(TestCase):
 
     def test_incorrect_validator_function_path(self):
         with self.assertRaises(AttributeError):
-            StaticValidator.objects.create(validator_function_absolute_name=
-                                           'kitabu.tests.validators.StaticValidatorTest.non_existant_func')
+            StaticValidator.objects.create(
+                    validator_function_absolute_name='kitabu.tests.validators.StaticValidatorTest.non_existant_func')
 
     def test_incorrect_validator_function_path_forced(self):
-        validator = StaticValidator(validator_function_absolute_name=
-                                    'kitabu.tests.validators.StaticValidatorTest.non_existant_func')
+        validator = StaticValidator(
+                    validator_function_absolute_name='kitabu.tests.validators.StaticValidatorTest.non_existant_func')
         validator.save(force_validation_function_name=True)
 
     @staticmethod

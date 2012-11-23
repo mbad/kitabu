@@ -141,7 +141,7 @@ class NotLaterThanValidator(Validator):
         return ['start', 'end']
 
 
-class LateEnoughValidator(Validator):
+class NotTooLateOrLateEnoughValidator(Validator):
     class Meta:
         abstract = True
 
@@ -158,27 +158,50 @@ class LateEnoughValidator(Validator):
         for (date, field_name) in zip(dates, date_field_names):
             delta = date - now()
 
-            too_soon = False
+            invalid_date = False
 
             if self.time_unit == 'second':
-                if delta.total_seconds() < self.time_value:
-                    too_soon = True
+                if not self._check(delta.total_seconds(), self.time_value):
+                    invalid_date = True
             elif self.time_unit == 'minute':
-                if delta.total_seconds() < self.time_value * 60:
-                    too_soon = True
+                if not self._check(delta.total_seconds(), self.time_value * 60):
+                    invalid_date = True
             elif self.time_unit == 'hour':
-                if delta.total_seconds() < self.time_value * 3600:
-                    too_soon = True
+                if not self._check(delta.total_seconds(), self.time_value * 3600):
+                    invalid_date = True
             elif self.time_unit == 'day':
-                if delta.days < self.time_value:
-                    too_soon = True
+                if not self._check(delta.days, self.time_value):
+                    invalid_date = True
 
-            if too_soon:
-                raise ValidationError("Reservation %s must by at least %s %ss in the future" %
-                                      (field_name, self.time_value, self.time_unit))
+            if invalid_date:
+                raise ValidationError("Reservation %s must by at least %s %ss in the %s" %
+                                      (field_name, self.time_value, self.time_unit, self.time_direction))
 
     def _get_date_field_names(self):
         return ['start', 'end']
+
+    def _check(self, delta, expected_time):
+        raise NotImplementedError
+
+
+class LateEnoughValidator(NotTooLateOrLateEnoughValidator):
+    time_direction = 'future'
+
+    class Meta:
+        abstract = True
+
+    def _check(self, delta, expected_time):
+        return delta >= expected_time
+
+
+class NotTooLateValidator(NotTooLateOrLateEnoughValidator):
+    time_direction = 'past'
+
+    class Meta:
+        abstract = True
+
+    def _check(self, delta, expected_time):
+        return delta <= expected_time
 
 
 class WithinPeriodValidator(Validator):
