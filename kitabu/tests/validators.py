@@ -14,7 +14,7 @@ from kitabu.tests.models import (
     NotLaterThanValidator,
     WithinPeriodValidator,
     NotWithinPeriodValidator,
-    GivenHoursAndDaysValidator,
+    GivenHoursAndWeekdaysValidator,
     Room,
 )
 
@@ -554,14 +554,15 @@ class NotWithinPeriodTest(TestCase):
 
 
 class GivenHoursAndDaysTest(TestCase):
+
     def setUp(self):
         # 0 - 2 ok, 3 - 6 wrong, 7 - 11 ok, 12 - 14 wrong, 15 - 19 ok, 20 - 21 wrong, 22 - 23 ok
         self.hours = [1, 1, 1, 0, 0, 0, 0, 1, 1, 1, 1, 1, 0, 0, 0, 1, 1, 1, 1, 1, 0, 0, 1, 1]
         # Monday, Tuesday, Thursday, Friday and Sunday ok, Wednesday and Saturday wrong
         self.days = [1, 1, 0, 1, 1, 0, 1]
-        self.hours_validator = GivenHoursAndDaysValidator.create_from_bitlists(days=[1] * 7, hours=self.hours)
-        self.days_validator = GivenHoursAndDaysValidator.create_from_bitlists(days=self.days, hours=[1] * 24)
-        self.all_validator = GivenHoursAndDaysValidator.create_from_bitlists(hours=[1] * 24, days=[1] * 7)
+        self.hours_validator = GivenHoursAndWeekdaysValidator.create_from_bitlists(days=[1] * 7, hours=self.hours)
+        self.days_validator = GivenHoursAndWeekdaysValidator.create_from_bitlists(days=self.days, hours=[1] * 24)
+        self.all_validator = GivenHoursAndWeekdaysValidator.create_from_bitlists(hours=[1] * 24, days=[1] * 7)
         self.reservation = Mock
 
     def test_valid_hours_same_day(self):

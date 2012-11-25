@@ -259,7 +259,7 @@ class NotWithinPeriodValidator(Validator):
                                       (self.start, self.end))
 
 
-class GivenHoursAndDaysValidator(Validator):
+class GivenHoursAndWeekdaysValidator(Validator):
     class Meta:
         abstract = True
 
