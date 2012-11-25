@@ -10,7 +10,8 @@ from kitabu.models.validators import (
     NotLaterThanValidator as KitabuNotLaterThanValidator,
     WithinPeriodValidator as KitabuWithinPeriodValidator,
     NotWithinPeriodValidator as KitabuNotWithinPeriodValidator,
-    MaxDurationValidator as KitabuMaxDurationValidator
+    MaxDurationValidator as KitabuMaxDurationValidator,
+    GivenHoursAndDaysValidator as KitabuGivenHoursAndDaysValidator
 )
 
 
@@ -88,4 +89,8 @@ class NotWithinPeriodValidator(KitabuNotWithinPeriodValidator):
 
 
 class MaxDurationValidator(KitabuMaxDurationValidator):
+    pass
+
+
+class GivenHoursAndDaysValidator(KitabuGivenHoursAndDaysValidator):
     pass

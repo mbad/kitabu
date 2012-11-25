@@ -8,6 +8,8 @@ from django.db import models
 from kitabu.exceptions import ValidationError
 from kitabu import managers
 
+import time
+
 # using datetime.now in this way allows to mock it with mock.patch and test nicely
 now = datetime.now
 
@@ -255,6 +257,83 @@ class NotWithinPeriodValidator(Validator):
             if reservation.start <= self.start <= self.end <= reservation.end:
                 raise ValidationError("Reservation cannot cover period between %s and %s" %
                                       (self.start, self.end))
+
+
+class GivenHoursAndDaysValidator(Validator):
+    class Meta:
+        abstract = True
+
+    days = models.PositiveIntegerField()  # 0 - 127
+    hours = models.PositiveIntegerField()  # 0 - 16777215 (2 ** 24)
+
+    def _perform_validation(self, reservation):
+        assert 0 <= self.days <= 127
+        assert 0 <= self.hours <= 16777215
+
+        if not self._valid_hours(reservation):
+            raise ValidationError("Reservation in wrong hours")
+        if not self._valid_days(reservation):
+            raise ValidationError("Reservation in wrong days")
+
+    def _valid_hours(self, reservation):
+        return self._valid_units(reservation=reservation, delta_method_name='_get_hours_delta',
+                                 checking_property_name='hours')
+
+    def _valid_days(self, reservation):
+        return self._valid_units(reservation=reservation, delta_method_name='_get_days_delta',
+                                 checking_property_name='days')
+
+    def _valid_units(self, reservation, delta_method_name, checking_property_name):
+        delta_method = getattr(self, delta_method_name)
+        checking_property = getattr(self, checking_property_name)
+        units_delta = delta_method(reservation.start, reservation.end)
+        return (units_delta & checking_property) == units_delta
+
+    def _get_days_delta(self, start, end):
+        return self._get_delta(start=start, end=end, seconds_in_unit=3600 * 24, nr_units=7,
+                               datetime_method_name='weekday')
+
+    def _get_hours_delta(self, start, end):
+        return self._get_delta(start=start, end=end, seconds_in_unit=3600, nr_units=24,
+                               datetime_method_name='hour')
+
+    def _get_delta(self, start, end, seconds_in_unit, nr_units, datetime_method_name):
+        '''
+            Return list of needed hours or days (e.g. [1,1,1,...,1,0,0,1]) converted to integer
+        '''
+        start_timestamp = self._date_to_timestamp(start) / seconds_in_unit
+        end_timestamp = self._date_to_timestamp(end) / seconds_in_unit
+        delta = int(end_timestamp) - int(start_timestamp)
+        if delta < 0:
+            return 0
+        elif delta >= (nr_units - 1):
+            return (2 ** nr_units) - 1
+        else:
+            current_representation = 0
+            start_attr = getattr(start, datetime_method_name)
+            end_attr = getattr(end, datetime_method_name)
+            if callable(start_attr):
+                (current_unit, end_unit) = (start_attr(), end_attr())
+            else:
+                (current_unit, end_unit) = (start_attr, end_attr)
+
+            if end_unit < current_unit:
+                end_unit += nr_units
+
+            while current_unit <= end_unit:
+                current_representation += 2 ** ((nr_units - 1) - (current_unit % nr_units))
+                current_unit += 1
+            return current_representation
+
+    def _date_to_timestamp(self, date):
+        return time.mktime(date.timetuple())
+
+    @classmethod
+    def create_from_bitlists(cls, hours, days):
+        def bitlist_to_int(bitlist):
+            return reduce(lambda a, v: a * 2 + v, bitlist, 0)
+
+        return cls.objects.create(hours=bitlist_to_int(hours), days=bitlist_to_int(days))
 
 
 class MaxDurationValidator(Validator):

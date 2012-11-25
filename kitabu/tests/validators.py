@@ -14,6 +14,7 @@ from kitabu.tests.models import (
     NotLaterThanValidator,
     WithinPeriodValidator,
     NotWithinPeriodValidator,
+    GivenHoursAndDaysValidator,
     Room,
 )
 
@@ -550,6 +551,112 @@ class NotWithinPeriodTest(TestCase):
         reservation.end = datetime(2001, 1, 14)
 
         validator.validate(reservation)
+
+
+class GivenHoursAndDaysTest(TestCase):
+    def setUp(self):
+        # 0 - 2 ok, 3 - 6 wrong, 7 - 11 ok, 12 - 14 wrong, 15 - 19 ok, 20 - 21 wrong, 22 - 23 ok
+        self.hours = [1, 1, 1, 0, 0, 0, 0, 1, 1, 1, 1, 1, 0, 0, 0, 1, 1, 1, 1, 1, 0, 0, 1, 1]
+        # Monday, Tuesday, Thursday, Friday and Sunday ok, Wednesday and Saturday wrong
+        self.days = [1, 1, 0, 1, 1, 0, 1]
+        self.hours_validator = GivenHoursAndDaysValidator.create_from_bitlists(days=[1] * 7, hours=self.hours)
+        self.days_validator = GivenHoursAndDaysValidator.create_from_bitlists(days=self.days, hours=[1] * 24)
+        self.all_validator = GivenHoursAndDaysValidator.create_from_bitlists(hours=[1] * 24, days=[1] * 7)
+        self.reservation = Mock
+
+    def test_valid_hours_same_day(self):
+        self.reservation.start = datetime(2012, 11, 27, 15, 15)
+        self.reservation.end = datetime(2012, 11, 27, 18, 45)
+        self.hours_validator.validate(self.reservation)
+
+    def test_valid_hours_one_day_difference(self):
+        self.reservation.start = datetime(2012, 11, 26, 22, 15)
+        self.reservation.end = datetime(2012, 11, 27, 1, 45)
+        self.hours_validator.validate(self.reservation)
+
+    def test_valid_hours_one_day_difference_all_hours(self):
+        self.reservation.start = datetime(2012, 11, 27, 15, 15)
+        self.reservation.end = datetime(2012, 11, 28, 14, 45)
+        self.all_validator.validate(self.reservation)
+
+    def test_valid_hours_two_days_difference(self):
+        self.reservation.start = datetime(2012, 11, 27, 15, 15)
+        self.reservation.end = datetime(2012, 11, 29, 14, 45)
+        self.all_validator.validate(self.reservation)
+
+    def test_valid_days_same_week(self):
+        # Monday - Tuesday
+        self.reservation.start = datetime(2012, 11, 26)
+        self.reservation.end = datetime(2012, 11, 27)
+        self.days_validator.validate(self.reservation)
+
+    def test_valid_days_one_week_difference(self):
+        # Sunday - Tuesday
+        self.reservation.start = datetime(2012, 11, 18)
+        self.reservation.end = datetime(2012, 11, 20)
+        self.days_validator.validate(self.reservation)
+
+    def test_valid_days_one_week_difference_all_days(self):
+        self.reservation.start = datetime(2012, 11, 21)
+        self.reservation.end = datetime(2012, 11, 27)
+        self.all_validator.validate(self.reservation)
+
+    def test_valid_days_two_weeks_difference(self):
+        self.reservation.start = datetime(2012, 11, 20)
+        self.reservation.end = datetime(2012, 12, 2)
+        self.all_validator.validate(self.reservation)
+
+    # Invalid data
+
+    def test_invalid_hours_same_day(self):
+        self.reservation.start = datetime(2012, 11, 27, 15, 15)
+        self.reservation.end = datetime(2012, 11, 27, 22, 45)
+        with self.assertRaises(ValidationError):
+            self.hours_validator.validate(self.reservation)
+
+    def test_invalid_hours_one_day_difference(self):
+        self.reservation.start = datetime(2012, 11, 26, 22, 15)
+        self.reservation.end = datetime(2012, 11, 27, 3, 45)
+        with self.assertRaises(ValidationError):
+            self.hours_validator.validate(self.reservation)
+
+    def test_invalid_hours_one_day_difference_all_hours(self):
+        self.reservation.start = datetime(2012, 11, 27, 15, 15)
+        self.reservation.end = datetime(2012, 11, 28, 14, 45)
+        with self.assertRaises(ValidationError):
+            self.hours_validator.validate(self.reservation)
+
+    def test_invalid_hours_two_days_difference(self):
+        self.reservation.start = datetime(2012, 11, 27, 15, 15)
+        self.reservation.end = datetime(2012, 11, 29, 14, 45)
+        with self.assertRaises(ValidationError):
+            self.hours_validator.validate(self.reservation)
+
+    def test_invalid_days_same_week(self):
+        # Monday - Friday
+        self.reservation.start = datetime(2012, 11, 26)
+        self.reservation.end = datetime(2012, 11, 30)
+        with self.assertRaises(ValidationError):
+            self.days_validator.validate(self.reservation)
+
+    def test_invalid_days_one_week_difference(self):
+        # Friday - Tuesday
+        self.reservation.start = datetime(2012, 11, 23)
+        self.reservation.end = datetime(2012, 11, 27)
+        with self.assertRaises(ValidationError):
+            self.days_validator.validate(self.reservation)
+
+    def test_invalid_days_one_week_difference_all_days(self):
+        self.reservation.start = datetime(2012, 11, 21)
+        self.reservation.end = datetime(2012, 11, 27)
+        with self.assertRaises(ValidationError):
+            self.days_validator.validate(self.reservation)
+
+    def test_invalid_days_two_weeks_difference(self):
+        self.reservation.start = datetime(2012, 11, 20)
+        self.reservation.end = datetime(2012, 12, 2)
+        with self.assertRaises(ValidationError):
+            self.days_validator.validate(self.reservation)
 
 
 class MaxDurationValidatorTest(TestCase):
