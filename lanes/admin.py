@@ -10,6 +10,6 @@ admin.site.register(models.Lane, LaneAdmin)
 admin.site.register(models.LaneReservation)
 
 admin.site.register(models.LaneFullTimeValidator)
-admin.site.register(models.LaneLateEnoughValidator)
+admin.site.register(models.LaneTimeIntervalValidator)
 admin.site.register(models.LaneNotWithinPeriodValidator)
 admin.site.register(models.LaneWithinPeriodValidator)

@@ -5,7 +5,7 @@ from kitabu.models.clusters import BaseCluster
 from kitabu.models.validators import (
     FullTimeValidator as KitabuFullTimeValidator,
     StaticValidator as KitabuStaticValidator,
-    LateEnoughValidator as KitabuFarEnoughValidator,
+    TimeIntervalValidator as KitabuTimeIntervalValidator,
     WithinPeriodValidator as KitabuWithinPeriodValidator,
     NotWithinPeriodValidator as KitabuNotWithinPeriodValidator,
     MaxDurationValidator as KitabuMaxDurationValidator,
@@ -66,7 +66,7 @@ class StaticValidator(KitabuStaticValidator):
     pass
 
 
-class LateEnoughValidator(KitabuFarEnoughValidator):
+class TimeIntervalValidator(KitabuTimeIntervalValidator):
     pass
 
 

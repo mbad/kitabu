@@ -103,14 +103,21 @@ class StaticValidator(Validator):
         return reduce(getattr, path[1:], base_module)
 
 
-class NotTooLateOrLateEnoughValidator(Validator):
+class TimeIntervalValidator(Validator):
     class Meta:
         abstract = True
 
     TIME_UNITS = ['second', 'minute', 'hour', 'day']
+    NOT_LATER = 'l'
+    NOT_SOONER = 's'
+    INTERVAL_TYPES_CHOICES = [
+        (NOT_LATER, 'maximum time span from now'),
+        (NOT_SOONER, 'minimum time span from now'),
+    ]
 
     time_value = models.PositiveSmallIntegerField(default=1)
     time_unit = models.CharField(max_length=6, choices=[(x, x) for x in TIME_UNITS], default='second')
+    interval_type = models.CharField(max_length=2, choices=INTERVAL_TYPES_CHOICES, default=NOT_SOONER)
 
     def _perform_validation(self, reservation):
         date_field_names = self._get_date_field_names()
@@ -120,50 +127,38 @@ class NotTooLateOrLateEnoughValidator(Validator):
         for (date, field_name) in zip(dates, date_field_names):
             delta = date - now()
 
-            invalid_date = False
+            valid = True
 
             if self.time_unit == 'second':
-                if not self._check(delta.total_seconds(), self.time_value):
-                    invalid_date = True
+                valid = self._check(delta.total_seconds(), self.time_value)
             elif self.time_unit == 'minute':
-                if not self._check(delta.total_seconds(), self.time_value * 60):
-                    invalid_date = True
+                valid = self._check(delta.total_seconds(), self.time_value * 60)
             elif self.time_unit == 'hour':
-                if not self._check(delta.total_seconds(), self.time_value * 3600):
-                    invalid_date = True
+                valid = self._check(delta.total_seconds(), self.time_value * 3600)
             elif self.time_unit == 'day':
-                if not self._check(delta.days, self.time_value):
-                    invalid_date = True
+                valid = self._check(delta.days, self.time_value)
+            else:
+                raise ValueError("time_unit must be one of (second, minute, hour, day)")
 
-            if invalid_date:
-                raise ValidationError("Reservation %s must by at least %s %ss in the %s" %
-                                      (field_name, self.time_value, self.time_unit, self.time_direction))
+            if not valid:
+                raise ValidationError(
+                    "Reservation %(field_name)s must by at %(least_most)s %(number)s %(time_unit)ss in the future" %
+                    {
+                        'field_name': field_name,
+                        'least_most': 'least' if self.interval_type == self.NOT_SOONER else "most",
+                        'number': self.time_value,
+                        'time_unit': self.time_unit,
+                    }
+                )
 
     def _get_date_field_names(self):
         return ['start', 'end']
 
     def _check(self, delta, expected_time):
-        raise NotImplementedError
-
-
-class LateEnoughValidator(NotTooLateOrLateEnoughValidator):
-    time_direction = 'future'
-
-    class Meta:
-        abstract = True
-
-    def _check(self, delta, expected_time):
-        return delta >= expected_time
-
-
-class NotTooLateValidator(NotTooLateOrLateEnoughValidator):
-    time_direction = 'past'
-
-    class Meta:
-        abstract = True
-
-    def _check(self, delta, expected_time):
-        return delta <= expected_time
+        if self.interval_type == self.NOT_SOONER:
+            return delta >= expected_time
+        if self.interval_type == self.NOT_LATER:
+            return delta <= expected_time
 
 
 class WithinPeriodValidator(Validator):

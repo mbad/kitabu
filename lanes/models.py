@@ -5,22 +5,6 @@ from django.db import models
 from pools.models import Pool
 
 
-class LaneFullTimeValidator(validators.FullTimeValidator):
-    pass
-
-
-class LaneLateEnoughValidator(validators.LateEnoughValidator):
-    pass
-
-
-class LaneWithinPeriodValidator(validators.WithinPeriodValidator):
-    pass
-
-
-class LaneNotWithinPeriodValidator(validators.NotWithinPeriodValidator):
-    pass
-
-
 class Lane(VariableSizeSubject):
     name = models.TextField()
     cluster = models.ForeignKey(Pool, related_name='subjects')
@@ -38,4 +22,20 @@ class LaneReservation(ReservationWithSize):
 
 
 class LaneReservationGroup(ReservationGroup):
+    pass
+
+
+class LaneFullTimeValidator(validators.FullTimeValidator):
+    pass
+
+
+class LaneTimeIntervalValidator(validators.TimeIntervalValidator):
+    pass
+
+
+class LaneWithinPeriodValidator(validators.WithinPeriodValidator):
+    pass
+
+
+class LaneNotWithinPeriodValidator(validators.NotWithinPeriodValidator):
     pass
