@@ -48,7 +48,8 @@ class SubjectWithValidatorTest(TestCase):
             self.room.reserve(start=start, end=end, size=1)
 
         current_count = self.room.reservations.count()
-        self.assertEqual(current_count, initial_count, 'There should be no reservation objects added to the database')
+        self.assertEqual(current_count, initial_count,
+                         'There should be no reservation objects added to the database')
 
 
 class SubjectAndUniversalValidatorTest(TestCase):
@@ -76,7 +77,8 @@ class SubjectAndUniversalValidatorTest(TestCase):
             self.room.reserve(start=start, end=end, size=1)
 
         current_count = self.room.reservations.count()
-        self.assertEqual(current_count, initial_count, 'There should be no reservation objects added to the database')
+        self.assertEqual(current_count, initial_count,
+                         'There should be no reservation objects added to the database')
 
 
 class FullTimeValidatorTest(TestCase):
@@ -219,9 +221,9 @@ class StaticValidatorTest(TestCase):
                 raise ValidationError()
 
 
-class FarEnoughValidatorTest(TestCase):
+class TimeIntervalValidatorTest(TestCase):
 
-    def setup_and_patch_5_days(method):
+    def setup_and_patch_5_days(at_least_at_most):
         '''
         This method is a hack and is meant to be called only as decorator of other methods in this class.
 
@@ -229,18 +231,74 @@ class FarEnoughValidatorTest(TestCase):
             when class is constructed, class body is executed - by the time methods in this class are not bound,
             so this method will be just a function - and we use this function to decorate other methods.
         '''
-        def new_method(self):
-            self.reservation = Mock()
-            self.validator = TimeIntervalValidator.objects.create(time_unit='day', time_value=5, interval_type=TimeIntervalValidator.NOT_SOONER)
-            TimeIntervalValidator._get_date_field_names = Mock(return_value=['start', 'end'])
 
-            with patch('kitabu.models.validators.now') as dtmock:
-                dtmock.return_value = datetime(2000, 1, 1)
+        if at_least_at_most == 'at_least':
+            at_least_at_most = TimeIntervalValidator.NOT_SOONER
+        elif at_least_at_most == 'at_most':
+            at_least_at_most = TimeIntervalValidator.NOT_LATER
+        else:
+            raise ValueError('please supply "at_least" or "at_most" string as parameter')
 
-                method(self)
-        return new_method
+        def actual_decorator(method):
+            def new_method(self):
+                self.reservation = Mock()
+                self.validator = TimeIntervalValidator.objects.create(
+                    time_unit='day',
+                    time_value=5,
+                    interval_type=at_least_at_most)
+                TimeIntervalValidator._get_date_field_names = Mock(return_value=['start', 'end'])
 
-    @setup_and_patch_5_days
+                with patch('kitabu.models.validators.now') as dtmock:
+                    dtmock.return_value = datetime(2000, 1, 1)
+
+                    method(self)
+            return new_method
+        return actual_decorator
+
+    @setup_and_patch_5_days('at_most')
+    def test_today_is_ok(self):
+        self.reservation.start = datetime(2000, 1, 1)
+        self.reservation.end = datetime(2000, 1, 1)
+
+        self.validator.validate(self.reservation)
+
+    @setup_and_patch_5_days('at_most')
+    def test_soon_enough(self):
+        self.reservation.start = datetime(2000, 1, 3)
+        self.reservation.end = datetime(2000, 1, 3)
+
+        self.validator.validate(self.reservation)
+
+    @setup_and_patch_5_days('at_most')
+    def test_past_is_ok(self):
+        self.reservation.start = datetime(1999, 4, 1)
+        self.reservation.end = datetime(1999, 5, 1)
+
+        self.validator.validate(self.reservation)
+
+    @setup_and_patch_5_days('at_most')
+    def test_almost_too_late(self):
+        self.reservation.start = datetime(2000, 1, 5, 23, 59)
+        self.reservation.end = datetime(2000, 1, 5, 23, 59)
+
+        self.validator.validate(self.reservation)
+
+    @setup_and_patch_5_days('at_most')
+    def test_as_late_as_it_gets(self):
+        self.reservation.start = datetime(2000, 1, 6, 0, 0)
+        self.reservation.end = datetime(2000, 1, 6, 0, 0)
+
+        self.validator.validate(self.reservation)
+
+    @setup_and_patch_5_days('at_most')
+    def test_much_later_is_ok(self):
+        self.reservation.start = datetime(2000, 1, 16, 0, 0)
+        self.reservation.end = datetime(2000, 1, 26, 0, 0)
+
+        with self.assertRaises(ValidationError):
+            self.validator.validate(self.reservation)
+
+    @setup_and_patch_5_days('at_least')
     def test_today_is_too_soon(self):
         self.reservation.start = datetime(2000, 1, 1)
         self.reservation.end = datetime(2000, 1, 1)
@@ -248,7 +306,7 @@ class FarEnoughValidatorTest(TestCase):
         with self.assertRaises(ValidationError):
             self.validator.validate(self.reservation)
 
-    @setup_and_patch_5_days
+    @setup_and_patch_5_days('at_least')
     def test_too_soon(self):
         self.reservation.start = datetime(2000, 1, 3)
         self.reservation.end = datetime(2000, 1, 3)
@@ -256,7 +314,7 @@ class FarEnoughValidatorTest(TestCase):
         with self.assertRaises(ValidationError):
             self.validator.validate(self.reservation)
 
-    @setup_and_patch_5_days
+    @setup_and_patch_5_days('at_least')
     def test_past_is_too_soon(self):
         self.reservation.start = datetime(1999, 4, 1)
         self.reservation.end = datetime(1999, 5, 1)
@@ -264,7 +322,7 @@ class FarEnoughValidatorTest(TestCase):
         with self.assertRaises(ValidationError):
             self.validator.validate(self.reservation)
 
-    @setup_and_patch_5_days
+    @setup_and_patch_5_days('at_least')
     def test_slightly_too_soon(self):
         self.reservation.start = datetime(2000, 1, 5, 23, 59)
         self.reservation.end = datetime(2000, 1, 5, 23, 59)
@@ -272,15 +330,15 @@ class FarEnoughValidatorTest(TestCase):
         with self.assertRaises(ValidationError):
             self.validator.validate(self.reservation)
 
-    @setup_and_patch_5_days
+    @setup_and_patch_5_days('at_least')
     def test_as_soon_as_it_gets(self):
         self.reservation.start = datetime(2000, 1, 6, 0, 0)
         self.reservation.end = datetime(2000, 1, 6, 0, 0)
 
         self.validator.validate(self.reservation)
 
-    @setup_and_patch_5_days
-    def test_much_later(self):
+    @setup_and_patch_5_days('at_least')
+    def test_much_later_is_much_too_late(self):
         self.reservation.start = datetime(2000, 1, 16, 0, 0)
         self.reservation.end = datetime(2000, 1, 26, 0, 0)
 
@@ -288,7 +346,8 @@ class FarEnoughValidatorTest(TestCase):
 
     def test_an_hour_too_soon_start(self):
         self.reservation = Mock()
-        self.validator = TimeIntervalValidator.objects.create(time_unit='minute', time_value=15, interval_type=TimeIntervalValidator.NOT_SOONER)
+        self.validator = TimeIntervalValidator.objects.create(
+            time_unit='minute', time_value=15, interval_type=TimeIntervalValidator.NOT_SOONER)
         self.validator._get_date_field_names = Mock(return_value=['start'])
 
         with patch('kitabu.models.validators.now') as dtmock:
@@ -302,7 +361,8 @@ class FarEnoughValidatorTest(TestCase):
 
     def test_a_quarter_too_soon_start(self):
         self.reservation = Mock()
-        self.validator = TimeIntervalValidator.objects.create(time_unit='minute', time_value=45, interval_type=TimeIntervalValidator.NOT_SOONER)
+        self.validator = TimeIntervalValidator.objects.create(
+            time_unit='minute', time_value=45, interval_type=TimeIntervalValidator.NOT_SOONER)
         TimeIntervalValidator._get_date_field_names = Mock(return_value=['start'])
 
         with patch('kitabu.models.validators.now') as dtmock:
@@ -315,7 +375,8 @@ class FarEnoughValidatorTest(TestCase):
 
     def test_just_in_time(self):
         self.reservation = Mock()
-        self.validator = TimeIntervalValidator.objects.create(time_unit='minute', time_value=30, interval_type=TimeIntervalValidator.NOT_SOONER)
+        self.validator = TimeIntervalValidator.objects.create(
+            time_unit='minute', time_value=30, interval_type=TimeIntervalValidator.NOT_SOONER)
         TimeIntervalValidator._get_date_field_names = Mock(return_value=['start'])
 
         with patch('kitabu.models.validators.now') as dtmock:
