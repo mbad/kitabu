@@ -9,14 +9,6 @@ class LaneFullTimeValidator(validators.FullTimeValidator):
     pass
 
 
-class LaneNotSoonerThanValidator(validators.NotSoonerThanValidator):
-    pass
-
-
-class LaneNotLaterThanValidator(validators.NotLaterThanValidator):
-    pass
-
-
 class LaneLateEnoughValidator(validators.LateEnoughValidator):
     pass
 

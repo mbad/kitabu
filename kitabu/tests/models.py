@@ -6,8 +6,6 @@ from kitabu.models.validators import (
     FullTimeValidator as KitabuFullTimeValidator,
     StaticValidator as KitabuStaticValidator,
     LateEnoughValidator as KitabuFarEnoughValidator,
-    NotSoonerThanValidator as KitabuNotSoonerThanValidator,
-    NotLaterThanValidator as KitabuNotLaterThanValidator,
     WithinPeriodValidator as KitabuWithinPeriodValidator,
     NotWithinPeriodValidator as KitabuNotWithinPeriodValidator,
     MaxDurationValidator as KitabuMaxDurationValidator,
@@ -69,14 +67,6 @@ class StaticValidator(KitabuStaticValidator):
 
 
 class LateEnoughValidator(KitabuFarEnoughValidator):
-    pass
-
-
-class NotSoonerThanValidator(KitabuNotSoonerThanValidator):
-    pass
-
-
-class NotLaterThanValidator(KitabuNotLaterThanValidator):
     pass
 
 

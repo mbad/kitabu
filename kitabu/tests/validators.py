@@ -10,8 +10,6 @@ from kitabu.tests.models import (
     FullTimeValidator,
     StaticValidator,
     LateEnoughValidator,
-    NotSoonerThanValidator,
-    NotLaterThanValidator,
     WithinPeriodValidator,
     NotWithinPeriodValidator,
     GivenHoursAndWeekdaysValidator,
@@ -19,9 +17,9 @@ from kitabu.tests.models import (
 )
 
 # TODO:
-# NotSoonerThanValidator._get_date_field_names = Mock(return_value=['begin'])
+# Class._get_date_field_names = Mock(return_value=['begin'])
 # patching this way is evil as it is permanent and may affect proceeding tests.
-# Maybe this can be done better.
+# Maybe this can be done better (with patch method?)
 
 
 class SubjectWithValidatorTest(TestCase):
@@ -331,8 +329,8 @@ class FarEnoughValidatorTest(TestCase):
 class NotSoonerThanValidatorTest(TestCase):
 
     def test_with_begin_field(self):
-        validator = NotSoonerThanValidator.objects.create(date=datetime(2000, 1, 2))
-        NotSoonerThanValidator._get_date_field_names = Mock(return_value=['begin'])
+        validator = WithinPeriodValidator.objects.create(start=datetime(2000, 1, 2))
+        WithinPeriodValidator._get_date_field_names = Mock(return_value=['begin'])
         reservation = Mock()
 
         reservation.begin = datetime(2000, 1, 2)
@@ -343,8 +341,8 @@ class NotSoonerThanValidatorTest(TestCase):
             validator.validate(reservation)
 
     def test_with_start_end_fields(self):
-        validator = NotSoonerThanValidator.objects.create(date=datetime(2000, 1, 2))
-        NotSoonerThanValidator._get_date_field_names = Mock(return_value=['start', 'end'])
+        validator = WithinPeriodValidator.objects.create(start=datetime(2000, 1, 2))
+        WithinPeriodValidator._get_date_field_names = Mock(return_value=['start', 'end'])
         reservation = Mock()
 
         reservation.start = datetime(2000, 1, 1)
@@ -372,8 +370,8 @@ class NotSoonerThanValidatorTest(TestCase):
 class NotLaterThanValidatorTest(TestCase):
 
     def test_with_begin_field(self):
-        validator = NotLaterThanValidator.objects.create(date=datetime(2000, 1, 2))
-        NotLaterThanValidator._get_date_field_names = Mock(return_value=['begin'])
+        validator = WithinPeriodValidator.objects.create(end=datetime(2000, 1, 2))
+        WithinPeriodValidator._get_date_field_names = Mock(return_value=['begin'])
         reservation = Mock()
 
         reservation.begin = datetime(2000, 1, 2)
@@ -384,8 +382,8 @@ class NotLaterThanValidatorTest(TestCase):
             validator.validate(reservation)
 
     def test_with_start_end_fields(self):
-        validator = NotLaterThanValidator.objects.create(date=datetime(2000, 1, 2))
-        NotLaterThanValidator._get_date_field_names = Mock(return_value=['start', 'end'])
+        validator = WithinPeriodValidator.objects.create(end=datetime(2000, 1, 2))
+        WithinPeriodValidator._get_date_field_names = Mock(return_value=['start', 'end'])
         reservation = Mock()
 
         reservation.start = datetime(2000, 1, 1)
