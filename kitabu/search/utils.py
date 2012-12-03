@@ -3,27 +3,6 @@ from collections import defaultdict
 from django.db.models import Q
 
 
-def overlapping_reservations_Q(start, end, prefix=''):
-    start_in_scope_kwargs = {
-        prefix + 'start__gte': start,
-        prefix + 'start__lt': end,
-    }
-    end_in_scope_kwargs = {
-        prefix + 'end__gt': start,
-        prefix + 'end__lte': end,
-    }
-    covers_whole_scope_kwargs = {
-        prefix + 'start__lte': start,
-        prefix + 'end__gte': end,
-    }
-
-    return (
-        Q(**start_in_scope_kwargs)
-        | Q(**end_in_scope_kwargs)
-        | Q(**covers_whole_scope_kwargs)
-    )
-
-
 class Timeline(list):
     def __init__(self, start, end, subject=None, reservations=None):
         assert any([subject, reservations]), "You must provide either subject or reservations"

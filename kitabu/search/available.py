@@ -4,7 +4,7 @@ from datetime import timedelta
 
 from django.db.models import Q, Sum
 
-from kitabu.search.utils import overlapping_reservations_Q, Timeline
+from kitabu.search.utils import Timeline
 
 
 class Subjects(object):
@@ -34,7 +34,7 @@ class ExclusivelyAvailableSubjects(Subjects):
 
     def search(self, start, end):
         colliding_reservations = self.reservation_model.objects.filter(
-            overlapping_reservations_Q(start, end),
+            start__lt=end, end__gt=start,
             subject__in=self.subject_manager.all()
         )
         disqualified_subjects = colliding_reservations.values('subject_id') .distinct()
@@ -69,7 +69,7 @@ class FiniteAvailability(Subjects):
     def search(self, start, end, required_size):
 
         colliding_reservations = self.reservation_model.objects.filter(
-            overlapping_reservations_Q(start, end),
+            start__lt=end, end__gt=start,
             subject__in=self.subject_manager.all(),
         ).select_related('subject')
 
@@ -148,7 +148,7 @@ class ClusterFiniteAvailability(SubjectsInCluster):
         clusters_with_size_dict = dict((cluster.id, cluster) for cluster in clusters_with_size)
 
         colliding_reservations = self.reservation_model.objects.filter(
-            overlapping_reservations_Q(start, end),
+            start__lt=end, end__gt=start,
             subject__cluster_id__in=self.cluster_manager.all(),
         ).select_related('subject')
 
