@@ -7,9 +7,10 @@ from kitabu.models.validators import (
     StaticValidator as KitabuStaticValidator,
     TimeIntervalValidator as KitabuTimeIntervalValidator,
     WithinPeriodValidator as KitabuWithinPeriodValidator,
+    Period as KitabuPeriod,
     NotWithinPeriodValidator as KitabuNotWithinPeriodValidator,
     MaxDurationValidator as KitabuMaxDurationValidator,
-    GivenHoursAndWeekdaysValidator as KitabuGivenHoursAndWeekdaysValidator
+    GivenHoursAndWeekdaysValidator as KitabuGivenHoursAndWeekdaysValidator,
 )
 
 
@@ -72,6 +73,10 @@ class TimeIntervalValidator(KitabuTimeIntervalValidator):
 
 class WithinPeriodValidator(KitabuWithinPeriodValidator):
     pass
+
+
+class Period(KitabuPeriod):
+    validator = models.ForeignKey(WithinPeriodValidator, related_name='periods')
 
 
 class NotWithinPeriodValidator(KitabuNotWithinPeriodValidator):

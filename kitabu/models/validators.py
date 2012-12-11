@@ -162,27 +162,54 @@ class TimeIntervalValidator(Validator):
 
 
 class WithinPeriodValidator(Validator):
+
     class Meta:
         abstract = True
-
-    start = models.DateTimeField(null=True, blank=True)
-    end = models.DateTimeField(null=True, blank=True)
 
     def _perform_validation(self, reservation):
         date_field_names = self._get_date_field_names()
         dates = [getattr(reservation, field_name) for field_name in date_field_names]
         assert all([isinstance(date, datetime) for date in dates])
 
-        for (date, field_name) in zip(dates, date_field_names):
-            if self.end and date > self.end:
-                raise ValidationError("Reservation %s must not be later than %s" %
-                                      (field_name, self.end))
-            if self.start and date < self.start:
-                raise ValidationError("Reservation %s must not be earlier than %s" %
-                                      (field_name, self.start))
+        for period in self.periods.all():
+            all_fields_valid_for_period = True
+            for (date, field_name) in zip(dates, date_field_names):
+                if (
+                    (period.end and date > period.end)  # after end
+                    or
+                    (period.start and date < period.start)  # before start
+                ):
+                    all_fields_valid_for_period = False
+
+            if all_fields_valid_for_period:
+                return
+
+        raise ValidationError("Reservation %s must be in one of given periods: %s, received: %s" %
+                              (field_name,
+                               ", ".join(map(unicode, self.periods.all())),
+                               date,
+                               ))
 
     def _get_date_field_names(self):
         return ['start', 'end']
+
+
+class Period(models.Model):
+    '''
+    In this model implementation it is obligatory to implement foreign key
+    pointing to WithinPeriodValidator model with related name of "periods", e.g.:
+
+    validator = models.ForeignKey('WithinPeriodValidator', related_name='periods')
+    '''
+
+    class Meta:
+        abstract = True
+
+    start = models.DateTimeField(null=True, blank=True)
+    end = models.DateTimeField(null=True, blank=True)
+
+    def __unicode__(self):
+        return "<%s, %s>" % (self.start, self.end)
 
 
 class NotWithinPeriodValidator(Validator):
