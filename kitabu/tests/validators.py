@@ -13,6 +13,7 @@ from kitabu.tests.models import (
     WithinPeriodValidator,
     NotWithinPeriodValidator,
     GivenHoursAndWeekdaysValidator,
+    MaxDurationValidator,
     Room,
     Period,
 )
@@ -689,7 +690,7 @@ class GivenHoursAndDaysTest(TestCase):
         self.hours_validator = GivenHoursAndWeekdaysValidator.create_from_bitlists(days=[1] * 7, hours=self.hours)
         self.days_validator = GivenHoursAndWeekdaysValidator.create_from_bitlists(days=self.days, hours=[1] * 24)
         self.all_validator = GivenHoursAndWeekdaysValidator.create_from_bitlists(hours=[1] * 24, days=[1] * 7)
-        self.reservation = Mock
+        self.reservation = Mock()
 
     def test_valid_hours_same_day(self):
         self.reservation.start = datetime(2012, 11, 27, 15, 15)
@@ -787,6 +788,30 @@ class GivenHoursAndDaysTest(TestCase):
 
 
 class MaxDurationValidatorTest(TestCase):
-    def test_max_len(self):
-        pass
-        # TODO
+    def setUp(self):
+        self.two_hours_validator = MaxDurationValidator.objects.create(max_duration_in_seconds=2 * 3600)
+        self.two_days_and_one_hour_validator = MaxDurationValidator.objects.create(
+                                                                        max_duration_in_seconds=2 * 3600 * 24 + 3600)
+        self.reservation = Mock()
+
+    def test_two_hours(self):
+        self.reservation.start = datetime(2012, 10, 10, 10, 15)
+        self.reservation.end = datetime(2012, 10, 10, 12, 15)
+        self.two_hours_validator.validate(self.reservation)
+
+    def test_two_hours_and_one_second(self):
+        self.reservation.start = datetime(2012, 10, 10, 10, 15)
+        self.reservation.end = datetime(2012, 10, 10, 12, 16)
+        with self.assertRaises(ValidationError):
+            self.two_hours_validator.validate(self.reservation)
+
+    def test_two_days_and_one_hour(self):
+        self.reservation.start = datetime(2012, 10, 10, 12, 15)
+        self.reservation.end = datetime(2012, 10, 12, 13, 15)
+        self.two_days_and_one_hour_validator.validate(self.reservation)
+
+    def test_two_days_one_hour_and_one_second(self):
+        self.reservation.start = datetime(2012, 10, 10, 12, 15)
+        self.reservation.end = datetime(2012, 10, 12, 13, 16)
+        with self.assertRaises(ValidationError):
+            self.two_days_and_one_hour_validator.validate(self.reservation)

@@ -321,3 +321,16 @@ class GivenHoursAndWeekdaysValidator(Validator):
 class MaxDurationValidator(Validator):
     class Meta:
         abstract = True
+
+    max_duration_in_seconds = models.PositiveIntegerField()
+
+    def _perform_validation(self, reservation):
+        date_field_names = ['start', 'end']
+        dates = [getattr(reservation, field_name) for field_name in date_field_names]
+
+        assert all([isinstance(date, datetime) for date in dates])
+        delta = (reservation.end - reservation.start)
+        duration = delta.days * 3600 * 24 + delta.seconds
+
+        if duration > self.max_duration_in_seconds:
+            raise ValidationError('Max reservation duration exceeded')
