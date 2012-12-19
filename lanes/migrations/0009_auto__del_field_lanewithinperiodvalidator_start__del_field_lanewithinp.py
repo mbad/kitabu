@@ -1,30 +1,28 @@
-# -*- coding: utf-8 -*-
+# encoding: utf-8
+import datetime
 from south.db import db
 from south.v2 import SchemaMigration
-
+from django.db import models
 
 class Migration(SchemaMigration):
 
-    depends_on = (
-        ("kitabu", "0002_auto__del_field_reservationvalidator_actual_instance_name__add_field_r"),
-    )
-
-    needed_by = (
-        ("kitabu", "0003_auto__del_reservationvalidator__add_validator"),
-    )
-
     def forwards(self, orm):
-        # Adding model 'LaneFullTimeValidator'
-        db.create_table('lanes_lanefulltimevalidator', (
-            ('reservationvalidator_ptr', self.gf('django.db.models.fields.related.OneToOneField')(to=orm['kitabu.ReservationValidator'], unique=True, primary_key=True)),
-            ('interval', self.gf('django.db.models.fields.PositiveIntegerField')()),
-            ('interval_type', self.gf('django.db.models.fields.PositiveIntegerField')()),
-        ))
-        db.send_create_signal('lanes', ['LaneFullTimeValidator'])
+        
+        # Deleting field 'LaneWithinPeriodValidator.start'
+        db.delete_column('lanes_lanewithinperiodvalidator', 'start')
+
+        # Deleting field 'LaneWithinPeriodValidator.end'
+        db.delete_column('lanes_lanewithinperiodvalidator', 'end')
+
 
     def backwards(self, orm):
-        # Deleting model 'LaneFullTimeValidator'
-        db.delete_table('lanes_lanefulltimevalidator')
+        
+        # Adding field 'LaneWithinPeriodValidator.start'
+        db.add_column('lanes_lanewithinperiodvalidator', 'start', self.gf('django.db.models.fields.DateTimeField')(null=True, blank=True), keep_default=False)
+
+        # Adding field 'LaneWithinPeriodValidator.end'
+        db.add_column('lanes_lanewithinperiodvalidator', 'end', self.gf('django.db.models.fields.DateTimeField')(null=True, blank=True), keep_default=False)
+
 
     models = {
         'auth.group': {
@@ -42,7 +40,7 @@ class Migration(SchemaMigration):
         },
         'auth.user': {
             'Meta': {'object_name': 'User'},
-            'date_joined': ('django.db.models.fields.DateTimeField', [], {'default': 'datetime.datetime.now'}),
+            'date_joined': ('django.db.models.fields.DateTimeField', [], {'default': 'datetime.datetime(2012, 12, 19, 13, 58, 27, 464199)'}),
             'email': ('django.db.models.fields.EmailField', [], {'max_length': '75', 'blank': 'True'}),
             'first_name': ('django.db.models.fields.CharField', [], {'max_length': '30', 'blank': 'True'}),
             'groups': ('django.db.models.fields.related.ManyToManyField', [], {'to': "orm['auth.Group']", 'symmetrical': 'False', 'blank': 'True'}),
@@ -50,7 +48,7 @@ class Migration(SchemaMigration):
             'is_active': ('django.db.models.fields.BooleanField', [], {'default': 'True'}),
             'is_staff': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             'is_superuser': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
-            'last_login': ('django.db.models.fields.DateTimeField', [], {'default': 'datetime.datetime.now'}),
+            'last_login': ('django.db.models.fields.DateTimeField', [], {'default': 'datetime.datetime(2012, 12, 19, 13, 58, 27, 464132)'}),
             'last_name': ('django.db.models.fields.CharField', [], {'max_length': '30', 'blank': 'True'}),
             'password': ('django.db.models.fields.CharField', [], {'max_length': '128'}),
             'user_permissions': ('django.db.models.fields.related.ManyToManyField', [], {'to': "orm['auth.Permission']", 'symmetrical': 'False', 'blank': 'True'}),
@@ -63,9 +61,10 @@ class Migration(SchemaMigration):
             'model': ('django.db.models.fields.CharField', [], {'max_length': '100'}),
             'name': ('django.db.models.fields.CharField', [], {'max_length': '100'})
         },
-        'kitabu.reservationvalidator': {
-            'Meta': {'object_name': 'ReservationValidator'},
-            '_actual_instance_name': ('django.db.models.fields.CharField', [], {'max_length': '200'}),
+        'kitabu.validator': {
+            'Meta': {'object_name': 'Validator'},
+            'actual_validator_related_name': ('django.db.models.fields.CharField', [], {'max_length': '200'}),
+            'apply_to_all': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'})
         },
         'lanes.lane': {
@@ -73,13 +72,20 @@ class Migration(SchemaMigration):
             'cluster': ('django.db.models.fields.related.ForeignKey', [], {'related_name': "'subjects'", 'to': "orm['pools.Pool']"}),
             'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'name': ('django.db.models.fields.TextField', [], {}),
-            'size': ('django.db.models.fields.PositiveIntegerField', [], {})
+            'size': ('django.db.models.fields.PositiveIntegerField', [], {}),
+            'validators': ('django.db.models.fields.related.ManyToManyField', [], {'to': "orm['kitabu.Validator']", 'symmetrical': 'False', 'blank': 'True'})
         },
         'lanes.lanefulltimevalidator': {
             'Meta': {'object_name': 'LaneFullTimeValidator'},
-            'interval': ('django.db.models.fields.PositiveIntegerField', [], {}),
-            'interval_type': ('django.db.models.fields.PositiveIntegerField', [], {}),
-            'reservationvalidator_ptr': ('django.db.models.fields.related.OneToOneField', [], {'to': "orm['kitabu.ReservationValidator']", 'unique': 'True', 'primary_key': 'True'})
+            'interval': ('django.db.models.fields.PositiveSmallIntegerField', [], {}),
+            'interval_type': ('django.db.models.fields.CharField', [], {'max_length': '6'}),
+            'validator_ptr': ('django.db.models.fields.related.OneToOneField', [], {'to': "orm['kitabu.Validator']", 'unique': 'True', 'primary_key': 'True'})
+        },
+        'lanes.lanenotwithinperiodvalidator': {
+            'Meta': {'object_name': 'LaneNotWithinPeriodValidator'},
+            'end': ('django.db.models.fields.DateTimeField', [], {}),
+            'start': ('django.db.models.fields.DateTimeField', [], {}),
+            'validator_ptr': ('django.db.models.fields.related.OneToOneField', [], {'to': "orm['kitabu.Validator']", 'unique': 'True', 'primary_key': 'True'})
         },
         'lanes.lanereservation': {
             'Meta': {'object_name': 'LaneReservation'},
@@ -94,6 +100,17 @@ class Migration(SchemaMigration):
         'lanes.lanereservationgroup': {
             'Meta': {'object_name': 'LaneReservationGroup'},
             'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'})
+        },
+        'lanes.lanetimeintervalvalidator': {
+            'Meta': {'object_name': 'LaneTimeIntervalValidator'},
+            'interval_type': ('django.db.models.fields.CharField', [], {'default': "'s'", 'max_length': '2'}),
+            'time_unit': ('django.db.models.fields.CharField', [], {'default': "'second'", 'max_length': '6'}),
+            'time_value': ('django.db.models.fields.PositiveSmallIntegerField', [], {'default': '1'}),
+            'validator_ptr': ('django.db.models.fields.related.OneToOneField', [], {'to': "orm['kitabu.Validator']", 'unique': 'True', 'primary_key': 'True'})
+        },
+        'lanes.lanewithinperiodvalidator': {
+            'Meta': {'object_name': 'LaneWithinPeriodValidator'},
+            'validator_ptr': ('django.db.models.fields.related.OneToOneField', [], {'to': "orm['kitabu.Validator']", 'unique': 'True', 'primary_key': 'True'})
         },
         'pools.pool': {
             'Meta': {'object_name': 'Pool'},
