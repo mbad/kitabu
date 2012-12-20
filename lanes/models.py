@@ -39,3 +39,7 @@ class LaneWithinPeriodValidator(validators.WithinPeriodValidator):
 
 class LaneNotWithinPeriodValidator(validators.NotWithinPeriodValidator):
     pass
+
+
+class LaneGivenHoursAndWeekdaysValidator(validators.GivenHoursAndWeekdaysValidator):
+    pass
