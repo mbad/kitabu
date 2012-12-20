@@ -61,3 +61,4 @@ class DataLoader(object):
                                 first_name="Janusz {0}".format(i), last_name="Nowak {0}".format(i),
                                 email=email)
             user.set_password("haslo{0}".format(i))
+            user.save()
