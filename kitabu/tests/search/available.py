@@ -1,7 +1,6 @@
 from datetime import datetime, timedelta
 
 from django.test import TestCase
-from django.contrib.auth.models import User
 
 from kitabu.tests.models import Room, RoomReservation, Hotel, HotelRoom
 from kitabu.search.available import FindPeriod, ClusterFiniteAvailability
@@ -16,13 +15,10 @@ class VaryingDateAndSizeSearchTest(TestCase):
         self.room2 = Room.objects.create(name='Room 2', size=2)
         self.room3 = Room.objects.create(name='Room 3', size=3)
 
-        self.user = User.objects.create_user('user', 'user@example.com')
-
     def test_whole_period_available(self):
         RoomReservation.objects.create(
             subject=self.room1,
             size=1,
-            owner=self.user,
             start=datetime(2001, 1, 1),
             end=datetime(2001, 1, 8)
         )
@@ -46,7 +42,6 @@ class VaryingDateAndSizeSearchTest(TestCase):
         reservation = RoomReservation.objects.create(
             subject=self.room1,
             size=1,
-            owner=self.user,
             start=datetime(2001, 1, 1),
             end=datetime(2001, 1, 8)
         )
@@ -69,7 +64,6 @@ class VaryingDateAndSizeSearchTest(TestCase):
         reservation = RoomReservation.objects.create(
             subject=self.room1,
             size=1,
-            owner=self.user,
             start=datetime(2001, 1, 1),
             end=datetime(2001, 1, 8)
         )
@@ -95,7 +89,6 @@ class VaryingDateAndSizeSearchTest(TestCase):
         RoomReservation.objects.create(
             subject=self.room2,
             size=1,
-            owner=self.user,
             start=datetime(2001, 1, 1),
             end=datetime(2001, 1, 8)
         )
@@ -120,7 +113,6 @@ class VaryingDateAndSizeSearchTest(TestCase):
         reservation = RoomReservation.objects.create(
             subject=self.room3,
             size=1,
-            owner=self.user,
             start=datetime(2001, 1, 8),
             end=datetime(2001, 1, 15)
         )  # this reservation will not collide as it has size one, leaving 2 places available
@@ -128,7 +120,6 @@ class VaryingDateAndSizeSearchTest(TestCase):
         reservation = RoomReservation.objects.create(
             subject=self.room3,
             size=2,
-            owner=self.user,
             start=datetime(2001, 1, 1),
             end=datetime(2001, 1, 8)
         )
@@ -155,7 +146,6 @@ class VaryingDateAndSizeSearchTest(TestCase):
         reserve = lambda start, end, size: RoomReservation.objects.create(
             subject=self.room3,
             size=size,
-            owner=self.user,
             start=start,
             end=end
         )

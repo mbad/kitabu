@@ -1,7 +1,6 @@
 #-*- coding=utf-8 -*-
 
 from django.db import models, transaction
-from django.contrib.auth.models import User
 
 from kitabu.utils import EnsureSize, AtomicReserver
 
@@ -10,7 +9,6 @@ class BaseReservation(models.Model, EnsureSize):
     class Meta:
         abstract = True
 
-    owner = models.ForeignKey(User, null=True)
     start = models.DateTimeField()
     end = models.DateTimeField()
 
