@@ -687,14 +687,14 @@ class GivenHoursAndDaysTest(TestCase):
         hours = [1, 1, 1, 0, 0, 0, 0, 1, 1, 1, 1, 1, 0, 0, 0, 1, 1, 1, 1, 1, 0, 0, 1, 1]
 
         self.validator = GivenHoursAndWeekdaysValidator.create_from_bitlists({
-                                                                              'monday': hours,
-                                                                              'tuesday': hours,
-                                                                              'wednesday': [0] * 24,
-                                                                              'thursday': hours,
-                                                                              'friday': hours,
-                                                                              'saturday': [0] * 24,
-                                                                              'sunday': hours
-                                                                              })
+            'monday': hours,
+            'tuesday': hours,
+            'wednesday': [0] * 24,
+            'thursday': hours,
+            'friday': hours,
+            'saturday': [0] * 24,
+            'sunday': hours
+        })
 
         self.reservation = Mock()
 
@@ -742,7 +742,7 @@ class MaxDurationValidatorTest(TestCase):
     def setUp(self):
         self.two_hours_validator = MaxDurationValidator.objects.create(max_duration_in_seconds=2 * 3600)
         self.two_days_and_one_hour_validator = MaxDurationValidator.objects.create(
-                                                                        max_duration_in_seconds=2 * 3600 * 24 + 3600)
+            max_duration_in_seconds=2 * 3600 * 24 + 3600)
         self.reservation = Mock()
 
     def test_two_hours(self):

@@ -1,6 +1,6 @@
 #-*- coding: utf-8 -*-
 
-from django.core.management.base import BaseCommand, CommandError
+from django.core.management.base import BaseCommand
 from lanes.models import Lane
 from pools.models import Pool
 from django.contrib.auth.models import User
@@ -44,7 +44,7 @@ class DataLoader(object):
             except User.DoesNotExist:
                 pass
             user = User.objects.create(username="user{0}".format(i), is_active=True,
-                                first_name="Janusz {0}".format(i), last_name="Nowak {0}".format(i),
-                                email=email)
+                                       first_name="Janusz {0}".format(i), last_name="Nowak {0}".format(i),
+                                       email=email)
             user.set_password("haslo{0}".format(i))
             user.save()

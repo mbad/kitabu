@@ -1,28 +1,25 @@
 # encoding: utf-8
-import datetime
 from south.db import db
 from south.v2 import SchemaMigration
-from django.db import models
+
 
 class Migration(SchemaMigration):
 
     def forwards(self, orm):
-        
+
         # Deleting field 'LaneWithinPeriodValidator.start'
         db.delete_column('lanes_lanewithinperiodvalidator', 'start')
 
         # Deleting field 'LaneWithinPeriodValidator.end'
         db.delete_column('lanes_lanewithinperiodvalidator', 'end')
 
-
     def backwards(self, orm):
-        
+
         # Adding field 'LaneWithinPeriodValidator.start'
         db.add_column('lanes_lanewithinperiodvalidator', 'start', self.gf('django.db.models.fields.DateTimeField')(null=True, blank=True), keep_default=False)
 
         # Adding field 'LaneWithinPeriodValidator.end'
         db.add_column('lanes_lanewithinperiodvalidator', 'end', self.gf('django.db.models.fields.DateTimeField')(null=True, blank=True), keep_default=False)
-
 
     models = {
         'auth.group': {
