@@ -7,7 +7,7 @@ from django.contrib.auth.models import User
 
 
 class Command(BaseCommand):
-    help = 'Loades initial data for kitabu v0.4'
+    help = 'Loades initial data for kitabu v0.3'
 
     def handle(self, *args, **options):
         DataLoader().load_all()
