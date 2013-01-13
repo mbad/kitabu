@@ -12,6 +12,8 @@ import time
 
 # using datetime.now in this way allows to mock it with mock.patch and test nicely
 now = datetime.now
+SECONDS_IN_DAY = 3600 * 24
+HOURS_IN_WEEK = 7 * 24
 
 
 class Validator(models.Model):
@@ -245,77 +247,74 @@ class GivenHoursAndWeekdaysValidator(Validator):
     class Meta:
         abstract = True
 
-    days = models.PositiveIntegerField()  # 0 - 127
-    hours = models.PositiveIntegerField()  # 0 - 16777215 (2 ** 24)
+    monday = models.PositiveIntegerField()
+    tuesday = models.PositiveIntegerField()
+    wednesday = models.PositiveIntegerField()
+    thursday = models.PositiveIntegerField()
+    friday = models.PositiveIntegerField()
+    saturday = models.PositiveIntegerField()
+    sunday = models.PositiveIntegerField()
 
     def _perform_validation(self, reservation):
-        assert 0 <= self.days <= 127
-        assert 0 <= self.hours <= 16777215
+        reservation_bitlist = self._get_hours_bitlist(reservation.start, reservation.end)
 
-        if not self._valid_hours(reservation):
+        list_and = self._list_and(self._to_hours_bitlist(), reservation_bitlist)
+
+        if not list_and == map(lambda x: True if x else False, reservation_bitlist):
             raise ValidationError("Reservation in wrong hours")
-        if not self._valid_days(reservation):
-            raise ValidationError("Reservation in wrong days")
 
-    def _valid_hours(self, reservation):
-        return self._valid_units(reservation=reservation, delta_method_name='_get_hours_delta',
-                                 checking_property_name='hours')
+    def _get_hours_bitlist(self, start, end):
+        start_timestamp = self._date_to_timestamp(start) / SECONDS_IN_DAY
+        end_timestamp = self._date_to_timestamp(end) / SECONDS_IN_DAY
+        days_delta = int(end_timestamp) - int(start_timestamp)
 
-    def _valid_days(self, reservation):
-        return self._valid_units(reservation=reservation, delta_method_name='_get_days_delta',
-                                 checking_property_name='days')
-
-    def _valid_units(self, reservation, delta_method_name, checking_property_name):
-        delta_method = getattr(self, delta_method_name)
-        checking_property = getattr(self, checking_property_name)
-        units_delta = delta_method(reservation.start, reservation.end)
-        return (units_delta & checking_property) == units_delta
-
-    def _get_days_delta(self, start, end):
-        return self._get_delta(start=start, end=end, seconds_in_unit=3600 * 24, nr_units=7,
-                               datetime_method_name='weekday')
-
-    def _get_hours_delta(self, start, end):
-        return self._get_delta(start=start, end=end, seconds_in_unit=3600, nr_units=24,
-                               datetime_method_name='hour')
-
-    def _get_delta(self, start, end, seconds_in_unit, nr_units, datetime_method_name):
-        '''
-            Return list of needed hours or days (e.g. [1,1,1,...,1,0,0,1]) converted to integer
-        '''
-        start_timestamp = self._date_to_timestamp(start) / seconds_in_unit
-        end_timestamp = self._date_to_timestamp(end) / seconds_in_unit
-        delta = int(end_timestamp) - int(start_timestamp)
-        if delta < 0:
-            return 0
-        elif delta >= (nr_units - 1):
-            return (2 ** nr_units) - 1
+        if days_delta < 0:
+            return [0] * HOURS_IN_WEEK
+        elif days_delta > 7:
+            return [1] * HOURS_IN_WEEK
         else:
-            current_representation = 0
-            start_attr = getattr(start, datetime_method_name)
-            end_attr = getattr(end, datetime_method_name)
-            if callable(start_attr):
-                (current_unit, end_unit) = (start_attr(), end_attr())
-            else:
-                (current_unit, end_unit) = (start_attr, end_attr)
-
-            if end_unit < current_unit:
-                end_unit += nr_units
-
-            while current_unit <= end_unit:
-                current_representation += 2 ** ((nr_units - 1) - (current_unit % nr_units))
-                current_unit += 1
-            return current_representation
+            return self._hours_to_bitlist(self._hour_nr_in_week(start), self._hour_nr_in_week(end))
 
     def _date_to_timestamp(self, date):
         return time.mktime(date.timetuple())
 
+    def _hours_to_bitlist(self, start_hour, end_hour):
+        if start_hour <= end_hour:
+            return [0] * start_hour + [1] * (end_hour - start_hour + 1) + [0] * (HOURS_IN_WEEK - end_hour - 1)
+        else:
+            return [1] * (end_hour + 1) + [0] * (start_hour - end_hour - 1) + [1] * (HOURS_IN_WEEK - start_hour)
+
+    def _hour_nr_in_week(self, datetime):
+        day = datetime.weekday()
+        return day * 24 + datetime.hour
+
+    def _list_and(self, *lists):
+        return [all(tup) for tup in zip(*lists)]
+
+    def _to_hours_bitlist(self):
+        return reduce(lambda acc, day: acc + self._hours_number_to_bitlist(day), self._days(), [])
+
+    def _hours_number_to_bitlist(self, number):
+        bitlist = [1 if digit == '1' else 0 for digit in bin(number)[2:]]
+        bitlist_length = len(bitlist)
+        if bitlist_length < 24:
+            bitlist = [0] * (24 - bitlist_length) + bitlist
+
+        return bitlist
+
+    def _days(self):
+        return [self.monday, self.tuesday, self.wednesday, self.thursday, self.friday, self.saturday, self.sunday]
+
     @classmethod
-    def create_from_bitlists(cls, hours, days):
+    def create_from_bitlists(cls, bitlists_dict):
         def bitlist_to_int(bitlist):
             return reduce(lambda a, v: a * 2 + v, bitlist, 0)
 
-        return cls.objects.create(hours=bitlist_to_int(hours), days=bitlist_to_int(days))
+        kwargs = {}
+        for key, bitlist in bitlists_dict.items():
+            kwargs[key] = bitlist_to_int(bitlist)
+
+        return cls.objects.create(**kwargs)
 
 
 class MaxDurationValidator(Validator):
