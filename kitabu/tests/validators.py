@@ -705,9 +705,9 @@ class GivenHoursAndDaysTest(TestCase):
         self.validator.validate(self.reservation)
 
     def test_valid_hours_same_day(self):
-        #monday
-        self.reservation.start = datetime(2012, 11, 26, 8, 15)
-        self.reservation.end = datetime(2012, 11, 26, 10, 45)
+        #thursday
+        self.reservation.start = datetime(2012, 11, 29, 8, 15)
+        self.reservation.end = datetime(2012, 11, 29, 10, 45)
         self.validator.validate(self.reservation)
 
     def test_valid_hours_not_the_same_week(self):
@@ -724,9 +724,9 @@ class GivenHoursAndDaysTest(TestCase):
             self.validator.validate(self.reservation)
 
     def test_invalid_hours_same_day(self):
-        #monday
-        self.reservation.start = datetime(2012, 11, 26, 11, 15)
-        self.reservation.end = datetime(2012, 11, 26, 13, 45)
+        #thursday
+        self.reservation.start = datetime(2012, 11, 29, 11, 15)
+        self.reservation.end = datetime(2012, 11, 29, 13, 45)
         with self.assertRaises(ValidationError):
             self.validator.validate(self.reservation)
 
