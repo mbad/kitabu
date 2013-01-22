@@ -4,7 +4,7 @@ from collections import defaultdict
 
 from django.db import models
 
-from kitabu.exceptions import OverlappingReservations, SizeExceeded
+from kitabu.exceptions import SizeExceeded, ValidationError
 from kitabu.utils import EnsureSize
 from kitabu.models.validators import Validator
 
@@ -18,6 +18,8 @@ class BaseSubject(models.Model, EnsureSize):
     def reserve(self, **kwargs):
         reservation = self.reservation_model(subject=self, **kwargs)
         self._validate_reservation(reservation)
+        if kwargs.get('exclusive') or self._only_exclusive_reservations():
+            self._validate_exclusive(reservation)
         reservation.save()
         return reservation
 
@@ -32,25 +34,30 @@ class BaseSubject(models.Model, EnsureSize):
     # Private
 
     def _validate_reservation(self, reservation):
+
         for validator in Validator.universal.all():
             validator.validate(reservation)
 
         for validator in self.validators.all():
             validator.validate(reservation)
 
+    def _validate_exclusive(self, reservation):
+        # TODO: perhaps this would make sense to extract it as a static validator
+        overlapping_reservations = self.reservations.filter(
+            start__lt=reservation.end, end__gt=reservation.start)
+        if overlapping_reservations:
+            raise ValidationError("Overlapping reservations: %s" % overlapping_reservations)
+
+    def _only_exclusive_reservations(self):
+        return False
+
 
 class ExclusiveSubject(BaseSubject):
     class Meta:
         abstract = True
 
-    def reserve(self, start, end, **kwargs):
-        overlapping_reservations = self.reservations.filter(start__lt=end,
-                                                            end__gt=start)
-        if overlapping_reservations:
-            raise OverlappingReservations(overlapping_reservations)
-        else:
-            return super(ExclusiveSubject, self).reserve(start=start, end=end,
-                                                         **kwargs)
+    def _only_exclusive_reservations(self):
+        return True
 
 
 class FiniteSizeSubject(BaseSubject):
@@ -61,7 +68,8 @@ class FiniteSizeSubject(BaseSubject):
     class Meta:
         abstract = True
 
-    def reserve(self, start, end, size, **kwargs):
+    def reserve(self, start=None, end=None, size=1, **kwargs):
+        assert start and end, "start and end dates must be provided"
         overlapping_reservations = self.reservations.filter(start__lt=end,
                                                             end__gt=start)
         if size > self.size:
@@ -99,6 +107,7 @@ class FixedSizeSubject(FiniteSizeSubject):
 
     @classmethod
     def with_size(cls, size):
+        # TODO: fix this, class should not be modified
         cls._size = size
         return cls
 

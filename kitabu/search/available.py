@@ -28,7 +28,7 @@ class Subjects(object):
 
 class ExclusivelyAvailableSubjects(Subjects):
     '''
-    Form for searching subjects available in certain time period.
+    orm for searching subjects available in certain time period.
     Exclusive means only one reservation at a time is possible.
     '''
 
@@ -37,27 +37,8 @@ class ExclusivelyAvailableSubjects(Subjects):
             start__lt=end, end__gt=start,
             subject__in=self.subject_manager.all()
         )
-        disqualified_subjects = colliding_reservations.values('subject_id') .distinct()
+        disqualified_subjects = colliding_reservations.values('subject_id').distinct()
         return self.subject_manager.exclude(id__in=disqualified_subjects)
-
-
-class SubjectsInCluster(Subjects):
-
-    def __init__(self, subject_model, cluster_model, subject_related_name='subjects', *args, **kwargs):
-        self.subject_model = subject_model
-        self.reservation_model = subject_model.get_reservation_model()
-        self.cluster_model = cluster_model
-        self.subject_related_name = subject_related_name
-
-    def _get_cluster_manager(self):
-        if not hasattr(self, '_cluster_model_manager'):
-            self._cluster_model_manager = self.cluster_model.objects
-        return self._cluster_model_manager
-
-    def _set_cluster_manager(self, value):
-        self._cluster_model_manager = value
-
-    cluster_manager = property(_get_cluster_manager, _set_cluster_manager)
 
 
 class FiniteAvailability(Subjects):
@@ -137,11 +118,26 @@ class FindPeriod(object):
         return available_dates
 
 
-class ClusterFiniteAvailability(SubjectsInCluster):
+class ClusterFiniteAvailability(Subjects):
     '''
     Form for searching clusters available in certain time period.
     Finite availablity means only certain number of reservations at a time is possible.
     '''
+    def __init__(self, subject_model, cluster_model, subject_related_name='subjects', *args, **kwargs):
+        self.reservation_model = subject_model.get_reservation_model()
+        self.cluster_model = cluster_model
+        self.subject_related_name = subject_related_name
+
+    def _get_cluster_manager(self):
+        if not hasattr(self, '_cluster_model_manager'):
+            self._cluster_model_manager = self.cluster_model.objects
+        return self._cluster_model_manager
+
+    def _set_cluster_manager(self, value):
+        self._cluster_model_manager = value
+
+    cluster_manager = property(_get_cluster_manager, _set_cluster_manager)
+
     def search(self, start, end, required_size):
 
         clusters_with_size = self.cluster_manager.annotate(size=Sum(self.subject_related_name + '__size'))

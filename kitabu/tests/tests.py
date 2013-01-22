@@ -1,45 +1,52 @@
-from django.test import SimpleTestCase
-from kitabu.tests.models import TennisCourt, Room, RoomReservation, RoomReservationGroup
-from kitabu.exceptions import OverlappingReservations, SizeExceeded, ReservationError
+from django.test import TransactionTestCase, TestCase
+from kitabu.tests.models import (
+    TennisCourt,
+    Room,
+    RoomReservation,
+    RoomReservationGroup,
+    ConferenceRoom,
+    ConferenceRoomReservation,
+)
+from kitabu.exceptions import SizeExceeded, ReservationError, ValidationError
 from kitabu.utils import AtomicReserver
 
 
-class TennisCourtTest(SimpleTestCase):
+class TennisCourtTest(TestCase):
     def setUp(self):
         self.court = TennisCourt.objects.create(name="court")
 
     def test_one_reservation(self):
-        self.court.reserve('2012-04-01', '2012-05-11')
+        self.court.reserve(start='2012-04-01', end='2012-05-11')
         self.assertEqual(self.court.reservations.count(), 1, "Should have one reservation")
 
     def test_two_non_overlapping_reservations(self):
-        self.court.reserve('2012-04-01 12:00', '2012-05-11 12:00')
-        self.court.reserve('2012-05-11 12:00', '2012-05-15 12:00')
+        self.court.reserve(start='2012-04-01 12:00', end='2012-05-11 12:00')
+        self.court.reserve(start='2012-05-11 12:00', end='2012-05-15 12:00')
         self.assertEqual(self.court.reservations.count(), 2, "Should have two reservations")
 
     def test_two_overlappping_reservations(self):
-        with self.assertRaises(OverlappingReservations):
-            self.court.reserve('2012-04-01', '2012-05-11')
-            self.court.reserve('2012-04-20', '2012-05-15')
+        with self.assertRaises(ValidationError):
+            self.court.reserve(start='2012-04-01', end='2012-05-11')
+            self.court.reserve(start='2012-04-20', end='2012-05-15')
 
     def test_two_minimally_overlappping_reservations(self):
-        with self.assertRaises(OverlappingReservations):
-            self.court.reserve('2012-04-01', '2012-05-11 12:00')
-            self.court.reserve('2012-05-11 11:59:59', '2012-05-15')
+        with self.assertRaises(ValidationError):
+            self.court.reserve(start='2012-04-01', end='2012-05-11 12:00')
+            self.court.reserve(start='2012-05-11 11:59:59', end='2012-05-15')
 
 
-class RoomTest(SimpleTestCase):
+class RoomTest(TestCase):
     def setUp(self):
         self.room = Room.objects.create(name="room", size=5)
 
     def test_one_reservation(self):
-        self.room.reserve('2012-04-01', '2012-05-11', 3)
+        self.room.reserve(start='2012-04-01', end='2012-05-11', size=3)
         self.assertEqual(self.room.reservations.count(), 1, "Should have one reservation")
         self.assertEqual(self.room.reservations.get().size, 3, "Should have 3 places reserved")
 
     def test_two_overlapping_reservation_with_size_not_exceeded(self):
-        self.room.reserve('2012-04-01', '2012-05-11', 3)
-        self.room.reserve('2012-04-15', '2012-05-13', 2)
+        self.room.reserve(start='2012-04-01', end='2012-05-11', size=3)
+        self.room.reserve(start='2012-04-15', end='2012-05-13', size=2)
         self.assertEqual(self.room.reservations.count(), 2, "Should have two reservations")
         reservations = self.room.reservations.all()
         sum = reduce(lambda s, r: s + r.size, reservations, 0)
@@ -47,11 +54,11 @@ class RoomTest(SimpleTestCase):
 
     def test_two_overlapping_reservation_with_size_exceeded(self):
         with self.assertRaises(SizeExceeded):
-            self.room.reserve('2012-04-01', '2012-05-11', 3)
-            self.room.reserve('2012-04-15', '2012-05-13', 3)
+            self.room.reserve(start='2012-04-01', end='2012-05-11', size=3)
+            self.room.reserve(start='2012-04-15', end='2012-05-13', size=3)
 
 
-class AtomicReserveTest(SimpleTestCase):
+class AtomicReserveTest(TransactionTestCase):
     def setUp(self):
         self.room5 = Room.objects.create(name="room", size=5)
         self.room1 = Room.objects.create(name="room", size=1)
@@ -81,7 +88,7 @@ class AtomicReserveTest(SimpleTestCase):
                          'There should be no reservation objects added to the database')
 
 
-class GroupReservationTest(SimpleTestCase):
+class GroupReservationTest(TransactionTestCase):
     def setUp(self):
         self.room5 = Room.objects.create(name="room", size=5)
         self.room1 = Room.objects.create(name="room", size=1)
@@ -120,3 +127,27 @@ class GroupReservationTest(SimpleTestCase):
                          'There should be no reservation objects added to the database')
         self.assertEqual(RoomReservationGroup.objects.count(), initial_group_count,
                          'There should be no group objects added to the database')
+
+
+class ExclusiveReservationTest(TestCase):
+    def setUp(self):
+        self.room1 = ConferenceRoom.objects.create(size=1)
+        self.room3 = ConferenceRoom.objects.create(size=3)
+        self.room5 = ConferenceRoom.objects.create(size=5)
+
+    def test_cannot_reserve_over_other_reservation(self):
+        self.room3.reserve(start='2012-04-01', end='2012-04-02', size=1)
+        with self.assertRaises(ValidationError):
+            self.room3.reserve(start='2012-04-01', end='2012-04-02', exclusive=True)
+
+        self.room5.reserve(start='2012-04-01', end='2012-04-02', size=0)
+        with self.assertRaises(ValidationError):
+            self.room5.reserve(start='2012-04-01', end='2012-04-02', exclusive=True)
+
+        self.assertEqual(2, ConferenceRoomReservation.objects.count())
+
+    def test_can_reserve_if_no_overlapping_reservations(self):
+        self.room5.reserve(start='2012-04-01', end='2012-04-02', size=0)
+        self.room5.reserve(start='2012-04-02', end='2012-04-04', size=0)
+        self.room5.reserve(start='2012-04-05', end='2012-04-07', size=0)
+        self.assertEqual(3, ConferenceRoomReservation.objects.count())

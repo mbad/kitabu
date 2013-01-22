@@ -12,12 +12,27 @@ class BaseReservation(models.Model, EnsureSize):
     start = models.DateTimeField()
     end = models.DateTimeField()
 
+    def __unicode__(self):
+        return "id: %s, start: %s, end: %s" % (self.id, self.start, self.end)
+
 
 class ReservationWithSize(BaseReservation):
     class Meta:
         abstract = True
 
-    size = models.IntegerField()
+    size = models.PositiveIntegerField()
+
+
+class ReservationMaybeExclusive(ReservationWithSize):
+    class Meta:
+        abstract = True
+
+    exclusive = models.BooleanField(default=False)
+
+    def __init__(self, *args, **kwargs):
+        super(ReservationMaybeExclusive, self).__init__(*args, **kwargs)
+        if self.exclusive:
+            self.size = self.subject.size
 
 
 class ReservationGroup(models.Model):
