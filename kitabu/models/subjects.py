@@ -108,8 +108,12 @@ class FixedSizeSubject(FiniteSizeSubject):
     @classmethod
     def with_size(cls, size):
         # TODO: fix this, class should not be modified
-        cls._size = size
-        return cls
+        class C(cls):
+            _size = size
+
+            class Meta:
+                abstract = True
+        return C
 
     @property
     def size(self):
