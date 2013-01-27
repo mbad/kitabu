@@ -9,3 +9,4 @@ django-registration-defaults==0.3
 mock==1.0.0
 psycopg2==2.4.5
 wsgiref==0.1.2
+Werkzeug==0.8.3
