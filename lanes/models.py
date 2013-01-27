@@ -2,7 +2,7 @@ from django.db import models
 from django.contrib.auth.models import User
 
 from kitabu.models.subjects import VariableSizeSubject
-from kitabu.models.reservations import ReservationWithSize, ReservationGroup
+from kitabu.models.reservations import ReservationMaybeExclusive, ReservationGroup
 from kitabu.models import validators
 
 from pools.models import Pool
@@ -16,7 +16,7 @@ class Lane(VariableSizeSubject):
         return self.name
 
 
-class LaneReservation(ReservationWithSize):
+class LaneReservation(ReservationMaybeExclusive):
     subject = models.ForeignKey('Lane', related_name='reservations')
     group = models.ForeignKey('LaneReservationGroup', related_name='reservations', null=True, blank=True)
     owner = models.ForeignKey(User, null=True)

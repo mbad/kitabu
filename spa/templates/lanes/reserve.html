@@ -16,7 +16,8 @@
         <ul>
             {% for reservation in lane.reservations.all %}
                 <li>
-                    {{ reservation.start }} - {{ reservation.end }}, with {{ reservation.size }} places taken.
+                    {{ reservation.start }} - {{ reservation.end }}, with {{ reservation.size }} places 
+                    taken{% if reservation.exclusive %} (exlusive){% endif %}.
                     {% if reservation.group %}
                         Reservation group: {{ reservation.group.id }}
                     {% endif %}

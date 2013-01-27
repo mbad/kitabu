@@ -7,67 +7,13 @@ class Migration(SchemaMigration):
 
     def forwards(self, orm):
 
-        # Changing field 'LaneReservation.size'
-        db.alter_column('lanes_lanereservation', 'size', self.gf('django.db.models.fields.PositiveIntegerField')())
-
-        # Deleting field 'LaneGivenHoursAndWeekdaysValidator.hours'
-        db.delete_column('lanes_lanegivenhoursandweekdaysvalidator', 'hours')
-
-        # Deleting field 'LaneGivenHoursAndWeekdaysValidator.days'
-        db.delete_column('lanes_lanegivenhoursandweekdaysvalidator', 'days')
-
-        # Adding field 'LaneGivenHoursAndWeekdaysValidator.monday'
-        db.add_column('lanes_lanegivenhoursandweekdaysvalidator', 'monday', self.gf('django.db.models.fields.PositiveIntegerField')(default=0), keep_default=False)
-
-        # Adding field 'LaneGivenHoursAndWeekdaysValidator.tuesday'
-        db.add_column('lanes_lanegivenhoursandweekdaysvalidator', 'tuesday', self.gf('django.db.models.fields.PositiveIntegerField')(default=0), keep_default=False)
-
-        # Adding field 'LaneGivenHoursAndWeekdaysValidator.wednesday'
-        db.add_column('lanes_lanegivenhoursandweekdaysvalidator', 'wednesday', self.gf('django.db.models.fields.PositiveIntegerField')(default=0), keep_default=False)
-
-        # Adding field 'LaneGivenHoursAndWeekdaysValidator.thursday'
-        db.add_column('lanes_lanegivenhoursandweekdaysvalidator', 'thursday', self.gf('django.db.models.fields.PositiveIntegerField')(default=0), keep_default=False)
-
-        # Adding field 'LaneGivenHoursAndWeekdaysValidator.friday'
-        db.add_column('lanes_lanegivenhoursandweekdaysvalidator', 'friday', self.gf('django.db.models.fields.PositiveIntegerField')(default=0), keep_default=False)
-
-        # Adding field 'LaneGivenHoursAndWeekdaysValidator.saturday'
-        db.add_column('lanes_lanegivenhoursandweekdaysvalidator', 'saturday', self.gf('django.db.models.fields.PositiveIntegerField')(default=0), keep_default=False)
-
-        # Adding field 'LaneGivenHoursAndWeekdaysValidator.sunday'
-        db.add_column('lanes_lanegivenhoursandweekdaysvalidator', 'sunday', self.gf('django.db.models.fields.PositiveIntegerField')(default=0), keep_default=False)
+        # Adding field 'LaneReservation.exclusive'
+        db.add_column('lanes_lanereservation', 'exclusive', self.gf('django.db.models.fields.BooleanField')(default=False), keep_default=False)
 
     def backwards(self, orm):
 
-        # Changing field 'LaneReservation.size'
-        db.alter_column('lanes_lanereservation', 'size', self.gf('django.db.models.fields.IntegerField')())
-
-        # Adding field 'LaneGivenHoursAndWeekdaysValidator.hours'
-        db.add_column('lanes_lanegivenhoursandweekdaysvalidator', 'hours', self.gf('django.db.models.fields.PositiveIntegerField')(default=0), keep_default=False)
-
-        # Adding field 'LaneGivenHoursAndWeekdaysValidator.days'
-        db.add_column('lanes_lanegivenhoursandweekdaysvalidator', 'days', self.gf('django.db.models.fields.PositiveIntegerField')(default=0), keep_default=False)
-
-        # Deleting field 'LaneGivenHoursAndWeekdaysValidator.monday'
-        db.delete_column('lanes_lanegivenhoursandweekdaysvalidator', 'monday')
-
-        # Deleting field 'LaneGivenHoursAndWeekdaysValidator.tuesday'
-        db.delete_column('lanes_lanegivenhoursandweekdaysvalidator', 'tuesday')
-
-        # Deleting field 'LaneGivenHoursAndWeekdaysValidator.wednesday'
-        db.delete_column('lanes_lanegivenhoursandweekdaysvalidator', 'wednesday')
-
-        # Deleting field 'LaneGivenHoursAndWeekdaysValidator.thursday'
-        db.delete_column('lanes_lanegivenhoursandweekdaysvalidator', 'thursday')
-
-        # Deleting field 'LaneGivenHoursAndWeekdaysValidator.friday'
-        db.delete_column('lanes_lanegivenhoursandweekdaysvalidator', 'friday')
-
-        # Deleting field 'LaneGivenHoursAndWeekdaysValidator.saturday'
-        db.delete_column('lanes_lanegivenhoursandweekdaysvalidator', 'saturday')
-
-        # Deleting field 'LaneGivenHoursAndWeekdaysValidator.sunday'
-        db.delete_column('lanes_lanegivenhoursandweekdaysvalidator', 'sunday')
+        # Deleting field 'LaneReservation.exclusive'
+        db.delete_column('lanes_lanereservation', 'exclusive')
 
     models = {
         'auth.group': {
@@ -85,7 +31,7 @@ class Migration(SchemaMigration):
         },
         'auth.user': {
             'Meta': {'object_name': 'User'},
-            'date_joined': ('django.db.models.fields.DateTimeField', [], {'default': 'datetime.datetime(2013, 1, 27, 4, 46, 42, 276776)'}),
+            'date_joined': ('django.db.models.fields.DateTimeField', [], {'default': 'datetime.datetime(2013, 1, 27, 4, 59, 34, 771077)'}),
             'email': ('django.db.models.fields.EmailField', [], {'max_length': '75', 'blank': 'True'}),
             'first_name': ('django.db.models.fields.CharField', [], {'max_length': '30', 'blank': 'True'}),
             'groups': ('django.db.models.fields.related.ManyToManyField', [], {'to': "orm['auth.Group']", 'symmetrical': 'False', 'blank': 'True'}),
@@ -93,7 +39,7 @@ class Migration(SchemaMigration):
             'is_active': ('django.db.models.fields.BooleanField', [], {'default': 'True'}),
             'is_staff': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             'is_superuser': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
-            'last_login': ('django.db.models.fields.DateTimeField', [], {'default': 'datetime.datetime(2013, 1, 27, 4, 46, 42, 276465)'}),
+            'last_login': ('django.db.models.fields.DateTimeField', [], {'default': 'datetime.datetime(2013, 1, 27, 4, 59, 34, 770939)'}),
             'last_name': ('django.db.models.fields.CharField', [], {'max_length': '30', 'blank': 'True'}),
             'password': ('django.db.models.fields.CharField', [], {'max_length': '128'}),
             'user_permissions': ('django.db.models.fields.related.ManyToManyField', [], {'to': "orm['auth.Permission']", 'symmetrical': 'False', 'blank': 'True'}),
@@ -146,6 +92,7 @@ class Migration(SchemaMigration):
         'lanes.lanereservation': {
             'Meta': {'object_name': 'LaneReservation'},
             'end': ('django.db.models.fields.DateTimeField', [], {}),
+            'exclusive': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             'group': ('django.db.models.fields.related.ForeignKey', [], {'blank': 'True', 'related_name': "'reservations'", 'null': 'True', 'to': "orm['lanes.LaneReservationGroup']"}),
             'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'owner': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['auth.User']", 'null': 'True'}),
