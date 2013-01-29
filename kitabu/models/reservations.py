@@ -16,11 +16,19 @@ class BaseReservation(models.Model, EnsureSize):
         return "id: %s, start: %s, end: %s" % (self.id, self.start, self.end)
 
 
-class ReservationWithSize(BaseReservation):
+class ReservationWithSize(models.Model):
     class Meta:
         abstract = True
 
     size = models.PositiveIntegerField()
+
+
+class ApprovableReservation(models.Model):
+    class Meta:
+        abstract = True
+
+    approved = models.BooleanField()
+    valid_until = models.DateTimeField()
 
 
 class ReservationMaybeExclusive(ReservationWithSize):
