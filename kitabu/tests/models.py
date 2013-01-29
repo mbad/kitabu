@@ -1,6 +1,8 @@
 from django.db import models
-from kitabu.models.subjects import BaseSubject, ExclusiveSubject, FixedSizeSubject, VariableSizeSubject
-from kitabu.models.reservations import BaseReservation, ReservationWithSize, ReservationGroup, ReservationMaybeExclusive
+from kitabu.models.subjects import (BaseSubject, ExclusiveSubject, FixedSizeSubject, VariableSizeSubject,
+                                    SubjectWithApprovableReservations)
+from kitabu.models.reservations import (BaseReservation, ReservationWithSize, ReservationGroup,
+                                        ReservationMaybeExclusive, ApprovableReservation)
 from kitabu.models.clusters import BaseCluster
 from kitabu.models.validators import (
     FullTimeValidator as KitabuFullTimeValidator,
@@ -97,3 +99,11 @@ class ConferenceRoom(VariableSizeSubject, BaseSubject):
 
 class ConferenceRoomReservation(ReservationMaybeExclusive, BaseReservation):
     subject = models.ForeignKey(ConferenceRoom, related_name='reservations')
+
+
+class RoomWithApprovableReservations(VariableSizeSubject, SubjectWithApprovableReservations, BaseSubject):
+    pass
+
+
+class ApprovableRoomReservation(ReservationWithSize, ApprovableReservation, BaseReservation):
+    subject = models.ForeignKey(RoomWithApprovableReservations, related_name='reservations')

@@ -27,8 +27,8 @@ class ApprovableReservation(models.Model):
     class Meta:
         abstract = True
 
-    approved = models.BooleanField()
-    valid_until = models.DateTimeField()
+    approved = models.BooleanField(default=True)
+    valid_until = models.DateTimeField(null=True)
 
 
 class ReservationMaybeExclusive(ReservationWithSize):

@@ -58,9 +58,15 @@ class BaseSubject(models.Model, EnsureSize):
 
 
 class SubjectWithApprovableReservations(models.Model):
+    class Meta:
+        abstract = True
+
     def overlapping_reservations(self, start, end):
         extra_filter = Q(approved=True) | Q(valid_until__gt=datetime.datetime.utcnow())
         return self.reservations.filter(extra_filter, start__lt=end, end__gt=start)
+
+    def make_pre_reservation(self, start=None, end=None, valid_until=None, **kwargs):
+        return self.reserve(start=start, end=end, valid_until=valid_until, approved=False, **kwargs)
 
 
 class ExclusiveSubject(models.Model):
