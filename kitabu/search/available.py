@@ -33,9 +33,10 @@ class ExclusivelyAvailableSubjects(Subjects):
     '''
 
     def search(self, start, end):
-        colliding_reservations = self.reservation_model.objects.filter(
-            start__lt=end, end__gt=start,
-            subject__in=self.subject_manager.all()
+        colliding_reservations = self.reservation_model.colliding_reservations_in_subjects(
+            start=start,
+            end=end,
+            subjects=self.subject_manager.all()
         )
         disqualified_subjects = colliding_reservations.values('subject_id').distinct()
         return self.subject_manager.exclude(id__in=disqualified_subjects)
@@ -48,10 +49,10 @@ class FiniteAvailability(Subjects):
     '''
 
     def search(self, start, end, required_size):
-
-        colliding_reservations = self.reservation_model.objects.filter(
-            start__lt=end, end__gt=start,
-            subject__in=self.subject_manager.all(),
+        colliding_reservations = self.reservation_model.colliding_reservations_in_subjects(
+            start=start,
+            end=end,
+            subjects=self.subject_manager.all()
         ).select_related('subject')
 
         timelines = defaultdict(lambda: defaultdict(lambda: 0))
@@ -143,9 +144,10 @@ class ClusterFiniteAvailability(Subjects):
         clusters_with_size = self.cluster_manager.annotate(size=Sum(self.subject_related_name + '__size'))
         clusters_with_size_dict = dict((cluster.id, cluster) for cluster in clusters_with_size)
 
-        colliding_reservations = self.reservation_model.objects.filter(
-            start__lt=end, end__gt=start,
-            subject__cluster_id__in=self.cluster_manager.all(),
+        colliding_reservations = self.reservation_model.colliding_reservations_in_clusters(
+            start=start,
+            end=end,
+            clusters=self.cluster_manager.all()
         ).select_related('subject')
 
         timelines = defaultdict(lambda: defaultdict(lambda: 0))

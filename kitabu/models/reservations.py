@@ -15,6 +15,20 @@ class BaseReservation(models.Model, EnsureSize):
     def __unicode__(self):
         return "id: %s, start: %s, end: %s" % (self.id, self.start, self.end)
 
+    @classmethod
+    def colliding_reservations_in_subjects(cls, start, end, subjects, **kwargs):
+        kwargs['subject__cluster_id__in'] = subjects
+        return cls.colliding_reservations(start=start, end=end, **kwargs)
+
+    @classmethod
+    def colliding_reservations_in_clusters(cls, start, end, clusters, **kwargs):
+        kwargs['subject__cluster_id__in'] = clusters
+        return cls.colliding_reservations(start=start, end=end, **kwargs)
+
+    @classmethod
+    def colliding_reservations(cls, start, end, **kwargs):
+        return cls.objects.filter(start__lt=end, end__gt=start, **kwargs)
+
 
 class ReservationWithSize(models.Model):
     class Meta:
