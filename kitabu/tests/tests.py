@@ -6,6 +6,8 @@ from kitabu.tests.models import (
     RoomReservationGroup,
     ConferenceRoom,
     ConferenceRoomReservation,
+    RoomWithApprovableReservations,
+    ApprovableRoomReservation
 )
 from kitabu.exceptions import SizeExceeded, ReservationError, ValidationError
 from kitabu.utils import AtomicReserver
@@ -151,3 +153,23 @@ class ExclusiveReservationTest(TestCase):
         self.room5.reserve(start='2012-04-02', end='2012-04-04', size=0)
         self.room5.reserve(start='2012-04-05', end='2012-04-07', size=0)
         self.assertEqual(3, ConferenceRoomReservation.objects.count())
+
+
+class ApprovableReservationTest(TestCase):
+    def setUp(self):
+        self.room1 = RoomWithApprovableReservations.objects.create(size=3)
+
+    def test_proper_pre_reservation_proper_reservation(self):
+        self.room1.make_pre_reservation(start='2012-04-01', end='2012-04-02', size=2, valid_until='2100-10-10')
+        self.room1.reserve(start='2012-04-01', end='2012-04-02', size=1)
+        self.assertEqual(2, ApprovableRoomReservation.objects.count())
+
+    def test_proper_pre_reservation_improper_reservation(self):
+        self.room1.make_pre_reservation(start='2012-04-01', end='2012-04-02', size=2, valid_until='2013-10-10')
+        with self.assertRaises(SizeExceeded):
+            self.room1.reserve(start='2012-04-01', end='2012-04-02', size=2)
+
+    def test_improper_pre_reservation_proper_reservation(self):
+        self.room1.make_pre_reservation(start='2012-04-01', end='2012-04-02', size=2, valid_until='2011-10-10')
+        self.room1.reserve(start='2012-04-01', end='2012-04-02', size=3)
+        self.assertEqual(2, ApprovableRoomReservation.objects.count())

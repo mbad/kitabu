@@ -3,10 +3,13 @@
 from collections import defaultdict
 
 from django.db import models
+from django.db.models import Q
 
 from kitabu.exceptions import SizeExceeded, ValidationError
 from kitabu.utils import EnsureSize
 from kitabu.models.validators import Validator
+
+import datetime
 
 
 class BaseSubject(models.Model, EnsureSize):
@@ -22,6 +25,9 @@ class BaseSubject(models.Model, EnsureSize):
             self._validate_exclusive(reservation)
         reservation.save()
         return reservation
+
+    def overlapping_reservations(self, start, end):
+        return self.reservations.filter(start__lt=end, end__gt=start)
 
     @classmethod
     def get_reservation_model(cls):
@@ -43,8 +49,7 @@ class BaseSubject(models.Model, EnsureSize):
 
     def _validate_exclusive(self, reservation):
         # TODO: perhaps this would make sense to extract it as a static validator
-        overlapping_reservations = self.reservations.filter(
-            start__lt=reservation.end, end__gt=reservation.start)
+        overlapping_reservations = self.overlapping_reservations(reservation.start, reservation.end)
         if overlapping_reservations:
             raise ValidationError("Overlapping reservations: %s" % overlapping_reservations)
 
@@ -52,7 +57,19 @@ class BaseSubject(models.Model, EnsureSize):
         return False
 
 
-class ExclusiveSubject(BaseSubject):
+class SubjectWithApprovableReservations(models.Model):
+    class Meta:
+        abstract = True
+
+    def overlapping_reservations(self, start, end):
+        extra_filter = Q(approved=True) | Q(valid_until__gt=datetime.datetime.utcnow())
+        return self.reservations.filter(extra_filter, start__lt=end, end__gt=start)
+
+    def make_pre_reservation(self, start=None, end=None, valid_until=None, **kwargs):
+        return self.reserve(start=start, end=end, valid_until=valid_until, approved=False, **kwargs)
+
+
+class ExclusiveSubject(models.Model):
     class Meta:
         abstract = True
 
@@ -60,7 +77,7 @@ class ExclusiveSubject(BaseSubject):
         return True
 
 
-class FiniteSizeSubject(BaseSubject):
+class FiniteSizeSubject(models.Model):
     '''
     This mixin requires size property. Available e.g. in
     VariableSizeSubject and FixedSizeSubject
@@ -70,8 +87,7 @@ class FiniteSizeSubject(BaseSubject):
 
     def reserve(self, start=None, end=None, size=1, **kwargs):
         assert start and end, "start and end dates must be provided"
-        overlapping_reservations = self.reservations.filter(start__lt=end,
-                                                            end__gt=start)
+        overlapping_reservations = self.overlapping_reservations(start, end)
         if size > self.size:
             raise SizeExceeded
 

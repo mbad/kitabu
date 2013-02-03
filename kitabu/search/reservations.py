@@ -6,10 +6,7 @@ class ReservationSearch(object):
         self.reservation_model = reservation_model
 
     def search(self, start, end, *args, **kwargs):
-        return self.reservation_model.objects.filter(
-            Q(start__gte=start, start__lt=end) | Q(end__gt=start, end__lte=end) | Q(start__lte=start, end__gte=end),
-            *args, **kwargs
-        )
+        return self.reservation_model.colliding_reservations(start=start, end=end, *args, **kwargs)
 
 
 class SingleSubjectReservationSearch(ReservationSearch):
