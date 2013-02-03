@@ -1,6 +1,8 @@
 #-*- coding=utf-8 -*-
+import datetime
 
 from django.db import models, transaction
+from django.db.models import Q
 
 from kitabu.utils import EnsureSize, AtomicReserver
 
@@ -43,6 +45,12 @@ class ApprovableReservation(models.Model):
 
     approved = models.BooleanField(default=True)
     valid_until = models.DateTimeField(null=True)
+
+    @classmethod
+    def colliding_reservations(cls, start, end, *args, **kwargs):
+        extra_filter = Q(approved=True) | Q(valid_until__gt=datetime.datetime.utcnow())
+
+        return cls.objects.filter(extra_filter, start__lt=end, end__gt=start, *args, **kwargs)
 
 
 class ReservationMaybeExclusive(ReservationWithSize):
