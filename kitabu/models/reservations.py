@@ -16,18 +16,18 @@ class BaseReservation(models.Model, EnsureSize):
         return "id: %s, start: %s, end: %s" % (self.id, self.start, self.end)
 
     @classmethod
-    def colliding_reservations_in_subjects(cls, start, end, subjects, **kwargs):
+    def colliding_reservations_in_subjects(cls, start, end, subjects, *args, **kwargs):
         kwargs['subject__cluster_id__in'] = subjects
-        return cls.colliding_reservations(start=start, end=end, **kwargs)
+        return cls.colliding_reservations(start=start, end=end, *args, **kwargs)
 
     @classmethod
-    def colliding_reservations_in_clusters(cls, start, end, clusters, **kwargs):
+    def colliding_reservations_in_clusters(cls, start, end, clusters, *args, **kwargs):
         kwargs['subject__cluster_id__in'] = clusters
-        return cls.colliding_reservations(start=start, end=end, **kwargs)
+        return cls.colliding_reservations(start=start, end=end, *args, **kwargs)
 
     @classmethod
-    def colliding_reservations(cls, start, end, **kwargs):
-        return cls.objects.filter(start__lt=end, end__gt=start, **kwargs)
+    def colliding_reservations(cls, start, end, *args, **kwargs):
+        return cls.objects.filter(start__lt=end, end__gt=start, *args, **kwargs)
 
 
 class ReservationWithSize(models.Model):
