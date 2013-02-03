@@ -65,7 +65,7 @@ class SubjectWithApprovableReservations(models.Model):
         extra_filter = Q(approved=True) | Q(valid_until__gt=datetime.datetime.utcnow())
         return self.reservations.filter(extra_filter, start__lt=end, end__gt=start)
 
-    def make_pre_reservation(self, start=None, end=None, valid_until=None, **kwargs):
+    def make_preliminary_reservation(self, start=None, end=None, valid_until=None, **kwargs):
         return self.reserve(start=start, end=end, valid_until=valid_until, approved=False, **kwargs)
 
 

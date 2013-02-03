@@ -52,12 +52,12 @@ class Hotel(BaseCluster):
     pass
 
 
-class HotelRoom(VariableSizeSubject, BaseSubject):
+class HotelRoom(VariableSizeSubject, SubjectWithApprovableReservations, BaseSubject):
     cluster = models.ForeignKey(Hotel, related_name='rooms')
     name = models.TextField()
 
 
-class HotelRoomReservation(ReservationWithSize, BaseReservation):
+class HotelRoomReservation(ReservationWithSize, ApprovableReservation, BaseReservation):
     subject = models.ForeignKey(HotelRoom, related_name='reservations')
 
 
