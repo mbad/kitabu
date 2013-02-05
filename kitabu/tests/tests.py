@@ -4,6 +4,7 @@ from kitabu.tests.models import (
     Room,
     RoomReservation,
     RoomReservationGroup,
+    FiveSeatsBus,
     ConferenceRoom,
     ConferenceRoomReservation,
     RoomWithApprovableReservations,
@@ -58,6 +59,29 @@ class RoomTest(TestCase):
         with self.assertRaises(SizeExceeded):
             self.room.reserve(start='2012-04-01', end='2012-05-11', size=3)
             self.room.reserve(start='2012-04-15', end='2012-05-13', size=3)
+
+
+class BusTest(TestCase):
+    def setUp(self):
+        self.bus = FiveSeatsBus.objects.create(name="bus")
+
+    def test_one_reservation(self):
+        self.bus.reserve(start='2012-04-01', end='2012-05-11', size=3)
+        self.assertEqual(self.bus.reservations.count(), 1, "Should have one reservation")
+        self.assertEqual(self.bus.reservations.get().size, 3, "Should have 3 places reserved")
+
+    def test_two_overlapping_reservation_with_size_not_exceeded(self):
+        self.bus.reserve(start='2012-04-01', end='2012-05-11', size=3)
+        self.bus.reserve(start='2012-04-15', end='2012-05-13', size=2)
+        self.assertEqual(self.bus.reservations.count(), 2, "Should have two reservations")
+        reservations = self.bus.reservations.all()
+        sum = reduce(lambda s, r: s + r.size, reservations, 0)
+        self.assertEqual(sum, 5, "Should have 5 places reserved")
+
+    def test_two_overlapping_reservation_with_size_exceeded(self):
+        with self.assertRaises(SizeExceeded):
+            self.bus.reserve(start='2012-04-01', end='2012-05-11', size=3)
+            self.bus.reserve(start='2012-04-15', end='2012-05-13', size=3)
 
 
 class AtomicReserveTest(TransactionTestCase):
