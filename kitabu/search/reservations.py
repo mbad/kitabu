@@ -1,6 +1,3 @@
-from django.db.models import Q
-
-
 class ReservationSearch(object):
     def __init__(self, reservation_model):
         self.reservation_model = reservation_model

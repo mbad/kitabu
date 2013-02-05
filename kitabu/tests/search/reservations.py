@@ -4,8 +4,6 @@ from kitabu.tests.models import (
     Hotel,
     HotelRoom,
     HotelRoomReservation,
-    RoomWithApprovableReservations,
-    ApprovableRoomReservation
 )
 from kitabu.search.reservations import (
     ReservationSearch,
