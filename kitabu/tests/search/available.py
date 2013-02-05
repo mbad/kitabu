@@ -311,7 +311,9 @@ class ClusterAvailabilityWithApprovableReservationsTest(TestCase):
         self.room1.make_preliminary_reservation(start='2000-11-30', end='2001-01-21', size=4, valid_until='1900-10-10')
         self.room2.make_preliminary_reservation(start='2001-01-20', end='2001-02-11', size=2, valid_until='2100-10-10')
 
-        self.room3.make_preliminary_reservation(start='2001-01-05', end='2001-01-14', size=4, valid_until='2100-10-10')
+        reservation = self.room3.make_preliminary_reservation(
+            start='2001-01-05', end='2001-01-14', size=4, valid_until='1900-10-10')
+        reservation.approve()
         self.room3.reserve(start='2001-01-10', end='2001-01-17', size=4)
         self.room4.make_preliminary_reservation(start='2000-12-20', end='2001-02-18', size=7, valid_until='2100-10-10')
 

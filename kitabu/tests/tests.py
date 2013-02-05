@@ -16,6 +16,7 @@ from kitabu.exceptions import (
     OverlappingReservations,
 )
 from kitabu.utils import AtomicReserver
+from datetime import datetime
 
 
 class TennisCourtTest(TestCase):
@@ -201,3 +202,24 @@ class ApprovableReservationTest(TestCase):
         self.room1.make_preliminary_reservation(start='2012-04-01', end='2012-04-02', size=2, valid_until='2011-10-10')
         self.room1.reserve(start='2012-04-01', end='2012-04-02', size=3)
         self.assertEqual(2, ApprovableRoomReservation.objects.count())
+
+    def test_valid_reservation(self):
+        reservation = self.room1.make_preliminary_reservation(
+            start=datetime(2012, 4, 1),
+            end=datetime(2012, 4, 2),
+            size=2,
+            valid_until=datetime(2100, 4, 1)
+        )
+        self.assertTrue(reservation.is_valid())
+
+    def test_invalid_reservation(self):
+        reservation = self.room1.make_preliminary_reservation(
+            start=datetime(2012, 4, 1),
+            end=datetime(2012, 4, 2),
+            size=2,
+            valid_until=datetime(1900, 4, 1)
+        )
+        self.assertFalse(reservation.is_valid())
+
+        reservation.approve()
+        self.assertTrue(reservation.is_valid())

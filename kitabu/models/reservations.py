@@ -52,6 +52,10 @@ class ApprovableReservation(models.Model):
     def is_valid(self):
         return self.approved or self.valid_until > datetime.datetime.now()
 
+    def approve(self):
+        self.approved = True
+        self.save()
+
     @classmethod
     def colliding_reservations(cls, start, end, *args, **kwargs):
         extra_filter = Q(approved=True) | Q(valid_until__gt=datetime.datetime.utcnow())
