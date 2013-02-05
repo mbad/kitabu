@@ -11,16 +11,9 @@ class Timeline(list):
         self.subject = subject
 
         if subject and not reservations:
-            reservations = subject.reservation_model.objects.filter(
-                (
-                    Q(start__gte=start, start__lt=end)   # start in scope
-                    | Q(end__gt=start, end__lte=end)     # end in scope
-                    | Q(start__lte=start, end__gte=end)  # covers whole scope
-                ),
-                subject=subject,
-            ).select_related('subject')
+            reservations = subject.overlapping_reservations(start=start, end=end).select_related('subject')
         elif subject and reservations:
-            reservations = [r for r in reservations if r.subject_id == subject.id]
+            reservations = [r for r in reservations if r.subject_id == subject.id and r.is_valid()]
 
         timeline = defaultdict(lambda: 0)
 

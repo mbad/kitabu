@@ -172,6 +172,55 @@ class VaryingDateAndSizeSearchTest(TestCase):
         )
 
 
+class FindPeriodTestWithApprovableReservations(TestCase):
+    def setUp(self):
+        self.hotel = Hotel.objects.create(name='Hotel')
+        self.room1 = HotelRoom.objects.create(name='Room 1', size=1, cluster=self.hotel)
+
+    def test_begin_of_period_unavailable(self):
+        reservation_start = datetime(2001, 1, 1)
+        reservation_end = datetime(2001, 1, 8)
+
+        preliminary_reservation_start = datetime(2001, 1, 8)
+        preliminary_reservation_end = datetime(2001, 1, 14)
+
+        invalid_preliminary_reservation_start = datetime(2001, 1, 14)
+        invalid_preliminary_reservation_end = datetime(2001, 1, 20)
+
+        self.room1.reserve(
+            size=1,
+            start=reservation_start,
+            end=reservation_end
+        )
+        self.room1.make_preliminary_reservation(
+            size=1,
+            start=preliminary_reservation_start,
+            end=preliminary_reservation_end,
+            valid_until='2100-10-10'
+        )
+        self.room1.make_preliminary_reservation(
+            size=1,
+            start=invalid_preliminary_reservation_start,
+            end=invalid_preliminary_reservation_end,
+            valid_until='1900-10-10'
+        )
+
+        start = datetime(2001, 01, 01)
+        end = datetime(2001, 01, 31)
+        data = {
+            'start': start,
+            'end': end,
+            'required_duration': timedelta(7),
+            'required_size': 1,
+            'subject': self.room1,
+        }
+        searcher = FindPeriod()
+        self.assertEqual(
+            searcher.search(**data),
+            [(preliminary_reservation_end, end)]
+        )
+
+
 class ClusterFiniteAvailabilitySearchTest(TestCase):
     def setUp(self):
         '''
@@ -195,8 +244,8 @@ class ClusterFiniteAvailabilitySearchTest(TestCase):
         }
         searcher = ClusterFiniteAvailability(HotelRoom, Hotel, 'rooms')
         results = searcher.search(**data)
-        self.assertEqual(len(results), 1, 'There should be one hotel returned')
-        self.assertEqual(results[0].name, 'Hotel 2', 'Hotel 2 should be returned')
+        self.assertEqual(len(results), 1)
+        self.assertEqual(results[0].name, 'Hotel 2')
 
     def test_all_reservations_overlapping(self):
         self.room1.reserve(start='2000-12-30', end='2001-01-22', size=1)
@@ -217,8 +266,8 @@ class ClusterFiniteAvailabilitySearchTest(TestCase):
         searcher = ClusterFiniteAvailability(HotelRoom, Hotel, 'rooms')
         results = searcher.search(**data)
 
-        self.assertEqual(len(results), 1, 'There should be one hotel returned')
-        self.assertEqual(results[0].name, 'Hotel 1', 'Hotel 1 should be returned')
+        self.assertEqual(len(results), 1)
+        self.assertEqual(results[0].name, 'Hotel 1')
 
     def test_the_need_to_switch_room(self):
         self.room3.reserve(start='2001-01-01', end='2001-01-15', size=5)
@@ -238,8 +287,8 @@ class ClusterFiniteAvailabilitySearchTest(TestCase):
 
         results = searcher.search(**data)
         length = len(results)
-        self.assertEqual(length, 1, 'There should be one hotel returned. ' + str(length) + ' hotels returned instead')
-        self.assertEqual(results[0].name, 'Hotel 1', 'Hotel 1 should be returned')
+        self.assertEqual(length, 1)
+        self.assertEqual(results[0].name, 'Hotel 1')
 
 
 class ClusterAvailabilityWithApprovableReservationsTest(TestCase):
@@ -276,5 +325,5 @@ class ClusterAvailabilityWithApprovableReservationsTest(TestCase):
         searcher = ClusterFiniteAvailability(HotelRoom, Hotel, 'rooms')
         results = searcher.search(**data)
 
-        self.assertEqual(len(results), 1, 'There should be one hotel returned')
-        self.assertEqual(results[0].name, 'Hotel 1', 'Hotel 1 should be returned')
+        self.assertEqual(len(results), 1)
+        self.assertEqual(results[0].name, 'Hotel 1')

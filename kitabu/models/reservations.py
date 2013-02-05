@@ -14,6 +14,9 @@ class BaseReservation(models.Model, EnsureSize):
     start = models.DateTimeField()
     end = models.DateTimeField()
 
+    def is_valid(self):
+        return True
+
     def __unicode__(self):
         return "id: %s, start: %s, end: %s" % (self.id, self.start, self.end)
 
@@ -45,6 +48,9 @@ class ApprovableReservation(models.Model):
 
     approved = models.BooleanField(default=True)
     valid_until = models.DateTimeField(null=True)
+
+    def is_valid(self):
+        return self.approved or self.valid_until > datetime.datetime.now()
 
     @classmethod
     def colliding_reservations(cls, start, end, *args, **kwargs):
