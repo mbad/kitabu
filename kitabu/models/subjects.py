@@ -5,7 +5,10 @@ from collections import defaultdict
 from django.db import models
 from django.db.models import Q
 
-from kitabu.exceptions import SizeExceeded, ValidationError
+from kitabu.exceptions import (
+    SizeExceeded,
+    OverlappingReservations,
+)
 from kitabu.utils import EnsureSize
 from kitabu.models.validators import Validator
 
@@ -51,7 +54,7 @@ class BaseSubject(models.Model, EnsureSize):
         # TODO: perhaps this would make sense to extract it as a static validator
         overlapping_reservations = self.overlapping_reservations(reservation.start, reservation.end)
         if overlapping_reservations:
-            raise ValidationError("Overlapping reservations: %s" % overlapping_reservations)
+            raise OverlappingReservations(reservation, overlapping_reservations)
 
     def _only_exclusive_reservations(self):
         return False
@@ -87,9 +90,11 @@ class FiniteSizeSubject(models.Model):
 
     def reserve(self, start=None, end=None, size=1, **kwargs):
         assert start and end, "start and end dates must be provided"
-        overlapping_reservations = self.overlapping_reservations(start, end)
+
         if size > self.size:
-            raise SizeExceeded
+            raise SizeExceeded(subject=self, requested_size=size, start=start, end=end)
+
+        overlapping_reservations = self.overlapping_reservations(start, end)
 
         dates = defaultdict(lambda: 0)
         for r in overlapping_reservations:
@@ -100,7 +105,13 @@ class FiniteSizeSubject(models.Model):
         for date, delta in sorted(dates.iteritems()):
             balance += delta
             if balance + size > self.size:
-                raise SizeExceeded
+                raise SizeExceeded(
+                    subject=self,
+                    requested_size=size,
+                    start=start,
+                    end=end,
+                    overlapping_reservations=overlapping_reservations
+                )
 
         return super(FiniteSizeSubject, self).reserve(start=start, end=end, size=size, **kwargs)
 

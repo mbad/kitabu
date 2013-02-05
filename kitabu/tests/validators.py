@@ -4,7 +4,7 @@ from mock import Mock, patch
 
 from django.test import TestCase
 
-from kitabu.exceptions import ValidationError
+from kitabu.exceptions import ValidationError, InvalidPeriodValidationError
 
 from kitabu.tests.models import (
     FullTimeValidator,
@@ -46,7 +46,7 @@ class SubjectWithValidatorTest(TestCase):
 
         start = datetime(2000, 01, 01, 16, 07)
         end = datetime(2000, 01, 01, 16, 21)
-        with self.assertRaises(ValidationError):
+        with self.assertRaises(InvalidPeriodValidationError):
             self.room.reserve(start=start, end=end, size=1)
 
         current_count = self.room.reservations.count()
@@ -75,7 +75,7 @@ class SubjectAndUniversalValidatorTest(TestCase):
 
         start = datetime(2000, 01, 01, 16, 07)
         end = datetime(2000, 01, 01, 16, 21)
-        with self.assertRaises(ValidationError):
+        with self.assertRaises(InvalidPeriodValidationError):
             self.room.reserve(start=start, end=end, size=1)
 
         current_count = self.room.reservations.count()
@@ -99,11 +99,11 @@ class FullTimeValidatorTest(TestCase):
         reservation.start = datetime(2000, 1, 1, 16, 40, 30, 0)
         validator.validate(reservation)
 
-        with self.assertRaises(ValidationError):
+        with self.assertRaises(InvalidPeriodValidationError):
             reservation.start = datetime(2000, 1, 1, 16, 40, 15)
             validator.validate(reservation)
 
-        with self.assertRaises(ValidationError):
+        with self.assertRaises(InvalidPeriodValidationError):
             reservation.start = datetime(2000, 1, 1, 16, 40, 0, 1)
             validator.validate(reservation)
 
@@ -115,11 +115,11 @@ class FullTimeValidatorTest(TestCase):
         reservation.start = datetime(2000, 1, 1, 16, 0)
         validator.validate(reservation)
 
-        with self.assertRaises(ValidationError):
+        with self.assertRaises(InvalidPeriodValidationError):
             reservation.start = datetime(2000, 1, 1, 16, 40, 0, 1)
             validator.validate(reservation)
 
-        with self.assertRaises(ValidationError):
+        with self.assertRaises(InvalidPeriodValidationError):
             reservation.start = datetime(2000, 1, 1, 16, 0, 0, 1)
             validator.validate(reservation)
 
@@ -131,11 +131,11 @@ class FullTimeValidatorTest(TestCase):
         reservation.start = datetime(2000, 1, 1, 16, 0)
         validator.validate(reservation)
 
-        with self.assertRaises(ValidationError):
+        with self.assertRaises(InvalidPeriodValidationError):
             reservation.start = datetime(2000, 1, 1, 16, 40, 0, 0)
             validator.validate(reservation)
 
-        with self.assertRaises(ValidationError):
+        with self.assertRaises(InvalidPeriodValidationError):
             reservation.start = datetime(2000, 1, 1, 16, 0, 0, 1)
             validator.validate(reservation)
 
@@ -151,17 +151,17 @@ class FullTimeValidatorTest(TestCase):
         reservation.end = datetime(2000, 1, 1, 16, 0)
         validator.validate(reservation)
 
-        with self.assertRaises(ValidationError):
+        with self.assertRaises(InvalidPeriodValidationError):
             reservation.start = datetime(2000, 1, 1, 15, 0, 0, 0)
             reservation.end = datetime(2000, 1, 1, 16, 0)
             validator.validate(reservation)
 
-        with self.assertRaises(ValidationError):
+        with self.assertRaises(InvalidPeriodValidationError):
             reservation.start = datetime(2000, 1, 1, 16, 0, 0, 0)
             reservation.end = datetime(2000, 1, 1, 17, 0, 0, 0)
             validator.validate(reservation)
 
-        with self.assertRaises(ValidationError):
+        with self.assertRaises(InvalidPeriodValidationError):
             reservation.start = datetime(2000, 1, 1, 15, 0, 0, 0)
             reservation.end = datetime(2000, 1, 1, 17, 0, 0, 0)
             validator.validate(reservation)
@@ -297,7 +297,7 @@ class TimeIntervalValidatorTest(TestCase):
         self.reservation.start = datetime(2000, 1, 16, 0, 0)
         self.reservation.end = datetime(2000, 1, 26, 0, 0)
 
-        with self.assertRaises(ValidationError):
+        with self.assertRaises(InvalidPeriodValidationError):
             self.validator.validate(self.reservation)
 
     @setup_and_patch_5_days('at_least')
@@ -305,7 +305,7 @@ class TimeIntervalValidatorTest(TestCase):
         self.reservation.start = datetime(2000, 1, 1)
         self.reservation.end = datetime(2000, 1, 1)
 
-        with self.assertRaises(ValidationError):
+        with self.assertRaises(InvalidPeriodValidationError):
             self.validator.validate(self.reservation)
 
     @setup_and_patch_5_days('at_least')
@@ -313,7 +313,7 @@ class TimeIntervalValidatorTest(TestCase):
         self.reservation.start = datetime(2000, 1, 3)
         self.reservation.end = datetime(2000, 1, 3)
 
-        with self.assertRaises(ValidationError):
+        with self.assertRaises(InvalidPeriodValidationError):
             self.validator.validate(self.reservation)
 
     @setup_and_patch_5_days('at_least')
@@ -321,7 +321,7 @@ class TimeIntervalValidatorTest(TestCase):
         self.reservation.start = datetime(1999, 4, 1)
         self.reservation.end = datetime(1999, 5, 1)
 
-        with self.assertRaises(ValidationError):
+        with self.assertRaises(InvalidPeriodValidationError):
             self.validator.validate(self.reservation)
 
     @setup_and_patch_5_days('at_least')
@@ -329,7 +329,7 @@ class TimeIntervalValidatorTest(TestCase):
         self.reservation.start = datetime(2000, 1, 5, 23, 59)
         self.reservation.end = datetime(2000, 1, 5, 23, 59)
 
-        with self.assertRaises(ValidationError):
+        with self.assertRaises(InvalidPeriodValidationError):
             self.validator.validate(self.reservation)
 
     @setup_and_patch_5_days('at_least')
@@ -358,7 +358,7 @@ class TimeIntervalValidatorTest(TestCase):
             self.reservation.start = datetime(1999, 12, 31, 23, 15)
             self.reservation.end = datetime(2000, 1, 26, 0, 0)
 
-            with self.assertRaises(ValidationError):
+            with self.assertRaises(InvalidPeriodValidationError):
                 self.validator.validate(self.reservation)
 
     def test_a_quarter_too_soon_start(self):
@@ -372,7 +372,7 @@ class TimeIntervalValidatorTest(TestCase):
 
             self.reservation.start = datetime(2000, 1, 1, 0, 30)
 
-            with self.assertRaises(ValidationError):
+            with self.assertRaises(InvalidPeriodValidationError):
                 self.validator.validate(self.reservation)
 
     def test_just_in_time(self):
@@ -400,7 +400,7 @@ class NotSoonerThanValidatorTest(TestCase):
         reservation.begin = datetime(2000, 1, 2)
         validator.validate(reservation)
 
-        with self.assertRaises(ValidationError):
+        with self.assertRaises(InvalidPeriodValidationError):
             reservation.begin = datetime(2000, 1, 1)
             validator.validate(reservation)
 
@@ -413,19 +413,19 @@ class NotSoonerThanValidatorTest(TestCase):
         reservation.start = datetime(2000, 1, 1)
         reservation.end = datetime(2000, 1, 1)
 
-        with self.assertRaises(ValidationError):
+        with self.assertRaises(InvalidPeriodValidationError):
             validator.validate(reservation)
 
         reservation.start = datetime(2000, 1, 3)
         reservation.end = datetime(2000, 1, 1)
 
-        with self.assertRaises(ValidationError):
+        with self.assertRaises(InvalidPeriodValidationError):
             validator.validate(reservation)
 
         reservation.start = datetime(2000, 1, 1)
         reservation.end = datetime(2000, 1, 4)
 
-        with self.assertRaises(ValidationError):
+        with self.assertRaises(InvalidPeriodValidationError):
             validator.validate(reservation)
 
         reservation.start = datetime(2000, 1, 1, 16)
@@ -443,7 +443,7 @@ class NotLaterThanValidatorTest(TestCase):
         reservation.begin = datetime(2000, 1, 2)
         validator.validate(reservation)
 
-        with self.assertRaises(ValidationError):
+        with self.assertRaises(InvalidPeriodValidationError):
             reservation.begin = datetime(2000, 1, 3)
             validator.validate(reservation)
 
@@ -456,19 +456,19 @@ class NotLaterThanValidatorTest(TestCase):
         reservation.start = datetime(2000, 1, 1)
         reservation.end = datetime(2000, 1, 3)
 
-        with self.assertRaises(ValidationError):
+        with self.assertRaises(InvalidPeriodValidationError):
             validator.validate(reservation)
 
         reservation.start = datetime(2000, 1, 3)
         reservation.end = datetime(2000, 1, 1)
 
-        with self.assertRaises(ValidationError):
+        with self.assertRaises(InvalidPeriodValidationError):
             validator.validate(reservation)
 
         reservation.start = datetime(2000, 1, 3)
         reservation.end = datetime(2000, 1, 4)
 
-        with self.assertRaises(ValidationError):
+        with self.assertRaises(InvalidPeriodValidationError):
             validator.validate(reservation)
 
         reservation.start = datetime(2000, 1, 1, 16)
@@ -493,19 +493,19 @@ class WithinPeriodTest(TestCase):
         reservation.begin = datetime(2000, 1, 4)
         validator.validate(reservation)
 
-        with self.assertRaises(ValidationError):
+        with self.assertRaises(InvalidPeriodValidationError):
             reservation.begin = datetime(2000, 1, 1)
             validator.validate(reservation)
 
-        with self.assertRaises(ValidationError):
+        with self.assertRaises(InvalidPeriodValidationError):
             reservation.begin = datetime(2000, 1, 5)
             validator.validate(reservation)
 
-        with self.assertRaises(ValidationError):
+        with self.assertRaises(InvalidPeriodValidationError):
             reservation.begin = datetime(2002, 1, 5)
             validator.validate(reservation)
 
-        with self.assertRaises(ValidationError):
+        with self.assertRaises(InvalidPeriodValidationError):
             reservation.begin = datetime(1998, 1, 3)
             validator.validate(reservation)
 
@@ -523,7 +523,7 @@ class WithinPeriodTest(TestCase):
         reservation.start = datetime(2000, 1, 3)
         reservation.end = datetime(2000, 1, 1)
 
-        with self.assertRaises(ValidationError):
+        with self.assertRaises(InvalidPeriodValidationError):
             validator.validate(reservation)
 
         reservation.start = datetime(2000, 1, 4)
@@ -534,31 +534,31 @@ class WithinPeriodTest(TestCase):
         reservation.start = datetime(2000, 1, 1, 16)
         reservation.end = datetime(2000, 1, 2)
 
-        with self.assertRaises(ValidationError):
+        with self.assertRaises(InvalidPeriodValidationError):
             validator.validate(reservation)
 
         reservation.start = datetime(2000, 1, 3)
         reservation.end = datetime(2000, 1, 1)
 
-        with self.assertRaises(ValidationError):
+        with self.assertRaises(InvalidPeriodValidationError):
             validator.validate(reservation)
 
         reservation.start = datetime(2000, 1, 6)
         reservation.end = datetime(2000, 1, 4)
 
-        with self.assertRaises(ValidationError):
+        with self.assertRaises(InvalidPeriodValidationError):
             validator.validate(reservation)
 
         reservation.start = datetime(2000, 1, 1)
         reservation.end = datetime(2000, 1, 14)
 
-        with self.assertRaises(ValidationError):
+        with self.assertRaises(InvalidPeriodValidationError):
             validator.validate(reservation)
 
         reservation.start = datetime(2001, 1, 1)
         reservation.end = datetime(2001, 1, 14)
 
-        with self.assertRaises(ValidationError):
+        with self.assertRaises(InvalidPeriodValidationError):
             validator.validate(reservation)
 
 
@@ -584,43 +584,43 @@ class WithinOneOfPeriodsTest(TestCase):
         reservation.start = datetime(2000, 1, 3)
         reservation.end = datetime(2000, 1, 1)
 
-        with self.assertRaises(ValidationError):
+        with self.assertRaises(InvalidPeriodValidationError):
             validator.validate(reservation)
 
         reservation.start = datetime(2000, 2, 2)
         reservation.end = datetime(2000, 1, 4)
 
-        with self.assertRaises(ValidationError):
+        with self.assertRaises(InvalidPeriodValidationError):
             validator.validate(reservation)
 
         reservation.start = datetime(2000, 1, 1, 16)
         reservation.end = datetime(2000, 1, 2)
 
-        with self.assertRaises(ValidationError):
+        with self.assertRaises(InvalidPeriodValidationError):
             validator.validate(reservation)
 
         reservation.start = datetime(2000, 1, 3)
         reservation.end = datetime(2000, 2, 3)
 
-        with self.assertRaises(ValidationError):
+        with self.assertRaises(InvalidPeriodValidationError):
             validator.validate(reservation)
 
         reservation.start = datetime(2000, 1, 6)
         reservation.end = datetime(2000, 2, 1)
 
-        with self.assertRaises(ValidationError):
+        with self.assertRaises(InvalidPeriodValidationError):
             validator.validate(reservation)
 
         reservation.start = datetime(2000, 1, 1)
         reservation.end = datetime(2000, 2, 14)
 
-        with self.assertRaises(ValidationError):
+        with self.assertRaises(InvalidPeriodValidationError):
             validator.validate(reservation)
 
         reservation.start = datetime(2000, 2, 3)
         reservation.end = datetime(2001, 1, 2)
 
-        with self.assertRaises(ValidationError):
+        with self.assertRaises(InvalidPeriodValidationError):
             validator.validate(reservation)
 
 
@@ -635,43 +635,43 @@ class NotWithinPeriodTest(TestCase):
         reservation.start = datetime(2000, 1, 2)
         reservation.end = datetime(2000, 1, 4)
 
-        with self.assertRaises(ValidationError):
+        with self.assertRaises(InvalidPeriodValidationError):
             validator.validate(reservation)
 
         reservation.start = datetime(2000, 1, 3)
         reservation.end = datetime(2000, 1, 1)
 
-        with self.assertRaises(ValidationError):
+        with self.assertRaises(InvalidPeriodValidationError):
             validator.validate(reservation)
 
         reservation.start = datetime(2000, 1, 4)
         reservation.end = datetime(2000, 1, 3)
 
-        with self.assertRaises(ValidationError):
+        with self.assertRaises(InvalidPeriodValidationError):
             validator.validate(reservation)
 
         reservation.start = datetime(2000, 1, 1, 16)
         reservation.end = datetime(2000, 1, 2)
 
-        with self.assertRaises(ValidationError):
+        with self.assertRaises(InvalidPeriodValidationError):
             validator.validate(reservation)
 
         reservation.start = datetime(2000, 1, 3)
         reservation.end = datetime(2000, 1, 1)
 
-        with self.assertRaises(ValidationError):
+        with self.assertRaises(InvalidPeriodValidationError):
             validator.validate(reservation)
 
         reservation.start = datetime(2000, 1, 6)
         reservation.end = datetime(2000, 1, 4)
 
-        with self.assertRaises(ValidationError):
+        with self.assertRaises(InvalidPeriodValidationError):
             validator.validate(reservation)
 
         reservation.start = datetime(2000, 1, 1)
         reservation.end = datetime(2000, 1, 14)
 
-        with self.assertRaises(ValidationError):
+        with self.assertRaises(InvalidPeriodValidationError):
             validator.validate(reservation)
 
         reservation.start = datetime(2001, 1, 1)
@@ -720,21 +720,21 @@ class GivenHoursAndDaysTest(TestCase):
         #monday - tuesday
         self.reservation.start = datetime(2012, 11, 26, 21, 15)
         self.reservation.end = datetime(2012, 11, 27, 2, 45)
-        with self.assertRaises(ValidationError):
+        with self.assertRaises(InvalidPeriodValidationError):
             self.validator.validate(self.reservation)
 
     def test_invalid_hours_same_day(self):
         #thursday
         self.reservation.start = datetime(2012, 11, 29, 11, 15)
         self.reservation.end = datetime(2012, 11, 29, 13, 45)
-        with self.assertRaises(ValidationError):
+        with self.assertRaises(InvalidPeriodValidationError):
             self.validator.validate(self.reservation)
 
     def test_invalid_hours_not_the_same_week(self):
         #sunday - monday
         self.reservation.start = datetime(2012, 11, 25, 22, 15)
         self.reservation.end = datetime(2012, 11, 26, 4, 45)
-        with self.assertRaises(ValidationError):
+        with self.assertRaises(InvalidPeriodValidationError):
             self.validator.validate(self.reservation)
 
 
@@ -753,7 +753,7 @@ class MaxDurationValidatorTest(TestCase):
     def test_two_hours_and_one_second(self):
         self.reservation.start = datetime(2012, 10, 10, 10, 15)
         self.reservation.end = datetime(2012, 10, 10, 12, 16)
-        with self.assertRaises(ValidationError):
+        with self.assertRaises(InvalidPeriodValidationError):
             self.two_hours_validator.validate(self.reservation)
 
     def test_two_days_and_one_hour(self):
@@ -764,5 +764,5 @@ class MaxDurationValidatorTest(TestCase):
     def test_two_days_one_hour_and_one_second(self):
         self.reservation.start = datetime(2012, 10, 10, 12, 15)
         self.reservation.end = datetime(2012, 10, 12, 13, 16)
-        with self.assertRaises(ValidationError):
+        with self.assertRaises(InvalidPeriodValidationError):
             self.two_days_and_one_hour_validator.validate(self.reservation)

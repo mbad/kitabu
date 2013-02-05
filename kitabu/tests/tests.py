@@ -10,7 +10,11 @@ from kitabu.tests.models import (
     RoomWithApprovableReservations,
     ApprovableRoomReservation
 )
-from kitabu.exceptions import SizeExceeded, ReservationError, ValidationError
+from kitabu.exceptions import (
+    SizeExceeded,
+    ReservationError,
+    OverlappingReservations,
+)
 from kitabu.utils import AtomicReserver
 
 
@@ -28,12 +32,12 @@ class TennisCourtTest(TestCase):
         self.assertEqual(self.court.reservations.count(), 2, "Should have two reservations")
 
     def test_two_overlappping_reservations(self):
-        with self.assertRaises(ValidationError):
+        with self.assertRaises(OverlappingReservations):
             self.court.reserve(start='2012-04-01', end='2012-05-11')
             self.court.reserve(start='2012-04-20', end='2012-05-15')
 
     def test_two_minimally_overlappping_reservations(self):
-        with self.assertRaises(ValidationError):
+        with self.assertRaises(OverlappingReservations):
             self.court.reserve(start='2012-04-01', end='2012-05-11 12:00')
             self.court.reserve(start='2012-05-11 11:59:59', end='2012-05-15')
 
@@ -163,11 +167,11 @@ class ExclusiveReservationTest(TestCase):
 
     def test_cannot_reserve_over_other_reservation(self):
         self.room3.reserve(start='2012-04-01', end='2012-04-02', size=1)
-        with self.assertRaises(ValidationError):
+        with self.assertRaises(OverlappingReservations):
             self.room3.reserve(start='2012-04-01', end='2012-04-02', exclusive=True)
 
         self.room5.reserve(start='2012-04-01', end='2012-04-02', size=0)
-        with self.assertRaises(ValidationError):
+        with self.assertRaises(OverlappingReservations):
             self.room5.reserve(start='2012-04-01', end='2012-04-02', exclusive=True)
 
         self.assertEqual(2, ConferenceRoomReservation.objects.count())
