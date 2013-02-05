@@ -240,3 +240,41 @@ class ClusterFiniteAvailabilitySearchTest(TestCase):
         length = len(results)
         self.assertEqual(length, 1, 'There should be one hotel returned. ' + str(length) + ' hotels returned instead')
         self.assertEqual(results[0].name, 'Hotel 1', 'Hotel 1 should be returned')
+
+
+class ClusterAvailabilityWithApprovableReservationsTest(TestCase):
+    def setUp(self):
+        '''
+        All rooms in hotel1 have size of 5. Size of 10 in hotel2.
+        '''
+        self.hotel1 = Hotel.objects.create(name='Hotel 1')
+        self.hotel2 = Hotel.objects.create(name='Hotel 2')
+
+        self.room1 = HotelRoom.objects.create(name='Room 1', size=5, cluster=self.hotel1)
+        self.room2 = HotelRoom.objects.create(name='Room 2', size=5, cluster=self.hotel1)
+        self.room3 = HotelRoom.objects.create(name='Room 3', size=10, cluster=self.hotel2)
+        self.room4 = HotelRoom.objects.create(name='Room 3', size=10, cluster=self.hotel2)
+
+    def test_all_reservations_overlapping(self):
+        # would fail if the second reservation was valid
+
+        self.room1.reserve(start='2000-12-30', end='2001-01-22', size=1)
+        self.room1.make_preliminary_reservation(start='2000-11-30', end='2001-01-21', size=4, valid_until='1900-10-10')
+        self.room2.make_preliminary_reservation(start='2001-01-20', end='2001-02-11', size=2, valid_until='2100-10-10')
+
+        self.room3.make_preliminary_reservation(start='2001-01-05', end='2001-01-14', size=4, valid_until='2100-10-10')
+        self.room3.reserve(start='2001-01-10', end='2001-01-17', size=4)
+        self.room4.make_preliminary_reservation(start='2000-12-20', end='2001-02-18', size=7, valid_until='2100-10-10')
+
+        start = datetime(2001, 01, 01)
+        end = datetime(2001, 01, 31)
+        data = {
+            'start': start,
+            'end': end,
+            'required_size': 6,
+        }
+        searcher = ClusterFiniteAvailability(HotelRoom, Hotel, 'rooms')
+        results = searcher.search(**data)
+
+        self.assertEqual(len(results), 1, 'There should be one hotel returned')
+        self.assertEqual(results[0].name, 'Hotel 1', 'Hotel 1 should be returned')
