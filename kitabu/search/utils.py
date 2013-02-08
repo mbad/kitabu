@@ -1,7 +1,5 @@
 from collections import defaultdict
 
-from django.db.models import Q
-
 
 class Timeline(list):
     def __init__(self, start, end, subject=None, reservations=None):
