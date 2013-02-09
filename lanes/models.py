@@ -41,9 +41,17 @@ class LaneWithinPeriodValidator(validators.WithinPeriodValidator):
     pass
 
 
+class Period(validators.Period):
+    validator = models.ForeignKey(LaneWithinPeriodValidator, related_name='periods')
+
+
 class LaneNotWithinPeriodValidator(validators.NotWithinPeriodValidator):
     pass
 
 
 class LaneGivenHoursAndWeekdaysValidator(validators.GivenHoursAndWeekdaysValidator):
+    pass
+
+
+class LaneMaxReservationsPerUserValidator(validators.MaxReservationsPerUserValidator):
     pass
