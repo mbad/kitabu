@@ -43,8 +43,24 @@ class OverlappingReservations(ValidationError):
 
 
 class InvalidPeriodValidationError(ValidationError):
+    # TODO rename
     def __init__(self, message, reservation, validator):
         self.reservation = reservation
         self.validator = validator
         super(InvalidPeriodValidationError, self).__init__(
             message + "(reservation: %s, validator: %s)" % (reservation, validator))
+
+
+class TooManyReservations(ValidationError):
+    def __init__(self, reservation, validator, current):
+        self.reservation = reservation
+        self.validator = validator
+        message = ("Reached maximum number of reservations for user %(user)s %(on_subject)s(%(number)s)"
+                   % {
+                       'user': reservation.owner,
+                       'on_subject': ('on subject %s' % reservation.subject) if current else '',
+                       'number': (validator.max_reservations_on_current_subject
+                                  if current else
+                                  validator.max_reservations_on_all_subjects),
+                   })
+        super(TooManyReservations, self).__init__(message)

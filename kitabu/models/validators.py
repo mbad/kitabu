@@ -5,7 +5,7 @@ from datetime import datetime
 
 from django.db import models
 
-from kitabu.exceptions import InvalidPeriodValidationError
+from kitabu.exceptions import InvalidPeriodValidationError, TooManyReservations
 from kitabu import managers
 
 import time
@@ -31,6 +31,8 @@ class Validator(models.Model):
         return getattr(self, self.actual_validator_related_name).__class__.__name__ + ' ' + str(self.id)
 
     def validate(self, reservation):
+        # TODO: think whether this is not a good idea
+        # assert reservation.id is None, "Reservation must be validated before being saved to database"
         getattr(self, self.actual_validator_related_name)._perform_validation(reservation)
 
     def save(self, *args, **kwargs):
@@ -353,3 +355,27 @@ class MaxDurationValidator(Validator):
 
         if duration > self.max_duration_in_seconds:
             raise InvalidPeriodValidationError('Max reservation duration exceeded', reservation, self)
+
+
+class MaxReservationsPerUserValidator(Validator):
+    '''
+    Requires `Reservation` model to have field `owner`, which can be virtually anything,
+    as long as it uniquely identifies a user. Likely it will be foreign key to `User` model.
+    '''
+    class Meta:
+        abstract = True
+
+    max_reservations_on_current_subject = models.PositiveSmallIntegerField(default=0, help_text="0 means no limit")
+    max_reservations_on_all_subjects = models.PositiveSmallIntegerField(default=0, help_text="0 means no limit")
+
+    def _perform_validation(self, reservation):
+        if self.max_reservations_on_current_subject:
+            reservations_so_far = reservation.subject.reservations.filter(
+                end__gte=now(), owner=reservation.owner).count()
+            if reservations_so_far >= self.max_reservations_on_current_subject:
+                raise TooManyReservations(reservation, validator=self, current=True)
+        if self.max_reservations_on_all_subjects:
+            reservations_so_far = reservation.__class__.objects.filter(
+                end__gte=now(), owner=reservation.owner).count()
+            if reservations_so_far >= self.max_reservations_on_all_subjects:
+                raise TooManyReservations(reservation, validator=self, current=False)

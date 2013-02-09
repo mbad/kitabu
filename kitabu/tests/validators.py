@@ -4,7 +4,11 @@ from mock import Mock, patch
 
 from django.test import TestCase
 
-from kitabu.exceptions import ValidationError, InvalidPeriodValidationError
+from kitabu.exceptions import (
+    ValidationError,
+    InvalidPeriodValidationError,
+    TooManyReservations,
+)
 
 from kitabu.tests.models import (
     FullTimeValidator,
@@ -14,8 +18,10 @@ from kitabu.tests.models import (
     NotWithinPeriodValidator,
     GivenHoursAndWeekdaysValidator,
     MaxDurationValidator,
+    MaxReservationsPerUserValidator,
     Room,
     Period,
+    Table,
 )
 
 # TODO:
@@ -766,3 +772,115 @@ class MaxDurationValidatorTest(TestCase):
         self.reservation.end = datetime(2012, 10, 12, 13, 16)
         with self.assertRaises(InvalidPeriodValidationError):
             self.two_days_and_one_hour_validator.validate(self.reservation)
+
+
+class MaxReservationsPerUserValidatorTest(TestCase):
+    def setUp(self):
+        self.user = "Family Guy"
+        self.table = Table.objects.create()
+        self.validator1_2 = MaxReservationsPerUserValidator.objects.create(
+            max_reservations_on_current_subject=1,
+            max_reservations_on_all_subjects=2)
+        self.validator2_3 = MaxReservationsPerUserValidator.objects.create(
+            max_reservations_on_current_subject=2,
+            max_reservations_on_all_subjects=3)
+        self.validator3_2 = MaxReservationsPerUserValidator.objects.create(
+            max_reservations_on_current_subject=3,
+            max_reservations_on_all_subjects=2)
+
+    def test_first_reservation(self):
+        with patch('kitabu.models.validators.now') as dtmock:
+            dtmock.return_value = datetime(2000, 1, 1)
+            table = Table.objects.create()
+            table.validators.add(self.validator1_2)
+            table.reserve(start=datetime(2000, 2, 1), end=datetime(2000, 2, 3), owner=self.user)
+
+    def test_too_many_reservations_on_subject(self):
+        with patch('kitabu.models.validators.now') as dtmock:
+            validator = MaxReservationsPerUserValidator.objects.create(
+                max_reservations_on_current_subject=1,
+                max_reservations_on_all_subjects=0)
+            dtmock.return_value = datetime(2000, 1, 1)
+            table = Table.objects.create()
+            table.validators.add(validator)
+            table.reserve(start=datetime(2000, 2, 1), end=datetime(2000, 2, 3), owner=self.user)
+            with self.assertRaises(TooManyReservations):
+                table.reserve(start=datetime(2000, 3, 1), end=datetime(2000, 3, 3), owner=self.user)
+
+    def test_too_many_reservations_on_subject_when_all_also_limited(self):
+        with patch('kitabu.models.validators.now') as dtmock:
+            dtmock.return_value = datetime(2000, 1, 1)
+            table = Table.objects.create()
+            table.validators.add(self.validator1_2)
+            table.reserve(start=datetime(2000, 2, 1), end=datetime(2000, 2, 3), owner=self.user)
+            with self.assertRaises(TooManyReservations):
+                table.reserve(start=datetime(2000, 3, 1), end=datetime(2000, 3, 3), owner=self.user)
+
+    def test_many_past_reservations_on_subject(self):
+        with patch('kitabu.models.validators.now') as dtmock:
+            dtmock.return_value = datetime(2000, 1, 1)
+            table = Table.objects.create()
+            table.validators.add(self.validator1_2)
+            table.reserve(start=datetime(1996, 2, 1), end=datetime(1996, 2, 3), owner=self.user)
+            table.reserve(start=datetime(1997, 2, 1), end=datetime(1997, 2, 3), owner=self.user)
+            table.reserve(start=datetime(1998, 2, 1), end=datetime(1998, 2, 3), owner=self.user)
+            table.reserve(start=datetime(1999, 2, 1), end=datetime(1999, 2, 3), owner=self.user)
+            table.reserve(start=datetime(2000, 2, 1), end=datetime(2000, 2, 3), owner=self.user)
+
+    def test_many_past_reservations_on_other_subjects(self):
+        with patch('kitabu.models.validators.now') as dtmock:
+            dtmock.return_value = datetime(2000, 1, 1)
+            table = Table.objects.create()
+            table.validators.add(self.validator1_2)
+            Table.objects.create().reserve(start=datetime(1996, 2, 1), end=datetime(1996, 2, 3), owner=self.user)
+            Table.objects.create().reserve(start=datetime(1997, 2, 1), end=datetime(1997, 2, 3), owner=self.user)
+            Table.objects.create().reserve(start=datetime(1998, 2, 1), end=datetime(1998, 2, 3), owner=self.user)
+            Table.objects.create().reserve(start=datetime(1999, 2, 1), end=datetime(1999, 2, 3), owner=self.user)
+            table.reserve(start=datetime(2000, 2, 1), end=datetime(2000, 2, 3), owner=self.user)
+
+    def test_many_reservations_on_other_subjects(self):
+        with patch('kitabu.models.validators.now') as dtmock:
+            dtmock.return_value = datetime(2000, 1, 1)
+            validator = MaxReservationsPerUserValidator.objects.create(
+                max_reservations_on_current_subject=2,
+                max_reservations_on_all_subjects=0)
+            table = Table.objects.create()
+            table.validators.add(validator)
+            for i in range(5):
+                Table.objects.create().reserve(start=datetime(2000, 2, 1), end=datetime(2000, 2, 3), owner=self.user)
+            table.reserve(start=datetime(2000, 2, 1), end=datetime(2000, 2, 3), owner=self.user)  # first reservation on the table
+            table.reserve(start=datetime(2000, 2, 1), end=datetime(2000, 2, 3), owner=self.user)  # second reservation on the table
+            with self.assertRaises(TooManyReservations):  # third reservation on the table is not possible
+                table.reserve(start=datetime(2000, 2, 1), end=datetime(2000, 2, 3), owner=self.user)
+
+    def test_too_many_reservations_on_other_subjects(self):
+        with patch('kitabu.models.validators.now') as dtmock:
+            dtmock.return_value = datetime(2000, 1, 1)
+            validator = MaxReservationsPerUserValidator.objects.create(
+                max_reservations_on_current_subject=3,
+                max_reservations_on_all_subjects=5)
+            table = Table.objects.create()
+            table.validators.add(validator)
+            table.reserve(start=datetime(2000, 2, 1), end=datetime(2000, 2, 3), owner=self.user)  # first reservation on the table
+            table.reserve(start=datetime(2000, 2, 1), end=datetime(2000, 2, 3), owner=self.user)  # second reservation on the table
+            for i in range(3):  # this gives 5 reservations all together
+                Table.objects.create().reserve(start=datetime(2000, 2, 1), end=datetime(2000, 2, 3), owner=self.user)
+            with self.assertRaises(TooManyReservations):
+                # third reservation on the table is not possible because of other tables reservations
+                table.reserve(start=datetime(2000, 2, 1), end=datetime(2000, 2, 3), owner=self.user)
+
+    def test_too_many_reservations_on_other_subjects_current_unlimited(self):
+        with patch('kitabu.models.validators.now') as dtmock:
+            dtmock.return_value = datetime(2000, 1, 1)
+            validator = MaxReservationsPerUserValidator.objects.create(
+                max_reservations_on_current_subject=0,
+                max_reservations_on_all_subjects=5)
+            table = Table.objects.create()
+            table.validators.add(validator)
+            table.reserve(start=datetime(2000, 2, 1), end=datetime(2000, 2, 3), owner=self.user)  # first reservation on the table
+            table.reserve(start=datetime(2000, 2, 1), end=datetime(2000, 2, 3), owner=self.user)  # second reservation on the table
+            for i in range(3):  # this gives 5 reservations all together
+                Table.objects.create().reserve(start=datetime(2000, 2, 1), end=datetime(2000, 2, 3), owner=self.user)
+            with self.assertRaises(TooManyReservations):
+                # third reservation on the table is not possible because of other tables reservations
+                table.reserve(start=datetime(2000, 2, 1), end=datetime(2000, 2, 3), owner=self.user)

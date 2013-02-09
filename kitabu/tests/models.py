@@ -13,6 +13,7 @@ from kitabu.models.validators import (
     NotWithinPeriodValidator as KitabuNotWithinPeriodValidator,
     MaxDurationValidator as KitabuMaxDurationValidator,
     GivenHoursAndWeekdaysValidator as KitabuGivenHoursAndWeekdaysValidator,
+    MaxReservationsPerUserValidator as KitabuMaxReservationsPerUserValidator,
 )
 
 
@@ -107,3 +108,16 @@ class RoomWithApprovableReservations(VariableSizeSubject, SubjectWithApprovableR
 
 class ApprovableRoomReservation(ReservationWithSize, ApprovableReservation, BaseReservation):
     subject = models.ForeignKey(RoomWithApprovableReservations, related_name='reservations')
+
+
+class Table(BaseSubject):
+    pass
+
+
+class TableReservation(BaseReservation):
+    subject = models.ForeignKey(Table, related_name='reservations')
+    owner = models.CharField(max_length=20)
+
+
+class MaxReservationsPerUserValidator(KitabuMaxReservationsPerUserValidator):
+    pass
