@@ -27,8 +27,8 @@ class Validator(models.Model):
     objects = models.Manager()
     universal = managers.Universal()
 
-    def __unicode_(self):
-        return getattr(self, self.actual_validator_related_name).__class__.__name__ + ' ' + str(self.id)
+    def __unicode__(self):
+        return getattr(self, self.actual_validator_related_name).__class__.__name__ + ' ' + unicode(self.id)
 
     def validate(self, reservation):
         # TODO: think whether this is not a good idea
