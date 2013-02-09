@@ -188,20 +188,22 @@ class ApprovableReservationTest(TestCase):
     def setUp(self):
         self.room1 = RoomWithApprovableReservations.objects.create(size=3)
 
-    def test_proper_pre_reservation_proper_reservation(self):
+    def test_valid_pre_reservation_and_valid_reservation(self):
         self.room1.make_preliminary_reservation(start='2012-04-01', end='2012-04-02', size=2, valid_until='2100-10-10')
         self.room1.reserve(start='2012-04-01', end='2012-04-02', size=1)
         self.assertEqual(2, ApprovableRoomReservation.objects.count())
 
-    def test_proper_pre_reservation_improper_reservation(self):
+    def test_valid_pre_reservation_and_invalid_reservation(self):
         self.room1.make_preliminary_reservation(start='2012-04-01', end='2012-04-02', size=2, valid_until='2013-10-10')
         with self.assertRaises(SizeExceeded):
             self.room1.reserve(start='2012-04-01', end='2012-04-02', size=2)
 
-    def test_improper_pre_reservation_proper_reservation(self):
+    def test_invalid_pre_reservation_and_valid_reservation(self):
         self.room1.make_preliminary_reservation(start='2012-04-01', end='2012-04-02', size=2, valid_until='2011-10-10')
         self.room1.reserve(start='2012-04-01', end='2012-04-02', size=3)
-        self.assertEqual(2, ApprovableRoomReservation.objects.count())
+
+        self.assertEqual(1, ApprovableRoomReservation.objects.count())
+        self.assertEqual(2, ApprovableRoomReservation.objects.with_invalid().count())
 
     def test_valid_reservation(self):
         reservation = self.room1.make_preliminary_reservation(

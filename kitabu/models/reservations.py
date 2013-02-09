@@ -5,6 +5,7 @@ from django.db import models, transaction
 from django.db.models import Q
 
 from kitabu.utils import EnsureSize, AtomicReserver
+from kitabu.models.managers import ApprovableReservationsManager
 
 
 class BaseReservation(models.Model, EnsureSize):
@@ -46,6 +47,8 @@ class ApprovableReservation(models.Model):
     class Meta:
         abstract = True
 
+    objects = ApprovableReservationsManager()
+
     approved = models.BooleanField(default=True)
     valid_until = models.DateTimeField(null=True)
 
@@ -55,12 +58,6 @@ class ApprovableReservation(models.Model):
     def approve(self):
         self.approved = True
         self.save()
-
-    @classmethod
-    def colliding_reservations(cls, start, end, *args, **kwargs):
-        extra_filter = Q(approved=True) | Q(valid_until__gt=datetime.datetime.utcnow())
-
-        return cls.objects.filter(extra_filter, start__lt=end, end__gt=start, *args, **kwargs)
 
 
 class ReservationMaybeExclusive(ReservationWithSize):
