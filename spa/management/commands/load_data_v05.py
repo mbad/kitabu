@@ -1,9 +1,21 @@
 #-*- coding: utf-8 -*-
 
+from datetime import datetime
+
 from django.core.management.base import BaseCommand
-from lanes.models import Lane, LaneFullTimeValidator, LaneGivenHoursAndWeekdaysValidator
-from pools.models import Pool
 from django.contrib.auth.models import User
+
+from lanes.models import (
+    Lane,
+    LaneFullTimeValidator,
+    LaneGivenHoursAndWeekdaysValidator,
+    LaneTimeIntervalValidator,
+    LaneWithinPeriodValidator,
+    Period,
+    LaneNotWithinPeriodValidator,
+    LaneMaxReservationsPerUserValidator,
+)
+from pools.models import Pool
 
 
 class Command(BaseCommand):
@@ -50,6 +62,15 @@ class DataLoader(object):
             'saturday': [0] * 24,
             'sunday': hours
         })
+
+        LaneTimeIntervalValidator.objects.create(
+            time_value='30', time_unit='minute', interval_type='s', apply_to_all=True)
+        v = LaneWithinPeriodValidator.objects.create(apply_to_all=True)
+        Period.objects.create(validator=v, start=datetime(2013, 1, 1), end=datetime(2015, 12, 31))
+        LaneNotWithinPeriodValidator.objects.create(
+            start=datetime(2014, 7, 1), end=datetime(2014, 8, 31), apply_to_all=True)
+        LaneMaxReservationsPerUserValidator.objects.create(
+            max_reservations_on_all_subjects=10, max_reservations_on_current_subject=3, apply_to_all=True)
 
     def _load_lanes(self):
         for pool in self.pools.values():
