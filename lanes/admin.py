@@ -9,11 +9,11 @@ admin.site.register(models.Lane, LaneAdmin)
 
 admin.site.register(models.LaneReservation)
 
-admin.site.register(models.FullTimeValidator)
-admin.site.register(models.GivenHoursAndWeekdaysValidator)
-admin.site.register(models.TimeIntervalValidator)
-admin.site.register(models.NotWithinPeriodValidator)
-admin.site.register(models.MaxReservationsPerUserValidator)
+admin.site.register(models.LFullTimeValidator)
+admin.site.register(models.LGivenHoursAndWeekdaysValidator)
+admin.site.register(models.LTimeIntervalValidator)
+admin.site.register(models.LNotWithinPeriodValidator)
+admin.site.register(models.LMaxReservationsPerUserValidator)
 
 
 class PeriodInline(admin.TabularInline):
@@ -24,4 +24,4 @@ class WithinPeriodValidatorAdmin(admin.ModelAdmin):
     inlines = [PeriodInline]
 
 
-admin.site.register(models.WithinPeriodValidator, WithinPeriodValidatorAdmin)
+admin.site.register(models.LWithinPeriodValidator, WithinPeriodValidatorAdmin)
