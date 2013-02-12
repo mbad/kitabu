@@ -29,29 +29,29 @@ class LaneReservationGroup(ReservationGroup):
     pass
 
 
-class LaneFullTimeValidator(validators.FullTimeValidator):
+class LFullTimeValidator(validators.FullTimeValidator):
     pass
 
 
-class LaneTimeIntervalValidator(validators.TimeIntervalValidator):
+class LTimeIntervalValidator(validators.TimeIntervalValidator):
     pass
 
 
-class LaneWithinPeriodValidator(validators.WithinPeriodValidator):
+class LWithinPeriodValidator(validators.WithinPeriodValidator):
     pass
 
 
 class Period(validators.Period):
-    validator = models.ForeignKey(LaneWithinPeriodValidator, related_name='periods')
+    validator = models.ForeignKey(LWithinPeriodValidator, related_name='periods')
 
 
-class LaneNotWithinPeriodValidator(validators.NotWithinPeriodValidator):
+class LNotWithinPeriodValidator(validators.NotWithinPeriodValidator):
     pass
 
 
-class LaneGivenHoursAndWeekdaysValidator(validators.GivenHoursAndWeekdaysValidator):
+class LGivenHoursAndWeekdaysValidator(validators.GivenHoursAndWeekdaysValidator):
     pass
 
 
-class LaneMaxReservationsPerUserValidator(validators.MaxReservationsPerUserValidator):
+class LMaxReservationsPerUserValidator(validators.MaxReservationsPerUserValidator):
     pass

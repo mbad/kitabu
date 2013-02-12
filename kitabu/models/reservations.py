@@ -2,7 +2,6 @@
 import datetime
 
 from django.db import models, transaction
-from django.db.models import Q
 
 from kitabu.utils import EnsureSize, AtomicReserver
 from kitabu.models.managers import ApprovableReservationsManager
