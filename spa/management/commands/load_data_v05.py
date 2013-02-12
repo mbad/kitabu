@@ -7,13 +7,13 @@ from django.contrib.auth.models import User
 
 from lanes.models import (
     Lane,
-    LaneFullTimeValidator,
-    LaneGivenHoursAndWeekdaysValidator,
-    LaneTimeIntervalValidator,
-    LaneWithinPeriodValidator,
+    LFullTimeValidator,
+    LGivenHoursAndWeekdaysValidator,
+    LTimeIntervalValidator,
+    LWithinPeriodValidator,
     Period,
-    LaneNotWithinPeriodValidator,
-    LaneMaxReservationsPerUserValidator,
+    LNotWithinPeriodValidator,
+    LMaxReservationsPerUserValidator,
 )
 from pools.models import Pool
 
@@ -48,12 +48,12 @@ class DataLoader(object):
             self.pools[pool_name] = Pool.objects.create(name=pool_name)
 
     def _load_validators(self):
-        self.validators['Konopnicka'] = LaneFullTimeValidator.objects.create(interval=1, interval_type='hour')
+        self.validators['Konopnicka'] = LFullTimeValidator.objects.create(interval=1, interval_type='hour')
 
         # Monday to Friday
         hours = [1, 1, 1, 0, 0, 0, 0, 1, 1, 1, 1, 1, 0, 0, 0, 1, 1, 1, 1, 1, 0, 0, 1, 1]
 
-        self.validators['Cygański'] = LaneGivenHoursAndWeekdaysValidator.create_from_bitlists({
+        self.validators['Cygański'] = LGivenHoursAndWeekdaysValidator.create_from_bitlists({
             'monday': hours,
             'tuesday': hours,
             'wednesday': [0] * 24,
@@ -63,13 +63,13 @@ class DataLoader(object):
             'sunday': hours
         })
 
-        LaneTimeIntervalValidator.objects.create(
+        LTimeIntervalValidator.objects.create(
             time_value='30', time_unit='minute', interval_type='s', apply_to_all=True)
-        v = LaneWithinPeriodValidator.objects.create(apply_to_all=True)
+        v = LWithinPeriodValidator.objects.create(apply_to_all=True)
         Period.objects.create(validator=v, start=datetime(2013, 1, 1), end=datetime(2015, 12, 31))
-        LaneNotWithinPeriodValidator.objects.create(
+        LNotWithinPeriodValidator.objects.create(
             start=datetime(2014, 7, 1), end=datetime(2014, 8, 31), apply_to_all=True)
-        LaneMaxReservationsPerUserValidator.objects.create(
+        LMaxReservationsPerUserValidator.objects.create(
             max_reservations_on_all_subjects=10, max_reservations_on_current_subject=3, apply_to_all=True)
 
     def _load_lanes(self):
