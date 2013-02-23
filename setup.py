@@ -14,10 +14,10 @@ setup(name='kitabu',
       packages=['kitabu'],
       #include_package_data=True,
       install_requires=[
-          'Django==1.5c1',
+          'Django>=1.5c1',
           'South>=0.7.6',
       ],
       dependency_links=[
-          'http://github.com/mbad/kitabu/tarball/master#egg=kitabu-dev'
+          'http://github.com/django/django/tarball/1.5c1#egg=Django-1.5c1',
       ],
       )
