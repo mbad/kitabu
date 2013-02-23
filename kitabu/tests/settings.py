@@ -1,8 +1,7 @@
-print 'loading kitabu settings for automated tests'
-
-DATABASES['default'] = {
+DATABASES = {'default': {
     'ENGINE': 'django.db.backends.sqlite3',
-    'NAME': 'autotest.db',
-}
+    'NAME': 'autotest.db'}}
 
-INSTALLED_APPS += ('kitabu.tests',)
+INSTALLED_APPS = ('kitabu', 'kitabu.tests',)
+
+MAX_LANE_RESERVATIONS_NR = 5

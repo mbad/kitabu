@@ -1,14 +1,15 @@
 #!/bin/bash
 
 # Change to directory of this script
-cd "$( dirname "${BASH_SOURCE[0]}" )"
+BASE_DIRECTORY="$(cd  $(dirname "${BASH_SOURCE[0]}"); pwd)"
+cd $BASE_DIRECTORY
 
 echo "=============="
 echo "CHECKING STYLE"
 echo "=============="
 echo
 
-flake8 --ignore=E501 . | grep -v -e ./kitabu/tests/__init__.py -e ./kitabu/tests/settings.py -e ./spa/settings_local.py
+flake8 --ignore=E501 . | grep -v -e kitabu/tests/__init__.py -e kitabu/tests/settings.py -e spa/settings_local.py
 
 warnings_status=$?
 
@@ -20,6 +21,6 @@ echo
 echo "============="
 echo "RUNNING TESTS"
 echo "============="
-echo
+echo 
 
-./manage.py test kitabu
+django-admin.py test kitabu --settings='kitabu.tests.settings' --pythonpath="$BASE_DIRECTORY"
