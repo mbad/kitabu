@@ -162,7 +162,6 @@ class GroupReservationTest(TransactionTestCase):
 
 class ExclusiveReservationTest(TestCase):
     def setUp(self):
-        self.room1 = ConferenceRoom.objects.create(size=1)
         self.room3 = ConferenceRoom.objects.create(size=3)
         self.room5 = ConferenceRoom.objects.create(size=5)
 
@@ -178,10 +177,18 @@ class ExclusiveReservationTest(TestCase):
         self.assertEqual(2, ConferenceRoomReservation.objects.count())
 
     def test_can_reserve_if_no_overlapping_reservations(self):
-        self.room5.reserve(start='2012-04-01', end='2012-04-02', size=0)
-        self.room5.reserve(start='2012-04-02', end='2012-04-04', size=0)
-        self.room5.reserve(start='2012-04-05', end='2012-04-07', size=0)
+        self.assertEqual(5, self.room5.reserve(start='2012-04-01', end='2012-04-02', exclusive=True).size)
+        self.assertEqual(5, self.room5.reserve(start='2012-04-02', end='2012-04-04', exclusive=True).size)
+        self.assertEqual(5, self.room5.reserve(start='2012-04-05', end='2012-04-07', exclusive=True).size)
         self.assertEqual(3, ConferenceRoomReservation.objects.count())
+
+    def test_exclusive_reservation_always_full(self):
+        reservation = self.room5.reserve(start='2012-04-01', end='2012-04-02', exclusive=True)
+        self.assertEqual(5, reservation.size)
+        self.room5.size = 6
+        self.room5.save()
+        reservation = self.room5.reservation_model.objects.get(pk=reservation.pk)
+        self.assertEqual(6, reservation.size)
 
 
 class ApprovableReservationTest(TestCase):

@@ -1,6 +1,6 @@
 from django.db import models
 from kitabu.models.subjects import (BaseSubject, ExclusiveSubject, FixedSizeSubject, VariableSizeSubject,
-                                    SubjectWithApprovableReservations)
+                                    MaybeExclusiveVariableSizeSubject, SubjectWithApprovableReservations)
 from kitabu.models.reservations import (BaseReservation, ReservationWithSize, ReservationGroup,
                                         ReservationMaybeExclusive, ApprovableReservation)
 from kitabu.models.clusters import BaseCluster
@@ -94,7 +94,7 @@ class GivenHoursAndWeekdaysValidator(KitabuGivenHoursAndWeekdaysValidator):
     pass
 
 
-class ConferenceRoom(VariableSizeSubject, BaseSubject):
+class ConferenceRoom(MaybeExclusiveVariableSizeSubject, BaseSubject):
     pass
 
 

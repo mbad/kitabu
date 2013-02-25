@@ -14,6 +14,8 @@ from kitabu.models.validators import Validator
 
 import datetime
 
+now = datetime.datetime.utcnow
+
 
 class BaseSubject(models.Model, EnsureSize):
     class Meta:
@@ -65,7 +67,7 @@ class SubjectWithApprovableReservations(models.Model):
         abstract = True
 
     def overlapping_reservations(self, start, end):
-        extra_filter = Q(approved=True) | Q(valid_until__gt=datetime.datetime.utcnow())
+        extra_filter = Q(approved=True) | Q(valid_until__gt=now())
         return self.reservations.filter(extra_filter, start__lt=end, end__gt=start)
 
     def make_preliminary_reservation(self, valid_until, start=None, end=None, **kwargs):
@@ -121,6 +123,23 @@ class VariableSizeSubject(FiniteSizeSubject):
         abstract = True
 
     size = models.PositiveIntegerField()
+
+
+class MaybeExclusiveVariableSizeSubject(VariableSizeSubject):
+    class Meta:
+        abstract = True
+
+    def __setattr__(self, name, value):
+        if name == 'size' and getattr(self, '_old_size', None) is None:
+            self._old_size = self.size
+        return super(MaybeExclusiveVariableSizeSubject, self).__setattr__(name, value)
+
+    def save(self, **kwargs):
+        super(MaybeExclusiveVariableSizeSubject, self).save(**kwargs)
+
+        if getattr(self, '_old_size', self.size) != self.size:  # if size has changed
+            self.reservation_model.objects.filter(end__gte=now(), exclusive=True).update(size=self.size)
+            delattr(self, '_old_size')
 
 
 class FixedSizeSubject(FiniteSizeSubject):
