@@ -68,7 +68,19 @@ class ReservationMaybeExclusive(ReservationWithSize):
     def __init__(self, *args, **kwargs):
         super(ReservationMaybeExclusive, self).__init__(*args, **kwargs)
         if self.exclusive:
-            self.size = self.subject.size
+            self.__dict__['size'] = self.subject.size
+            if 'size' in kwargs:
+                raise AttributeError('Cannot explicitely set size for exclusive reservation')
+
+    def __setattr__(self, name, value):
+        if name == 'size' and getattr(self, 'size', False) and getattr(self, 'exclusive', False):
+            raise AttributeError('Cannot explicitely change size of exclusive reservation')
+        super(ReservationMaybeExclusive, self).__setattr__(name, value)
+
+    def save(self, *args, **kwargs):
+        super(ReservationMaybeExclusive, self).save(*args, **kwargs)
+        if self.exclusive:
+            self.__dict__['size'] = self.subject.size
 
 
 class ReservationGroup(models.Model):

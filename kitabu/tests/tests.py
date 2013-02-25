@@ -170,7 +170,7 @@ class ExclusiveReservationTest(TestCase):
         with self.assertRaises(OverlappingReservations):
             self.room3.reserve(start='2012-04-01', end='2012-04-02', exclusive=True)
 
-        self.room5.reserve(start='2012-04-01', end='2012-04-02', size=0)
+        self.room5.reserve(start='2012-04-01', end='2012-04-02', size=1)
         with self.assertRaises(OverlappingReservations):
             self.room5.reserve(start='2012-04-01', end='2012-04-02', exclusive=True)
 
@@ -189,6 +189,27 @@ class ExclusiveReservationTest(TestCase):
         self.room5.save()
         reservation = self.room5.reservation_model.objects.get(pk=reservation.pk)
         self.assertEqual(6, reservation.size)
+
+    def test_size_must_be_positive(self):
+        with self.assertRaises(AssertionError):
+            self.room5.reserve(start='2012-04-01', end='2012-04-02', size=0)
+        with self.assertRaises(AssertionError):
+            self.room5.reserve(start='2012-04-01', end='2012-04-02', size=-1)
+
+    def test_cannot_change_size(self):
+        reservation = self.room5.reserve(start='2012-04-01', end='2012-04-02', exclusive=True)
+        with self.assertRaises(AttributeError):
+            reservation.size = 1
+
+    def test_cannot_set_size(self):
+        with self.assertRaises(AttributeError):
+            self.room5.reserve(start='2012-04-01', end='2012-04-02', exclusive=True, size=-4)
+        with self.assertRaises(AttributeError):
+            self.room5.reserve(start='2012-04-01', end='2012-04-02', exclusive=True, size=4)
+        with self.assertRaises(AttributeError):
+            self.room5.reserve(start='2012-04-01', end='2012-04-02', exclusive=True, size=5)
+        with self.assertRaises(AttributeError):
+            self.room5.reserve(start='2012-04-01', end='2012-04-02', exclusive=True, size=0)
 
 
 class ApprovableReservationTest(TestCase):

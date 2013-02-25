@@ -90,8 +90,10 @@ class FiniteSizeSubject(models.Model):
     class Meta:
         abstract = True
 
-    def reserve(self, start=None, end=None, size=1, **kwargs):
+    def reserve(self, start=None, end=None, **kwargs):
+        size = kwargs.get('size', 1)
         assert start and end, "start and end dates must be provided"
+        assert size > 0, "size must be greater than zero"
 
         if size > self.size:
             raise SizeExceeded(subject=self, requested_size=size, start=start, end=end)
@@ -115,7 +117,7 @@ class FiniteSizeSubject(models.Model):
                     overlapping_reservations=overlapping_reservations
                 )
 
-        return super(FiniteSizeSubject, self).reserve(start=start, end=end, size=size, **kwargs)
+        return super(FiniteSizeSubject, self).reserve(start=start, end=end, **kwargs)
 
 
 class VariableSizeSubject(FiniteSizeSubject):
@@ -140,6 +142,11 @@ class MaybeExclusiveVariableSizeSubject(VariableSizeSubject):
         if getattr(self, '_old_size', self.size) != self.size:  # if size has changed
             self.reservation_model.objects.filter(end__gte=now(), exclusive=True).update(size=self.size)
             delattr(self, '_old_size')
+
+    def reserve(self, start=None, end=None, **kwargs):
+        if 'size' in kwargs and kwargs.get('exclusive'):
+            raise AttributeError('Cannot explicitely set size for exclusive reservation')
+        return super(MaybeExclusiveVariableSizeSubject, self).reserve(start=start, end=end, **kwargs)
 
 
 class FixedSizeSubject(FiniteSizeSubject):

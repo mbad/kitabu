@@ -32,12 +32,13 @@ class Timeline(list):
 
 class EnsureSize(object):
     def __getattribute__(self, name, *args):
-        if name != 'size':
-            return super(EnsureSize, self).__getattribute__(name, *args)
         try:
             return super(EnsureSize, self).__getattribute__(name, *args)
         except AttributeError:
-            return 1
+            if name == 'size':
+                return 1
+            else:
+                raise
 
 
 class AtomicReserver(object):
