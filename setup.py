@@ -1,7 +1,7 @@
 #! /usr/bin/env python
 #-*- coding=utf-8 -*-
 
-from setuptools import setup
+from setuptools import setup, find_packages
 
 
 setup(name='kitabu',
@@ -11,7 +11,7 @@ setup(name='kitabu',
       license='MIT',
       version='dev',
       url='https://github.com/mbad/kitabu',
-      packages=['kitabu'],
+      packages=find_packages(),
       #include_package_data=True,
       install_requires=[
           'Django>=1.5c1',
