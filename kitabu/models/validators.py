@@ -31,6 +31,9 @@ class Validator(models.Model):
         return getattr(self, self.actual_validator_related_name).__class__.__name__ + ' ' + unicode(self.id)
 
     def validate(self, reservation, allow_reservation_update=False):
+        # Not absolutely sure whether this is such a good idea, but the general
+        # idea is that reservations should not be modified after creation, and
+        # thus there should not be any need to validate existing reservations.
         if not allow_reservation_update:
             assert reservation.id is None, "Reservation must be validated before being saved to database"
         getattr(self, self.actual_validator_related_name)._perform_validation(reservation)
