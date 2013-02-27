@@ -5,7 +5,7 @@ from datetime import datetime
 
 from django.db import models
 
-from kitabu.exceptions import InvalidPeriodValidationError, TooManyReservations
+from kitabu.exceptions import InvalidPeriod, TooManyReservations
 from kitabu import managers
 
 import time
@@ -74,18 +74,18 @@ class FullTimeValidator(Validator):
 
                 if self.interval_type == time_unit:
                     if self.interval == 0 and time_value > 0:
-                        raise InvalidPeriodValidationError(
+                        raise InvalidPeriod(
                             "%ss must be 0 (%s is not)" % (time_unit, time_value),
                             reservation,
                             self)
                     if self.interval > 0 and time_value % self.interval > 0:
-                        raise InvalidPeriodValidationError(
+                        raise InvalidPeriod(
                             "%ss must by divisible by %s (%s is not)" % (time_unit, self.interval, time_value),
                             reservation,
                             self)
                     break  # don't validate any greater time units than this one
                 elif time_value > 0:
-                    raise InvalidPeriodValidationError(
+                    raise InvalidPeriod(
                         "%ss must by 0 (got %s)" % (time_unit, time_value),
                         reservation,
                         self)
@@ -155,7 +155,7 @@ class TimeIntervalValidator(Validator):
                 raise ValueError("time_unit must be one of (second, minute, hour, day)")
 
             if not valid:
-                raise InvalidPeriodValidationError(
+                raise InvalidPeriod(
                     "Reservation %(field_name)s must by at %(least_most)s %(number)s %(time_unit)ss in the future" %
                     {
                         'field_name': field_name,
@@ -200,7 +200,7 @@ class WithinPeriodValidator(Validator):
             if all_fields_valid_for_period:
                 return
 
-        raise InvalidPeriodValidationError(
+        raise InvalidPeriod(
             "Reservation %s must be in one of given periods: %s, received: %s" %
             (
                 field_name,
@@ -254,12 +254,12 @@ class NotWithinPeriodValidator(Validator):
 
         for (date, field_name) in zip(dates, date_field_names):
             if self.start <= date <= self.end:
-                raise InvalidPeriodValidationError(
+                raise InvalidPeriod(
                     "Reservation %s must not be between %s and %s" % (field_name, self.start, self.end),
                     reservation,
                     self)
             if reservation.start <= self.start <= self.end <= reservation.end:
-                raise InvalidPeriodValidationError(
+                raise InvalidPeriod(
                     "Reservation cannot cover period between %s and %s" % (self.start, self.end),
                     reservation,
                     self)
@@ -283,7 +283,7 @@ class GivenHoursAndWeekdaysValidator(Validator):
         list_and = self._list_and(self._to_hours_bitlist(), reservation_bitlist)
 
         if not list_and == map(lambda x: True if x else False, reservation_bitlist):
-            raise InvalidPeriodValidationError("Reservation in wrong hours", reservation, self)
+            raise InvalidPeriod("Reservation in wrong hours", reservation, self)
 
     def _get_hours_bitlist(self, start, end):
         start_timestamp = self._date_to_timestamp(start) / SECONDS_IN_DAY
@@ -354,7 +354,7 @@ class MaxDurationValidator(Validator):
         duration = delta.days * 3600 * 24 + delta.seconds
 
         if duration > self.max_duration_in_seconds:
-            raise InvalidPeriodValidationError('Max reservation duration exceeded', reservation, self)
+            raise InvalidPeriod('Max reservation duration exceeded', reservation, self)
 
 
 class MaxReservationsPerUserValidator(Validator):

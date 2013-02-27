@@ -42,12 +42,11 @@ class OverlappingReservations(ValidationError):
                 reservation.start, reservation.end, self.reservations))
 
 
-class InvalidPeriodValidationError(ValidationError):
-    # TODO rename
+class InvalidPeriod(ValidationError):
     def __init__(self, message, reservation, validator):
         self.reservation = reservation
         self.validator = validator
-        super(InvalidPeriodValidationError, self).__init__(
+        super(InvalidPeriod, self).__init__(
             message + "(reservation: %s, validator: %s)" % (reservation, validator))
 
 
