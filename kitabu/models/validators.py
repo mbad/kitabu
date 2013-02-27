@@ -67,11 +67,7 @@ class FullTimeValidator(Validator):
     interval_type = models.CharField(max_length=6, choices=[(x, x) for x in TIME_UNITS[1:]])
 
     def _perform_validation(self, reservation):
-        date_field_names = self._get_date_field_names()
-        dates = [getattr(reservation, field_name) for field_name in date_field_names]
-        assert all([isinstance(date, datetime) for date in dates])
-
-        for date in dates:
+        for date in [reservation.start, reservation.end]:
             for time_unit in self.TIME_UNITS:
                 time_value = getattr(date, time_unit)
 
@@ -92,9 +88,6 @@ class FullTimeValidator(Validator):
                         "%ss must by 0 (got %s)" % (time_unit, time_value),
                         reservation,
                         self)
-
-    def _get_date_field_names(self):
-        return ['start', 'end']
 
 
 class StaticValidator(Validator):
@@ -137,11 +130,7 @@ class TimeIntervalValidator(Validator):
     interval_type = models.CharField(max_length=2, choices=INTERVAL_TYPES_CHOICES, default=NOT_SOONER)
 
     def _perform_validation(self, reservation):
-        date_field_names = self._get_date_field_names()
-        dates = [getattr(reservation, field_name) for field_name in date_field_names]
-        assert all([isinstance(date, datetime) for date in dates])
-
-        for (date, field_name) in zip(dates, date_field_names):
+        for (date, field_name) in [(reservation.start, 'start'), (reservation.end, 'end')]:
             delta = date - now()
 
             valid = True
@@ -170,9 +159,6 @@ class TimeIntervalValidator(Validator):
                     self
                 )
 
-    def _get_date_field_names(self):
-        return ['start', 'end']
-
     def _check(self, delta, expected_time):
         if self.interval_type == self.NOT_SOONER:
             return delta >= expected_time
@@ -186,13 +172,9 @@ class WithinPeriodValidator(Validator):
         abstract = True
 
     def _perform_validation(self, reservation):
-        date_field_names = self._get_date_field_names()
-        dates = [getattr(reservation, field_name) for field_name in date_field_names]
-        assert all([isinstance(date, datetime) for date in dates])
-
         for period in self.periods.all():
             all_fields_valid_for_period = True
-            for (date, field_name) in zip(dates, date_field_names):
+            for (date, field_name) in [(reservation.start, 'start'), (reservation.end, 'end')]:
                 if (
                     (period.end and date > period.end)  # after end
                     or
@@ -212,9 +194,6 @@ class WithinPeriodValidator(Validator):
             ),
             reservation,
             self)
-
-    def _get_date_field_names(self):
-        return ['start', 'end']
 
 
 class Period(models.Model):
