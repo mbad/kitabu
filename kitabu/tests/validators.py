@@ -30,6 +30,12 @@ from kitabu.tests.models import (
 # Maybe this can be done better (with patch method?)
 
 
+def MockWithoutId():
+    mock = Mock()
+    mock.id = None
+    return mock
+
+
 class SubjectWithValidatorTest(TestCase):
     def setUp(self):
         self.room = Room.objects.create(name="room", size=200)
@@ -92,7 +98,7 @@ class SubjectAndUniversalValidatorTest(TestCase):
 class FullTimeValidatorTest(TestCase):
 
     def test_half_a_minute(self):
-        reservation = Mock()
+        reservation = MockWithoutId()
         validator = FullTimeValidator.objects.create(interval_type='second', interval=30)
         FullTimeValidator._get_date_field_names = Mock(return_value=['start'])
 
@@ -114,7 +120,7 @@ class FullTimeValidatorTest(TestCase):
             validator.validate(reservation)
 
     def test_full_hour_zero_minures(self):
-        reservation = Mock()
+        reservation = MockWithoutId()
         validator = FullTimeValidator.objects.create(interval_type='minute', interval=0)
         FullTimeValidator._get_date_field_names = Mock(return_value=['start'])
 
@@ -130,7 +136,7 @@ class FullTimeValidatorTest(TestCase):
             validator.validate(reservation)
 
     def test_full_hour_60_minutes(self):
-        reservation = Mock()
+        reservation = MockWithoutId()
         validator = FullTimeValidator.objects.create(interval_type='minute', interval=60)
         FullTimeValidator._get_date_field_names = Mock(return_value=['start'])
 
@@ -147,7 +153,7 @@ class FullTimeValidatorTest(TestCase):
 
     def test_many_fields(self):
         FullTimeValidator._get_date_field_names = Mock(return_value=['start', 'end'])
-        reservation = Mock()
+        reservation = MockWithoutId()
         validator = FullTimeValidator.objects.create(interval_type='hour', interval=2)
 
         reservation.start = reservation.end = datetime(2000, 1, 1, 16, 0)
@@ -176,7 +182,7 @@ class FullTimeValidatorTest(TestCase):
 class StaticValidatorTest(TestCase):
 
     def test_failing_validator(self):
-        reservation = Mock()
+        reservation = MockWithoutId()
         validator = StaticValidator.objects.create(
             validator_function_absolute_name='kitabu.tests.validators.StaticValidatorTest.fail')
 
@@ -184,18 +190,17 @@ class StaticValidatorTest(TestCase):
             validator.validate(reservation)
 
     def test_passing_validator(self):
-        reservation = Mock()
+        reservation = MockWithoutId()
         validator = StaticValidator.objects.create(
             validator_function_absolute_name='kitabu.tests.validators.StaticValidatorTest.pass_')
 
         validator.validate(reservation)
 
     def test_fail_for_a_reason_validator(self):
-        reservation = Mock()
+        reservation = MockWithoutId()
         validator = StaticValidator.objects.create(
             validator_function_absolute_name='kitabu.tests.validators.StaticValidatorTest.fail_for_a_reason')
 
-        validator.validate(None)
         reservation.reason = Mock(return_value=False)
         validator.validate(reservation)
         reservation.reason.assert_called_once_with()
@@ -249,7 +254,7 @@ class TimeIntervalValidatorTest(TestCase):
 
         def actual_decorator(method):
             def new_method(self):
-                self.reservation = Mock()
+                self.reservation = MockWithoutId()
                 self.validator = TimeIntervalValidator.objects.create(
                     time_unit='day',
                     time_value=5,
@@ -353,7 +358,7 @@ class TimeIntervalValidatorTest(TestCase):
         self.validator.validate(self.reservation)
 
     def test_an_hour_too_soon_start(self):
-        self.reservation = Mock()
+        self.reservation = MockWithoutId()
         self.validator = TimeIntervalValidator.objects.create(
             time_unit='minute', time_value=15, interval_type=TimeIntervalValidator.NOT_SOONER)
         self.validator._get_date_field_names = Mock(return_value=['start'])
@@ -368,7 +373,7 @@ class TimeIntervalValidatorTest(TestCase):
                 self.validator.validate(self.reservation)
 
     def test_a_quarter_too_soon_start(self):
-        self.reservation = Mock()
+        self.reservation = MockWithoutId()
         self.validator = TimeIntervalValidator.objects.create(
             time_unit='minute', time_value=45, interval_type=TimeIntervalValidator.NOT_SOONER)
         TimeIntervalValidator._get_date_field_names = Mock(return_value=['start'])
@@ -382,7 +387,7 @@ class TimeIntervalValidatorTest(TestCase):
                 self.validator.validate(self.reservation)
 
     def test_just_in_time(self):
-        self.reservation = Mock()
+        self.reservation = MockWithoutId()
         self.validator = TimeIntervalValidator.objects.create(
             time_unit='minute', time_value=30, interval_type=TimeIntervalValidator.NOT_SOONER)
         TimeIntervalValidator._get_date_field_names = Mock(return_value=['start'])
@@ -401,7 +406,7 @@ class NotSoonerThanValidatorTest(TestCase):
         validator = WithinPeriodValidator.objects.create()
         Period.objects.create(start=datetime(2000, 1, 2), validator=validator)
         WithinPeriodValidator._get_date_field_names = Mock(return_value=['begin'])
-        reservation = Mock()
+        reservation = MockWithoutId()
 
         reservation.begin = datetime(2000, 1, 2)
         validator.validate(reservation)
@@ -414,7 +419,7 @@ class NotSoonerThanValidatorTest(TestCase):
         validator = WithinPeriodValidator.objects.create()
         Period.objects.create(start=datetime(2000, 1, 2), validator=validator)
         WithinPeriodValidator._get_date_field_names = Mock(return_value=['start', 'end'])
-        reservation = Mock()
+        reservation = MockWithoutId()
 
         reservation.start = datetime(2000, 1, 1)
         reservation.end = datetime(2000, 1, 1)
@@ -444,7 +449,7 @@ class NotLaterThanValidatorTest(TestCase):
         validator = WithinPeriodValidator.objects.create()
         Period.objects.create(end=datetime(2000, 1, 2), validator=validator)
         WithinPeriodValidator._get_date_field_names = Mock(return_value=['begin'])
-        reservation = Mock()
+        reservation = MockWithoutId()
 
         reservation.begin = datetime(2000, 1, 2)
         validator.validate(reservation)
@@ -457,7 +462,7 @@ class NotLaterThanValidatorTest(TestCase):
         validator = WithinPeriodValidator.objects.create()
         Period.objects.create(end=datetime(2000, 1, 2), validator=validator)
         WithinPeriodValidator._get_date_field_names = Mock(return_value=['start', 'end'])
-        reservation = Mock()
+        reservation = MockWithoutId()
 
         reservation.start = datetime(2000, 1, 1)
         reservation.end = datetime(2000, 1, 3)
@@ -488,7 +493,7 @@ class WithinPeriodTest(TestCase):
         validator = WithinPeriodValidator.objects.create()
         Period.objects.create(start=datetime(2000, 1, 2), end=datetime(2000, 1, 4), validator=validator)
         WithinPeriodValidator._get_date_field_names = Mock(return_value=['begin'])
-        reservation = Mock()
+        reservation = MockWithoutId()
 
         reservation.begin = datetime(2000, 1, 2)
         validator.validate(reservation)
@@ -519,7 +524,7 @@ class WithinPeriodTest(TestCase):
         validator = WithinPeriodValidator.objects.create()
         Period.objects.create(start=datetime(2000, 1, 2), end=datetime(2000, 1, 4), validator=validator)
         WithinPeriodValidator._get_date_field_names = Mock(return_value=['start', 'end'])
-        reservation = Mock()
+        reservation = MockWithoutId()
 
         reservation.start = datetime(2000, 1, 2)
         reservation.end = datetime(2000, 1, 4)
@@ -580,7 +585,7 @@ class WithinOneOfPeriodsTest(TestCase):
                               end=datetime(2000, 2, 4))
 
         WithinPeriodValidator._get_date_field_names = Mock(return_value=['start', 'end'])
-        reservation = Mock()
+        reservation = MockWithoutId()
 
         reservation.start = datetime(2000, 1, 2)
         reservation.end = datetime(2000, 1, 4)
@@ -636,7 +641,7 @@ class NotWithinPeriodTest(TestCase):
         validator = NotWithinPeriodValidator.objects.create(start=datetime(2000, 1, 2),
                                                             end=datetime(2000, 1, 4))
         NotWithinPeriodValidator._get_date_field_names = Mock(return_value=['start', 'end'])
-        reservation = Mock()
+        reservation = MockWithoutId()
 
         reservation.start = datetime(2000, 1, 2)
         reservation.end = datetime(2000, 1, 4)
@@ -702,7 +707,7 @@ class GivenHoursAndDaysTest(TestCase):
             'sunday': hours
         })
 
-        self.reservation = Mock()
+        self.reservation = MockWithoutId()
 
     def test_valid_hours_one_day_difference(self):
         #monday - tuesday
@@ -749,7 +754,7 @@ class MaxDurationValidatorTest(TestCase):
         self.two_hours_validator = MaxDurationValidator.objects.create(max_duration_in_seconds=2 * 3600)
         self.two_days_and_one_hour_validator = MaxDurationValidator.objects.create(
             max_duration_in_seconds=2 * 3600 * 24 + 3600)
-        self.reservation = Mock()
+        self.reservation = MockWithoutId()
 
     def test_two_hours(self):
         self.reservation.start = datetime(2012, 10, 10, 10, 15)

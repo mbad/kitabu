@@ -30,9 +30,9 @@ class Validator(models.Model):
     def __unicode__(self):
         return getattr(self, self.actual_validator_related_name).__class__.__name__ + ' ' + unicode(self.id)
 
-    def validate(self, reservation):
-        # TODO: think whether this is not a good idea
-        # assert reservation.id is None, "Reservation must be validated before being saved to database"
+    def validate(self, reservation, allow_reservation_update=False):
+        if not allow_reservation_update:
+            assert reservation.id is None, "Reservation must be validated before being saved to database"
         getattr(self, self.actual_validator_related_name)._perform_validation(reservation)
 
     def save(self, *args, **kwargs):
