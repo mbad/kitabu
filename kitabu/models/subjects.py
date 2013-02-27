@@ -53,7 +53,6 @@ class BaseSubject(models.Model, EnsureSize):
             validator.validate(reservation)
 
     def _validate_exclusive(self, reservation):
-        # TODO: perhaps this would make sense to extract it as a static validator
         overlapping_reservations = self.overlapping_reservations(reservation.start, reservation.end)
         if overlapping_reservations:
             raise OverlappingReservations(reservation, overlapping_reservations)
@@ -160,7 +159,6 @@ class FixedSizeSubject(FiniteSizeSubject):
 
     @classmethod
     def with_size(cls, size):
-        # TODO: fix this, class should not be modified
         class C(cls):
             _size = size
 
