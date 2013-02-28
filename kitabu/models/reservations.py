@@ -1,5 +1,6 @@
 #-*- coding=utf-8 -*-
 import datetime
+import warnings
 
 from django.db import models, transaction
 
@@ -70,7 +71,7 @@ class ReservationMaybeExclusive(ReservationWithSize):
         if self.exclusive:
             self.__dict__['size'] = self.subject.size
             if 'size' in kwargs:
-                raise AttributeError('Cannot explicitely set size for exclusive reservation')
+                warnings.warn("Explicitely setting size for exclusive reservation is ignored")
 
     def __setattr__(self, name, value):
         if name == 'size' and getattr(self, 'size', False) and getattr(self, 'exclusive', False):

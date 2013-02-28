@@ -6,7 +6,13 @@ from django.forms.util import ErrorList
 from django.forms.formsets import formset_factory
 
 from kitabu.search.available import ExclusivelyAvailableSubjects
-from kitabu.exceptions import ReservationError
+from kitabu.exceptions import (
+    ReservationError,
+    InvalidPeriod,
+    OverlappingReservations,
+    SizeExceeded,
+    TooManyReservations,
+)
 
 from spa.forms import RequiredFormSet
 from spa.settings import MAX_LANE_RESERVATIONS_NR
@@ -47,9 +53,20 @@ def reserve(request, lane_id):
             try:
                 LaneReservationGroup.reserve(*arguments, owner=request.user)
             except ReservationError as e:
+                message = (
+                    "Size exceeded. There aren't %s places available." % e.requested_size
+                    if isinstance(e, SizeExceeded) else
+                    "There are other reservations that overlap with selected period."
+                    if isinstance(e, OverlappingReservations) else
+                    "Invalid period. Please see restriction for reserving this lane."
+                    if isinstance(e, InvalidPeriod) else
+                    "You have reached limit of reservation for you account."
+                    if isinstance(e, TooManyReservations) else
+                    "Disallowed reservation parameters (%s)." % e.message
+                )
                 if "__all__" not in form._errors:
                     form._errors["__all__"] = ErrorList()
-                form.errors['__all__'].append(e.message)
+                form.errors['__all__'].append(message)
             else:
                 return redirect('reserve-lane', lane_id)
     else:
