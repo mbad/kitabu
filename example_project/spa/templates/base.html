@@ -27,11 +27,11 @@
         <div class="menu">
             <ul>
                 <li><a href="/">Home</a></li>
-                <li><a href="{% url list-pools %}">Pools</a></li>
+                <li><a href="{% url 'list-pools' %}">Pools</a></li>
                 {% if user.is_authenticated %}
-                    <li><a href="{% url auth_logout %}">Log out</a></li>
+                    <li><a href="{% url 'auth_logout' %}">Log out</a></li>
                 {% else %}
-                    <li><a href="{% url auth_login %}">Log in</a></li>
+                    <li><a href="{% url 'auth_login' %}">Log in</a></li>
                 {% endif %}
             </ul>
         </div>
@@ -67,7 +67,7 @@
                             <h4>Links</h4>
                                 <ul>
                                     <li><a href="/">Home</a></li>
-                                    <li><a href="{% url list-pools %}">Pools</a></li>
+                                    <li><a href="{% url 'list-pools' %}">Pools</a></li>
                                 </ul>
                     </aside><!-- end of #first footer segment -->
             </section><!-- end of footer-outer-block -->

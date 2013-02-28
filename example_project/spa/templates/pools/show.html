@@ -15,12 +15,12 @@
         <ul>
             See more:
             <li>
-                <a href="{% url show-pool-availability pool.id %}">
+                <a href="{% url 'show-pool-availability' pool.id %}">
                     Search available dates
                 </a>
             </li>
             <li>
-                <a href="{% url show-pool-reservations pool.id %}">
+                <a href="{% url 'show-pool-reservations' pool.id %}">
                     See reservations on the pool
                 </a>
             </li>

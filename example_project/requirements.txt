@@ -4,8 +4,7 @@ argparse==1.2.1
 dj-database-url==0.2.1
 django-crispy-forms==1.1.4
 django-extensions==0.9
-django-registration==0.8
-django-registration-defaults==0.3
+https://bitbucket.org/marekbrzoska/django-registration/get/fd14433.zip
 mock==1.0.0
 psycopg2==2.4.5
 wsgiref==0.1.2

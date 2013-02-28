@@ -3,7 +3,7 @@
     <ul>
         {% for pool in pools %}
             <li>
-                <a href="{% url show-pool pool.id %}">{{ pool }}</a>
+                <a href="{% url 'show-pool' pool.id %}">{{ pool }}</a>
             </li>
         {% endfor %}        
     </ul>

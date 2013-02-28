@@ -21,7 +21,7 @@
     {% if available_lanes %}
         <ul>
             {% for lane in available_lanes %}
-                <li><a href="{% url reserve-lane lane.id %}">{{ lane }}</a></li>
+                <li><a href="{% url 'reserve-lane' lane.id %}">{{ lane }}</a></li>
             {% endfor %}
         </ul>
     {% else %}

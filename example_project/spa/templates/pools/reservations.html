@@ -22,7 +22,7 @@
     {% if reservations %}
         <ul>
             {% for reservation in reservations %}
-                <li><a href="{% url reserve-lane reservation.subject_id %}">{{ reservation }}</a></li>
+                <li><a href="{% url 'reserve-lane' reservation.subject_id %}">{{ reservation }}</a></li>
             {% endfor %}
         </ul>
     {% else %}

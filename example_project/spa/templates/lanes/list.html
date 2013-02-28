@@ -3,7 +3,7 @@
     <ul>
         {% for lane in lanes %}
             <li>
-                <a href="{% url lanes.views.reserve lane.id %}">{{ lane }}</a>
+                <a href="{% url 'lanes.views.reserve' lane.id %}">{{ lane }}</a>
             </li>
         {% endfor %}        
     </ul>
