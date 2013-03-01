@@ -5,7 +5,7 @@ from mock import Mock, patch
 from django.test import TestCase
 
 from kitabu.exceptions import (
-    KitabuValidationError,
+    ReservationError,
     InvalidPeriod,
     TooManyReservations,
 )
@@ -181,7 +181,7 @@ class StaticValidatorTest(TestCase):
         validator = StaticValidator.objects.create(
             validator_function_absolute_name='kitabu.tests.validators.StaticValidatorTest.fail')
 
-        with self.assertRaises(KitabuValidationError):
+        with self.assertRaises(ReservationError):
             validator.validate(reservation)
 
     def test_passing_validator(self):
@@ -200,7 +200,7 @@ class StaticValidatorTest(TestCase):
         validator.validate(reservation)
         reservation.reason.assert_called_once_with()
         reservation.reason = Mock(return_value=True)
-        with self.assertRaises(KitabuValidationError):
+        with self.assertRaises(ReservationError):
             validator.validate(reservation)
         reservation.reason.assert_called_once_with()
 
@@ -216,7 +216,7 @@ class StaticValidatorTest(TestCase):
 
     @staticmethod
     def fail(reservation):
-        raise KitabuValidationError()
+        raise ReservationError()
 
     @staticmethod
     def pass_(reservation):
@@ -226,7 +226,7 @@ class StaticValidatorTest(TestCase):
     def fail_for_a_reason(reservation):
         if hasattr(reservation, 'reason'):
             if reservation.reason():
-                raise KitabuValidationError()
+                raise ReservationError()
 
 
 class TimeIntervalValidatorTest(TestCase):

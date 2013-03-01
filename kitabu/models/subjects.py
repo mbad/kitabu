@@ -18,12 +18,36 @@ now = datetime.datetime.utcnow
 
 
 class BaseSubject(models.Model, EnsureSize):
+    """Base model for all Subjects.
+
+    The main purpose of this class is to deliver ``reserve`` method that is
+    intended to be called instead of creating reservation explicitly.
+
+    It has one ``ManyToManyField`` - ``validators``.
+
+    It is subclassed to deliver more specialized functionalities.
+
+    By itself the class represents subject that can be reserved but includes no
+    additional info about the subject, except for validators that can be
+    attached.
+
+    """
     class Meta:
         abstract = True
 
     validators = models.ManyToManyField(Validator, blank=True)
 
     def reserve(self, **kwargs):
+        """Make a reservation on current subject and return the reservation.
+
+        The core method of Subject. Creates a reservation and validates
+        it against all attached and global validators. If validation is
+        successfull then reservation is saved to database and returned.
+        Otherwise ``ReservationError`` is raised.
+
+        """
+        assert 'start' in kwargs and 'end' in kwargs, "start and end dates must be provided"
+
         reservation = self.reservation_model(subject=self, **kwargs)
         self._validate_reservation(reservation)
         if kwargs.get('exclusive') or self._only_exclusive_reservations():
@@ -32,19 +56,26 @@ class BaseSubject(models.Model, EnsureSize):
         return reservation
 
     def overlapping_reservations(self, start, end):
+        """Find all reservations that overlap with given period.
+
+        Return a query set, possibly empty.
+        """
         return self.reservations.filter(start__lt=end, end__gt=start)
 
     @classmethod
     def get_reservation_model(cls):
+        """Get class of reservation model associated with the Subject model."""
         return cls._meta.get_field_by_name('reservations')[0].model
 
     @property
     def reservation_model(self):
+        """Get class of reservation model associated with the Subject model."""
         return self.__class__.get_reservation_model()
 
     # Private
 
     def _validate_reservation(self, reservation):
+        """Run associated and global validators."""
 
         for validator in Validator.universal.all():
             validator.validate(reservation)
@@ -53,6 +84,12 @@ class BaseSubject(models.Model, EnsureSize):
             validator.validate(reservation)
 
     def _validate_exclusive(self, reservation):
+        """Make sure given reservation's period doesn't overlap any other's.
+
+        If there is overlapped reservation, raise ``OverlappingReservations``,
+        otherwise do nothing.
+
+        """
         overlapping_reservations = self.overlapping_reservations(reservation.start, reservation.end)
         if overlapping_reservations:
             raise OverlappingReservations(reservation, overlapping_reservations)
@@ -62,18 +99,40 @@ class BaseSubject(models.Model, EnsureSize):
 
 
 class SubjectWithApprovableReservations(models.Model):
+
+    """Subject for reservations that require approval - ``ApprovableReservation``s.
+
+    Main purpose of this class is to deliver ``make_preliminary_reservation``
+    method that creates reservation that still needs to approved, otherwise
+    will expire.
+
+    Overrides method ``overlapping_reservations`` to discard not not approved
+    and thus no longer valid reservations.
+
+    """
+
     class Meta:
         abstract = True
 
     def overlapping_reservations(self, start, end):
+        """
+        Find overlapping reservation discarding not approved and stale ones.
+        """
         extra_filter = Q(approved=True) | Q(valid_until__gt=now())
         return self.reservations.filter(extra_filter, start__lt=end, end__gt=start)
 
     def make_preliminary_reservation(self, valid_until, start=None, end=None, **kwargs):
+        """ Make *not yet approved* reservation."""
         return self.reserve(start=start, end=end, valid_until=valid_until, approved=False, **kwargs)
 
 
-class ExclusiveSubject(models.Model):
+class ExclusiveSubjectMixin(models.Model):
+    """Mixin that allows only exclusive reservations.
+
+    Mixin before BaseSubject.
+    Can be used with BaseReservation.
+
+    """
     class Meta:
         abstract = True
 
@@ -81,15 +140,25 @@ class ExclusiveSubject(models.Model):
         return True
 
 
-class FiniteSizeSubject(models.Model):
-    '''
-    This mixin requires size property. Available e.g. in
-    VariableSizeSubject and FixedSizeSubject
+class FiniteSizeSubjectMixin(models.Model):
+    '''Suitable for all subjects that can have limited concurrent reservations.
+
+    This mixin requires size property. Available e.g. in VariableSizeSubject
+    and FixedSizeSubject subclasses.
+
+    Mix in before BaseSubject.
+
     '''
     class Meta:
         abstract = True
 
     def reserve(self, start=None, end=None, **kwargs):
+        """Make a reservation on current subject and return the reservation.
+
+        Check if reservation with given number of slots can be made. If yes,
+        return super. If not raise SizeExceeded.
+
+        """
         size = kwargs.get('size', 1)
         assert start and end, "start and end dates must be provided"
         assert size > 0, "size must be greater than zero"
@@ -116,44 +185,17 @@ class FiniteSizeSubject(models.Model):
                     overlapping_reservations=overlapping_reservations
                 )
 
-        return super(FiniteSizeSubject, self).reserve(start=start, end=end, **kwargs)
+        return super(FiniteSizeSubjectMixin, self).reserve(start=start, end=end, **kwargs)
 
 
-class VariableSizeSubject(FiniteSizeSubject):
-    class Meta:
-        abstract = True
+class FixedSizeSubject(FiniteSizeSubjectMixin):
+    """Include functionality of FiniteSizeSubjectMixin and supply fixed size.
 
-    size = models.PositiveIntegerField()
-
-
-class MaybeExclusiveVariableSizeSubject(VariableSizeSubject):
-    class Meta:
-        abstract = True
-
-    def __setattr__(self, name, value):
-        if name == 'size' and getattr(self, '_old_size', None) is None:
-            self._old_size = self.size
-        return super(MaybeExclusiveVariableSizeSubject, self).__setattr__(name, value)
-
-    def save(self, **kwargs):
-        super(MaybeExclusiveVariableSizeSubject, self).save(**kwargs)
-
-        if getattr(self, '_old_size', self.size) != self.size:  # if size has changed
-            self.reservation_model.objects.filter(end__gte=now(), exclusive=True).update(size=self.size)
-            delattr(self, '_old_size')
-
-    def reserve(self, start=None, end=None, **kwargs):
-        if 'size' in kwargs and kwargs.get('exclusive'):
-            raise AttributeError('Cannot explicitely set size for exclusive reservation')
-        return super(MaybeExclusiveVariableSizeSubject, self).reserve(start=start, end=end, **kwargs)
-
-
-class FixedSizeSubject(FiniteSizeSubject):
-    '''
-    You can inherit from this class like this:
+    This class can be inherited from like this:
     class YourClass(FixedSizeSubject.with_size(5)
         pass
-    '''
+
+    """
     class Meta:
         abstract = True
 
@@ -169,3 +211,49 @@ class FixedSizeSubject(FiniteSizeSubject):
     @property
     def size(self):
         return self._size
+
+
+class VariableSizeSubject(FiniteSizeSubjectMixin):
+    """Include functionality of FiniteSizeSubjectMixin and supply size field.
+
+    ``size`` is simply django PositiveIntegerField, so each instance of this
+    model can have its own size. Suitable for e.g. hotel rooms, where each
+    can have different number of beds.
+
+    """
+    class Meta:
+        abstract = True
+
+    size = models.PositiveIntegerField()
+
+
+class ExclusivableVariableSizeSubjectMixin(VariableSizeSubject):
+    """Include functionality of VariableSizeSubject and watch data consistency.
+
+    The main purpose of this mixin is to make sure that changing size of the
+    subject will also change size of already made exclusive reservations and
+    thus keep data consistent.
+
+    As bonus it prevents programmer from accidentally setting size on exclusive
+    reservation.
+    """
+    class Meta:
+        abstract = True
+
+    def __setattr__(self, name, value):
+        if name == 'size' and getattr(self, '_old_size', None) is None:
+            self._old_size = self.size
+        return super(ExclusivableVariableSizeSubjectMixin, self).__setattr__(name, value)
+
+    def save(self, **kwargs):
+        super(ExclusivableVariableSizeSubjectMixin, self).save(**kwargs)
+
+        if getattr(self, '_old_size', self.size) != self.size:  # if size has changed
+            self.reservation_model.objects.filter(end__gte=now(), exclusive=True).update(size=self.size)
+            delattr(self, '_old_size')
+
+    def reserve(self, start=None, end=None, **kwargs):
+        """Forbid exclusive reservation with size set, then call super."""
+        if 'size' in kwargs and kwargs.get('exclusive'):
+            raise AttributeError('Cannot explicitly set size for exclusive reservation')
+        return super(ExclusivableVariableSizeSubjectMixin, self).reserve(start=start, end=end, **kwargs)

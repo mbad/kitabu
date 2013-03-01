@@ -2,16 +2,11 @@
 
 
 class ReservationError(Exception):
-    ''' Error class to be thrown when reservation can't be made '''
-    pass
-
-
-class KitabuValidationError(ReservationError):
     ''' Error class to be thrown when a validator fails '''
     pass
 
 
-class SizeExceeded(KitabuValidationError):
+class SizeExceeded(ReservationError):
     def __init__(self, subject, requested_size, start, end, overlapping_reservations=None):
         self.subject = subject
         self.requested_size = requested_size
@@ -32,7 +27,7 @@ class SizeExceeded(KitabuValidationError):
         super(SizeExceeded, self).__init__(msg)
 
 
-class OverlappingReservations(KitabuValidationError):
+class OverlappingReservations(ReservationError):
     def __init__(self, reservation, reservations):
         self.reservation = reservation
         self.reservations = reservations
@@ -42,7 +37,7 @@ class OverlappingReservations(KitabuValidationError):
                 reservation.start, reservation.end, self.reservations))
 
 
-class InvalidPeriod(KitabuValidationError):
+class InvalidPeriod(ReservationError):
     def __init__(self, message, reservation, validator):
         self.reservation = reservation
         self.validator = validator
@@ -50,7 +45,7 @@ class InvalidPeriod(KitabuValidationError):
             message + u"(reservation: %s, validator: %s)" % (reservation, validator))
 
 
-class TooManyReservations(KitabuValidationError):
+class TooManyReservations(ReservationError):
     def __init__(self, reservation, validator, current):
         self.reservation = reservation
         self.validator = validator
