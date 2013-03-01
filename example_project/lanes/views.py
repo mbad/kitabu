@@ -58,7 +58,7 @@ def reserve(request, lane_id):
                     if isinstance(e, SizeExceeded) else
                     "There are other reservations that overlap with selected period."
                     if isinstance(e, OverlappingReservations) else
-                    "Invalid period. Please see restriction for reserving this lane."
+                    e.message
                     if isinstance(e, InvalidPeriod) else
                     "You have reached limit of reservation for you account."
                     if isinstance(e, TooManyReservations) else

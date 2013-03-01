@@ -37,25 +37,66 @@ class OverlappingReservations(ReservationError):
                 reservation.start, reservation.end, self.reservations))
 
 
-class InvalidPeriod(ReservationError):
-    # TODO this should be put apart into more detailed classes
-    def __init__(self, message, reservation, validator):
-        self.reservation = reservation
-        self.validator = validator
-        super(InvalidPeriod, self).__init__(
-            message + u"(reservation: %s, validator: %s)" % (reservation, validator))
+class ValidatorError(ReservationError):
+    pass
 
 
-class TooManyReservations(ReservationError):
-    def __init__(self, reservation, validator, current):
-        self.reservation = reservation
-        self.validator = validator
-        message = (u"Reached maximum number of reservations for user %(user)s %(on_subject)s(%(number)s)"
-                   % {
-                       'user': reservation.owner,
-                       'on_subject': ('on subject %s' % reservation.subject) if current else '',
-                       'number': (validator.max_reservations_on_current_subject
-                                  if current else
-                                  validator.max_reservations_on_all_subjects),
-                   })
-        super(TooManyReservations, self).__init__(message)
+class InvalidPeriod(ValidatorError):
+    def __init__(self, *a, **ka):
+        pass
+
+
+class TimeUnitNotNull(InvalidPeriod):
+    def __init__(self, unit):
+        self.unit = unit
+
+
+class TimeUnitNotDivisible(InvalidPeriod):
+    def __init__(self, time_unit, interval):
+        self.unit = time_unit
+        self.interval = interval
+
+
+class TooSoon(InvalidPeriod):
+    def __init__(self, expected_period):
+        self.expected_period = expected_period
+
+
+class TooLate(InvalidPeriod):
+    def __init__(self, expected_period):
+        self.expected_period = expected_period
+
+
+class OutsideAllowedPeriods(InvalidPeriod):
+    def __init__(self, periods):
+        self.periods = periods
+
+
+class ForbiddenPeriod(InvalidPeriod):
+    def __init__(self, start, end):
+        self.start = start
+        self.end = end
+
+
+class ForbiddenHours(InvalidPeriod):
+    def __init__(self, schedule):
+        self.schedule = schedule
+
+
+class TooLong(InvalidPeriod):
+    def __init__(self, max_allowed_seconds):
+        self.max_allowed_seconds = max_allowed_seconds
+
+
+class TooManyReservations(ValidatorError):
+    pass
+
+
+class TooManyReservationsForUser(TooManyReservations):
+    def __init__(self, max_allowed):
+        self.max_allowed = max_allowed
+
+
+class TooManyReservationsOnSubjectForUser(TooManyReservations):
+    def __init__(self, max_allowed):
+        self.max_allowed = max_allowed

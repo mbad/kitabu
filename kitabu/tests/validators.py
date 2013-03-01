@@ -580,14 +580,14 @@ class NotWithinPeriodTest(TestCase):
         with self.assertRaises(InvalidPeriod):
             validator.validate(reservation)
 
-        reservation.start = datetime(2000, 1, 3)
-        reservation.end = datetime(2000, 1, 1)
+        reservation.start = datetime(2000, 1, 1)
+        reservation.end = datetime(2000, 1, 3)
 
         with self.assertRaises(InvalidPeriod):
             validator.validate(reservation)
 
-        reservation.start = datetime(2000, 1, 4)
-        reservation.end = datetime(2000, 1, 3)
+        reservation.start = datetime(2000, 1, 3)
+        reservation.end = datetime(2000, 1, 4)
 
         with self.assertRaises(InvalidPeriod):
             validator.validate(reservation)
@@ -598,14 +598,14 @@ class NotWithinPeriodTest(TestCase):
         with self.assertRaises(InvalidPeriod):
             validator.validate(reservation)
 
-        reservation.start = datetime(2000, 1, 3)
-        reservation.end = datetime(2000, 1, 1)
+        reservation.start = datetime(2000, 1, 1)
+        reservation.end = datetime(2000, 1, 3)
 
         with self.assertRaises(InvalidPeriod):
             validator.validate(reservation)
 
-        reservation.start = datetime(2000, 1, 6)
-        reservation.end = datetime(2000, 1, 4)
+        reservation.start = datetime(2000, 1, 4)
+        reservation.end = datetime(2000, 1, 6)
 
         with self.assertRaises(InvalidPeriod):
             validator.validate(reservation)

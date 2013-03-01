@@ -5,7 +5,18 @@ from datetime import datetime
 
 from django.db import models
 
-from kitabu.exceptions import InvalidPeriod, TooManyReservations
+from kitabu.exceptions import (
+    TimeUnitNotNull,
+    TimeUnitNotDivisible,
+    TooSoon,
+    TooLate,
+    OutsideAllowedPeriods,
+    ForbiddenPeriod,
+    ForbiddenHours,
+    TooLong,
+    TooManyReservationsForUser,
+    TooManyReservationsOnSubjectForUser,
+)
 from kitabu import managers
 
 import time
@@ -73,21 +84,12 @@ class FullTimeValidator(Validator):
 
                 if self.interval_type == time_unit:
                     if self.interval == 0 and time_value > 0:
-                        raise InvalidPeriod(
-                            "%ss must be 0 (%s is not)" % (time_unit, time_value),
-                            reservation,
-                            self)
+                        raise TimeUnitNotNull(time_unit)
                     if self.interval > 0 and time_value % self.interval > 0:
-                        raise InvalidPeriod(
-                            "%ss must by divisible by %s (%s is not)" % (time_unit, self.interval, time_value),
-                            reservation,
-                            self)
+                        raise TimeUnitNotDivisible(time_unit, self.interval)
                     break  # don't validate any greater time units than this one
                 elif time_value > 0:
-                    raise InvalidPeriod(
-                        "%ss must by 0 (got %s)" % (time_unit, time_value),
-                        reservation,
-                        self)
+                    raise TimeUnitNotNull(time_unit)
 
 
 class StaticValidator(Validator):
@@ -133,37 +135,22 @@ class TimeIntervalValidator(Validator):
         for (date, field_name) in [(reservation.start, 'start'), (reservation.end, 'end')]:
             delta = date - now()
 
-            valid = True
-
             if self.time_unit == 'second':
-                valid = self._check(delta.total_seconds(), self.time_value)
+                self._check(delta.total_seconds(), self.time_value)
             elif self.time_unit == 'minute':
-                valid = self._check(delta.total_seconds(), self.time_value * 60)
+                self._check(delta.total_seconds(), self.time_value * 60)
             elif self.time_unit == 'hour':
-                valid = self._check(delta.total_seconds(), self.time_value * 3600)
+                self._check(delta.total_seconds(), self.time_value * 3600)
             elif self.time_unit == 'day':
-                valid = self._check(delta.days, self.time_value)
+                self._check(delta.days, self.time_value)
             else:
                 raise ValueError("time_unit must be one of (second, minute, hour, day)")
 
-            if not valid:
-                raise InvalidPeriod(
-                    "Reservation %(field_name)s must by at %(least_most)s %(number)s %(time_unit)ss in the future" %
-                    {
-                        'field_name': field_name,
-                        'least_most': 'least' if self.interval_type == self.NOT_SOONER else "most",
-                        'number': self.time_value,
-                        'time_unit': self.time_unit,
-                    },
-                    reservation,
-                    self
-                )
-
     def _check(self, delta, expected_time):
-        if self.interval_type == self.NOT_SOONER:
-            return delta >= expected_time
-        if self.interval_type == self.NOT_LATER:
-            return delta <= expected_time
+        if self.interval_type == self.NOT_SOONER and delta < expected_time:
+            raise TooSoon(expected_time)
+        if self.interval_type == self.NOT_LATER and delta > expected_time:
+            raise TooLate(expected_time)
 
 
 class WithinPeriodValidator(Validator):
@@ -185,15 +172,7 @@ class WithinPeriodValidator(Validator):
             if all_fields_valid_for_period:
                 return
 
-        raise InvalidPeriod(
-            "Reservation %s must be in one of given periods: %s, received: %s" %
-            (
-                field_name,
-                ", ".join(map(unicode, self.periods.all())),
-                date,
-            ),
-            reservation,
-            self)
+        raise OutsideAllowedPeriods(list(self.periods.all()))
 
 
 class Period(models.Model):
@@ -229,22 +208,8 @@ class NotWithinPeriodValidator(Validator):
     def _perform_validation(self, reservation):
         assert self.start <= self.end
 
-        date_field_names = ['start', 'end']
-        dates = [getattr(reservation, field_name) for field_name in date_field_names]
-
-        assert all([isinstance(date, datetime) for date in dates])
-
-        for (date, field_name) in zip(dates, date_field_names):
-            if self.start <= date <= self.end:
-                raise InvalidPeriod(
-                    "Reservation %s must not be between %s and %s" % (field_name, self.start, self.end),
-                    reservation,
-                    self)
-            if reservation.start <= self.start <= self.end <= reservation.end:
-                raise InvalidPeriod(
-                    "Reservation cannot cover period between %s and %s" % (self.start, self.end),
-                    reservation,
-                    self)
+        if reservation.start <= self.end and reservation.end >= self.start:
+            raise ForbiddenPeriod(self.start, self.end)
 
 
 class GivenHoursAndWeekdaysValidator(Validator):
@@ -265,7 +230,7 @@ class GivenHoursAndWeekdaysValidator(Validator):
         list_and = self._list_and(self._to_hours_bitlist(), reservation_bitlist)
 
         if not list_and == map(lambda x: True if x else False, reservation_bitlist):
-            raise InvalidPeriod("Reservation in wrong hours", reservation, self)
+            raise ForbiddenHours([self._hours_number_to_bitlist(number) for number in self._days()])
 
     def _get_hours_bitlist(self, start, end):
         start_timestamp = self._date_to_timestamp(start) / SECONDS_IN_DAY
@@ -336,7 +301,7 @@ class MaxDurationValidator(Validator):
         duration = delta.days * 3600 * 24 + delta.seconds
 
         if duration > self.max_duration_in_seconds:
-            raise InvalidPeriod('Max reservation duration exceeded', reservation, self)
+            raise TooLong(self.max_duration_in_seconds)
 
 
 class MaxReservationsPerUserValidator(Validator):
@@ -355,9 +320,9 @@ class MaxReservationsPerUserValidator(Validator):
             reservations_so_far = reservation.subject.reservations.filter(
                 end__gte=now(), owner=reservation.owner).count()
             if reservations_so_far >= self.max_reservations_on_current_subject:
-                raise TooManyReservations(reservation, validator=self, current=True)
+                raise TooManyReservationsOnSubjectForUser(self.max_reservations_on_current_subject)
         if self.max_reservations_on_all_subjects:
             reservations_so_far = reservation.__class__.objects.filter(
                 end__gte=now(), owner=reservation.owner).count()
             if reservations_so_far >= self.max_reservations_on_all_subjects:
-                raise TooManyReservations(reservation, validator=self, current=False)
+                raise TooManyReservationsForUser(self.max_reservations_on_all_subjects)
