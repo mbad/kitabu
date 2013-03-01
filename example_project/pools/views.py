@@ -41,7 +41,7 @@ def availability(request, pool_id):
 
     form = ClusterSearchForm(request.GET or None)
 
-    searcher = FiniteAvailability(Lane, pool.subjects)
+    searcher = FiniteAvailability(Lane, pool.lanes)
 
     available_lanes = searcher.search(**form.cleaned_data) if form.is_valid() else []
 
@@ -64,7 +64,7 @@ def reservations(request, pool_id):
     form = Form(request.GET) if request.GET else Form()
 
     searcher = SingleSubjectManagerReservationSearch(
-        reservation_model=LaneReservation, subject_manager=pool.subjects)
+        reservation_model=LaneReservation, subject_manager=pool.lanes)
 
     reservations = searcher.search(**form.cleaned_data) if form.is_valid() else []
 
