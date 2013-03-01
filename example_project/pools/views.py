@@ -66,7 +66,13 @@ def reservations(request, pool_id):
     searcher = SingleSubjectManagerReservationSearch(
         reservation_model=LaneReservation, subject_manager=pool.lanes)
 
-    reservations = searcher.search(**form.cleaned_data) if form.is_valid() else []
+    reservations = (
+        searcher.search(**form.cleaned_data)
+        if form.is_valid() else
+        LaneReservation.objects.filter(subject__cluster=pool)
+        if not request.GET else
+        []
+    )
 
     return render(
         request,
