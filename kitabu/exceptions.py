@@ -18,7 +18,7 @@ class SizeExceeded(KitabuValidationError):
         self.start = start
         self.end = end
         self.overlapping_reservations = overlapping_reservations
-        msg = ("for reservation on subject %(subject)s of size %(subject_size)s "
+        msg = (u"for reservation on subject %(subject)s of size %(subject_size)s "
                "for period %(start)s-%(end)s (requested size: %(requested_size)s)" % {
                    'subject': subject,
                    'subject_size': subject.size,
@@ -47,14 +47,14 @@ class InvalidPeriod(KitabuValidationError):
         self.reservation = reservation
         self.validator = validator
         super(InvalidPeriod, self).__init__(
-            message + "(reservation: %s, validator: %s)" % (reservation, validator))
+            message + u"(reservation: %s, validator: %s)" % (reservation, validator))
 
 
 class TooManyReservations(KitabuValidationError):
     def __init__(self, reservation, validator, current):
         self.reservation = reservation
         self.validator = validator
-        message = ("Reached maximum number of reservations for user %(user)s %(on_subject)s(%(number)s)"
+        message = (u"Reached maximum number of reservations for user %(user)s %(on_subject)s(%(number)s)"
                    % {
                        'user': reservation.owner,
                        'on_subject': ('on subject %s' % reservation.subject) if current else '',

@@ -23,5 +23,8 @@ Installation for development
 1. Run `python setup.py develop`
 1. Develop. You can run example project from `example_project` directory, the usual django way: `python manage.py runserver`. You probably also want to install requirements: `pip install -r requirements.txt` and create local database: `python manage.py syncdb --migrate`.
 
+Heroku
+------
 
+Example project is ready to deploy on Heroku. ``requirements.txt`` and ``Procfile`` files in the main directory are all that heroku expects.
 

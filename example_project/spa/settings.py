@@ -124,7 +124,6 @@ TEMPLATE_DIRS = (
 )
 
 INSTALLED_APPS = (
-    'registration_defaults',  # this is here so that admin can use its templates
     # django apps
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -196,10 +195,6 @@ try:
     execfile(os.path.join(PROJECT_ROOT, 'spa', 'settings_local.py'))
 except IOError:
     print "settings_local not found"
-
-# spacial settings for heroku:
-if os.environ.get('HEROKU_DEV'):
-    execfile(os.path.join(PROJECT_ROOT, 'spa', 'settings_heroku.py'))
 
 # special settings for testing kitabu application
 if 'test' in sys.argv and 'kitabu' in sys.argv:

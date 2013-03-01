@@ -1,3 +1,4 @@
+from spa.settings import *
 import dj_database_url
 
 
