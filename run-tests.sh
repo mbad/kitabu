@@ -9,7 +9,7 @@ echo "CHECKING STYLE"
 echo "=============="
 echo
 
-flake8 --ignore=E501 . | grep -v -e kitabu/tests/__init__.py -e kitabu/tests/settings.py -e spa/settings_local.py
+flake8 --ignore=E501 . | grep -v -e kitabu/tests/__init__.py -e kitabu/tests/settings.py -e spa/settings_*
 
 warnings_status=$?
 
