@@ -1,5 +1,5 @@
 from django.db import models
-from kitabu.models.subjects import (BaseSubject, ExclusiveSubjectMixin, FixedSizeSubject, VariableSizeSubject,
+from kitabu.models.subjects import (BaseSubject, ExclusiveSubjectMixin, FixedSizeSubject, VariableSizeSubjectMixin,
                                     ExclusivableVariableSizeSubjectMixin, SubjectWithApprovableReservations)
 from kitabu.models.reservations import (BaseReservation, ReservationWithSize, ReservationGroup,
                                         ReservationMaybeExclusive, ApprovableReservation)
@@ -36,7 +36,7 @@ class BusReservation(ReservationWithSize, BaseReservation):
     subject = models.ForeignKey(FiveSeatsBus, related_name='reservations')
 
 
-class Room(VariableSizeSubject, BaseSubject):
+class Room(VariableSizeSubjectMixin, BaseSubject):
     name = models.TextField()
 
 
@@ -53,7 +53,7 @@ class Hotel(BaseCluster):
     pass
 
 
-class HotelRoom(VariableSizeSubject, SubjectWithApprovableReservations, BaseSubject):
+class HotelRoom(VariableSizeSubjectMixin, SubjectWithApprovableReservations, BaseSubject):
     cluster = models.ForeignKey(Hotel, related_name='rooms')
     name = models.TextField()
 
@@ -102,7 +102,7 @@ class ConferenceRoomReservation(ReservationMaybeExclusive, BaseReservation):
     subject = models.ForeignKey(ConferenceRoom, related_name='reservations')
 
 
-class RoomWithApprovableReservations(VariableSizeSubject, SubjectWithApprovableReservations, BaseSubject):
+class RoomWithApprovableReservations(VariableSizeSubjectMixin, SubjectWithApprovableReservations, BaseSubject):
     pass
 
 

@@ -143,7 +143,7 @@ class ExclusiveSubjectMixin(models.Model):
 class FiniteSizeSubjectMixin(models.Model):
     '''Suitable for all subjects that can have limited concurrent reservations.
 
-    This mixin requires size property. Available e.g. in VariableSizeSubject
+    This mixin requires size property. Available e.g. in VariableSizeSubjectMixin
     and FixedSizeSubject subclasses.
 
     Mix in before BaseSubject.
@@ -213,7 +213,7 @@ class FixedSizeSubject(FiniteSizeSubjectMixin):
         return self._size
 
 
-class VariableSizeSubject(FiniteSizeSubjectMixin):
+class VariableSizeSubjectMixin(FiniteSizeSubjectMixin):
     """Include functionality of FiniteSizeSubjectMixin and supply size field.
 
     ``size`` is simply django PositiveIntegerField, so each instance of this
@@ -227,8 +227,8 @@ class VariableSizeSubject(FiniteSizeSubjectMixin):
     size = models.PositiveIntegerField()
 
 
-class ExclusivableVariableSizeSubjectMixin(VariableSizeSubject):
-    """Include functionality of VariableSizeSubject and watch data consistency.
+class ExclusivableVariableSizeSubjectMixin(VariableSizeSubjectMixin):
+    """Include functionality of VariableSizeSubjectMixin and watch data consistency.
 
     The main purpose of this mixin is to make sure that changing size of the
     subject will also change size of already made exclusive reservations and

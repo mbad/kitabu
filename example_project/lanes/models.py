@@ -1,14 +1,14 @@
 from django.db import models
 from django.contrib.auth.models import User
 
-from kitabu.models.subjects import VariableSizeSubject, BaseSubject
+from kitabu.models.subjects import VariableSizeSubjectMixin, BaseSubject
 from kitabu.models.reservations import ReservationMaybeExclusive, ReservationGroup, BaseReservation
 from kitabu.models import validators
 
 from pools.models import Pool
 
 
-class Lane(VariableSizeSubject, BaseSubject):
+class Lane(VariableSizeSubjectMixin, BaseSubject):
     name = models.TextField()
     cluster = models.ForeignKey(Pool, related_name='lanes')
 

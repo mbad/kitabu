@@ -9,6 +9,28 @@ from kitabu.models.managers import ApprovableReservationsManager
 
 
 class BaseReservation(models.Model, EnsureSize):
+    """Base reservation class.
+
+    It represents a reservation on a subject that has a start and end
+    which are datetime instances.
+
+    When subclassing in a project an additional field is required, namely
+    subject. This is not provided out of the box, to allow programmer specify
+    arbitrary subject of reservation, not limited by framework.
+
+    Provided fields:
+
+        start :: DateTimeField
+        end   :: DateTimeField
+
+    Provided methods:
+        is_valid
+
+    Provided class methods:
+        colliding_reservations
+        colliding_reservations_in_subjects
+        colliding_reservations_in_clusters
+    """
     class Meta:
         abstract = True
 
@@ -16,27 +38,39 @@ class BaseReservation(models.Model, EnsureSize):
     end = models.DateTimeField()
 
     def is_valid(self):
+        """Indicate if the reservation is valid. Alway true in this class."""
         return True
 
     def __unicode__(self):
         return "id: %s, start: %s, end: %s" % (self.id, self.start, self.end)
 
+    # TODO: According to django design practices the following 3 methods should
+    # be methods on manager, not model.
     @classmethod
     def colliding_reservations_in_subjects(cls, start, end, subjects, *args, **kwargs):
+        """Return reservations on ``subjects`` that overlap <start, end> period.
+        """
+        # The following line seems to be an obious bug (unnecessary cluster).
+        # TODO: write a test that shows it, and then fix.
         kwargs['subject__cluster_id__in'] = subjects
         return cls.colliding_reservations(start=start, end=end, *args, **kwargs)
 
     @classmethod
     def colliding_reservations_in_clusters(cls, start, end, clusters, *args, **kwargs):
+        """Return reservations on ``clusters`` that overlap <start, end> period.
+        """
         kwargs['subject__cluster_id__in'] = clusters
         return cls.colliding_reservations(start=start, end=end, *args, **kwargs)
 
     @classmethod
     def colliding_reservations(cls, start, end, *args, **kwargs):
+        """Return reservations on ``clusters`` that overlap <start, end> period.
+        """
         return cls.objects.filter(start__lt=end, end__gt=start, *args, **kwargs)
 
 
 class ReservationWithSize(models.Model):
+    """Mixin for BaseReservation providing size field."""
     class Meta:
         abstract = True
 
@@ -44,6 +78,23 @@ class ReservationWithSize(models.Model):
 
 
 class ApprovableReservation(models.Model):
+    #TODO: this description goes before all that is described is implemented.
+    # Verify after implementing all of this.
+    """Mixin for BaseReservation adding approval functionality.
+
+    Adds two model fields:
+
+        approved :: BooleanField
+        valid_until :: DateTimeField
+
+    ``valid_until`` is filled either automatically, using
+    ``settings.DEFAULT_TIME_FOR_APPROVAL`` variable or manually by providing
+    TODO argument to ``Subject.reserve`` method.
+
+    Overrides default manager to filter out outdated reservations that didn't
+    get approved.
+
+    """
     class Meta:
         abstract = True
 
@@ -53,14 +104,30 @@ class ApprovableReservation(models.Model):
     valid_until = models.DateTimeField(null=True)
 
     def is_valid(self):
+        """Return True, unless reservation is not aproved and outdated."""
         return self.approved or self.valid_until > datetime.datetime.now()
 
     def approve(self):
+        """Mark reservation as approved and save it."""
         self.approved = True
         self.save()
 
 
 class ReservationMaybeExclusive(ReservationWithSize):
+    """Subclass of ReservationWithSize that allows exclusiveness.
+
+    If reservation is exclusive, flag ``exclusive`` is set on it and its
+    ``size`` is set to maximum for subject in question. Explicit setting of
+    ``size`` is then forbidden.
+
+    Provides one additional field:
+
+        exclusive :: BooleanField
+
+    To make sure that changing size of related subject won't break the
+    exclusive reservation functionality, use ExclusivableVariableSizeSubjectMixin
+    that will update all exclusive reservation when size of subject is changed.
+    """
     class Meta:
         abstract = True
 
@@ -85,6 +152,19 @@ class ReservationMaybeExclusive(ReservationWithSize):
 
 
 class ReservationGroup(models.Model):
+    """Group of reservations that are treated together.
+
+    Main goal is to provide a way to reserve *all of them at once* or
+    *all of them or none*. This is achieved by making all reservations in one
+    transaction.
+
+    Additional gain is that the reservation can be easily managed together,
+    thanks to being tied in one group.
+
+    This may be of use e.g. for cancelling or approving logically linked group
+    of reservations.
+
+    """
     class Meta:
         abstract = True
 
