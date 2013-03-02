@@ -1,8 +1,6 @@
 # Django settings for spa project.
 
 from os.path import join, normpath, dirname
-import sys
-import os
 
 PROJECT_ROOT = normpath(join(dirname(__file__), '..'))
 
@@ -189,16 +187,4 @@ SOUTH_TESTS_MIGRATE = False
 # For django registration:
 ACCOUNT_ACTIVATION_DAYS = 2
 
-# spa/settings_local.py can be used to override environment-specific settings
-# like database and email that differ between development and production.
-try:
-    execfile(os.path.join(PROJECT_ROOT, 'spa', 'settings_local.py'))
-except IOError:
-    print "settings_local not found"
-
-# special settings for testing kitabu application
-if 'test' in sys.argv and 'kitabu' in sys.argv:
-    execfile(os.path.join(PROJECT_ROOT, 'kitabu', 'tests', 'settings.py'))
-
-# Maximum number of lane reservations made in one atomic reservation
 MAX_LANE_RESERVATIONS_NR = 5
