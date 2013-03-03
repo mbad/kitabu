@@ -49,9 +49,5 @@ class LNotWithinPeriodValidator(validators.NotWithinPeriodValidator):
     pass
 
 
-class LGivenHoursAndWeekdaysValidator(validators.GivenHoursAndWeekdaysValidator):
-    pass
-
-
 class LMaxReservationsPerUserValidator(validators.MaxReservationsPerUserValidator):
     pass
