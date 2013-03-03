@@ -10,9 +10,10 @@ from kitabu.models.validators import (
     TimeIntervalValidator as KitabuTimeIntervalValidator,
     WithinPeriodValidator as KitabuWithinPeriodValidator,
     Period as KitabuPeriod,
+    WithinDayPeriod as KitabuWithinDayPeriod,
     NotWithinPeriodValidator as KitabuNotWithinPeriodValidator,
     MaxDurationValidator as KitabuMaxDurationValidator,
-    GivenHoursAndWeekdaysValidator as KitabuGivenHoursAndWeekdaysValidator,
+    PeriodsInWeekdaysValidator as KitabuPeriodsInWeekdaysValidator,
     MaxReservationsPerUserValidator as KitabuMaxReservationsPerUserValidator,
 )
 
@@ -90,8 +91,12 @@ class MaxDurationValidator(KitabuMaxDurationValidator):
     pass
 
 
-class GivenHoursAndWeekdaysValidator(KitabuGivenHoursAndWeekdaysValidator):
+class PeriodsInWeekdaysValidator(KitabuPeriodsInWeekdaysValidator):
     pass
+
+
+class WithinDayPeriod(KitabuWithinDayPeriod):
+    validator = models.ForeignKey(PeriodsInWeekdaysValidator, related_name='periods')
 
 
 class ConferenceRoom(ExclusivableVariableSizeSubjectMixin, BaseSubject):

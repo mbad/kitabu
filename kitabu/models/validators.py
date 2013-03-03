@@ -1,7 +1,7 @@
 #-*- coding=utf-8 -*-
 
 from importlib import import_module
-from datetime import datetime
+from datetime import datetime, timedelta, time
 
 from django.db import models
 
@@ -19,7 +19,6 @@ from kitabu.exceptions import (
 )
 from kitabu import managers
 
-import time
 
 # using datetime.now in this way allows to mock it with mock.patch and test nicely
 now = datetime.now
@@ -302,79 +301,87 @@ class NotWithinPeriodValidator(Validator):
             raise ForbiddenPeriod(self.start, self.end)
 
 
-class GivenHoursAndWeekdaysValidator(Validator):
-    """Allow only reservation that fall into open hours pattern."""
+class PeriodsInWeekdaysValidator(Validator):
+    """Allow only reservation that fall into open hours pattern.
+
+    This validator requires associated ``Period`` model."""
+
     class Meta:
         abstract = True
 
-    monday = models.PositiveIntegerField()
-    tuesday = models.PositiveIntegerField()
-    wednesday = models.PositiveIntegerField()
-    thursday = models.PositiveIntegerField()
-    friday = models.PositiveIntegerField()
-    saturday = models.PositiveIntegerField()
-    sunday = models.PositiveIntegerField()
-
     def _perform_validation(self, reservation):
-        reservation_bitlist = self._get_hours_bitlist(reservation.start, reservation.end)
+        required_period_params_list = self._construct_required_period_params_list(
+            start=reservation.start,
+            end=reservation.end
+        )
 
-        list_and = self._list_and(self._to_hours_bitlist(), reservation_bitlist)
+        for required_period_params in required_period_params_list:
+            if not self._check_required_period_params(required_period_params):
+                raise ForbiddenHours(self.periods.all())
 
-        if not list_and == map(lambda x: True if x else False, reservation_bitlist):
-            raise ForbiddenHours([self._hours_number_to_bitlist(number) for number in self._days()])
+    def _check_required_period_params(self, period_params):
+        for period in self.periods.all():
+            if self._check_period_with_required_period_params(period, period_params):
+                return True
 
-    def _get_hours_bitlist(self, start, end):
-        start_timestamp = self._date_to_timestamp(start) / SECONDS_IN_DAY
-        end_timestamp = self._date_to_timestamp(end) / SECONDS_IN_DAY
-        days_delta = int(end_timestamp) - int(start_timestamp)
+        return False
 
-        if days_delta < 0:
-            return [0] * HOURS_IN_WEEK
-        elif days_delta > 7:
-            return [1] * HOURS_IN_WEEK
+    def _check_period_with_required_period_params(self, period, required_period_params):
+        if period.weekday != required_period_params['weekday']:
+            return False
+
+        for time_val in [required_period_params['start'], required_period_params['end']]:
+            if (
+                (period.end and time_val > period.end)  # after end
+                or
+                (period.start and time_val < period.start)  # before start
+            ):
+                return False
+
+        return True
+
+    def _construct_required_period_params_list(self, start, end, already_constructed=None):
+        if already_constructed is None:
+            already_constructed = []
+
+        if len(already_constructed) >= 8:
+            return already_constructed
+
+        period_params = {
+            'weekday': start.weekday(),
+            'start': start.time()
+        }
+
+        if start.day == end.day:
+            period_params['end'] = end.time()
+            already_constructed.append(period_params)
+            return already_constructed
         else:
-            return self._hours_to_bitlist(self._hour_nr_in_week(start), self._hour_nr_in_week(end))
+            period_params['end'] = time(23, 59, 59)
+            already_constructed.append(period_params)
+            new_start = datetime.combine(start.date(), time()) + timedelta(days=1)
+            return self._construct_required_period_params_list(
+                start=new_start,
+                end=end,
+                already_constructed=already_constructed
+            )
 
-    def _date_to_timestamp(self, date):
-        return time.mktime(date.timetuple())
 
-    def _hours_to_bitlist(self, start_hour, end_hour):
-        if start_hour <= end_hour:
-            return [0] * start_hour + [1] * (end_hour - start_hour + 1) + [0] * (HOURS_IN_WEEK - end_hour - 1)
-        else:
-            return [1] * (end_hour + 1) + [0] * (start_hour - end_hour - 1) + [1] * (HOURS_IN_WEEK - start_hour)
+class WithinDayPeriod(models.Model):
+    """Period model for PeriodsInWeekdaysValidator.
 
-    def _hour_nr_in_week(self, datetime):
-        day = datetime.weekday()
-        return day * 24 + datetime.hour
+    In this model implementation it is obligatory to implement foreign key
+    pointing to PeriodsInWeekdaysValidator model with related name of "periods", e.g.:
 
-    def _list_and(self, *lists):
-        return [all(tup) for tup in zip(*lists)]
+    validator = models.ForeignKey('PeriodsInWeekdaysValidator', related_name='periods')
+    """
 
-    def _to_hours_bitlist(self):
-        return reduce(lambda acc, day: acc + self._hours_number_to_bitlist(day), self._days(), [])
+    class Meta:
+        abstract = True
 
-    def _hours_number_to_bitlist(self, number):
-        bitlist = [1 if digit == '1' else 0 for digit in bin(number)[2:]]
-        bitlist_length = len(bitlist)
-        if bitlist_length < 24:
-            bitlist = [0] * (24 - bitlist_length) + bitlist
-
-        return bitlist
-
-    def _days(self):
-        return [self.monday, self.tuesday, self.wednesday, self.thursday, self.friday, self.saturday, self.sunday]
-
-    @classmethod
-    def create_from_bitlists(cls, bitlists_dict):
-        def bitlist_to_int(bitlist):
-            return reduce(lambda a, v: a * 2 + v, bitlist, 0)
-
-        kwargs = {}
-        for key, bitlist in bitlists_dict.items():
-            kwargs[key] = bitlist_to_int(bitlist)
-
-        return cls.objects.create(**kwargs)
+    weekday = models.IntegerField()
+    start = models.TimeField(null=True, blank=True)
+    end = models.TimeField(null=True, blank=True)
 
 
 class MaxDurationValidator(Validator):

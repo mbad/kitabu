@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, time
 
 from mock import Mock, patch
 
@@ -8,6 +8,7 @@ from kitabu.exceptions import (
     ReservationError,
     InvalidPeriod,
     TooManyReservations,
+    ForbiddenHours
 )
 
 from kitabu.tests.models import (
@@ -16,11 +17,12 @@ from kitabu.tests.models import (
     TimeIntervalValidator,
     WithinPeriodValidator,
     NotWithinPeriodValidator,
-    GivenHoursAndWeekdaysValidator,
+    PeriodsInWeekdaysValidator,
     MaxDurationValidator,
     MaxReservationsPerUserValidator,
     Room,
     Period,
+    WithinDayPeriod,
     Table,
 )
 
@@ -622,62 +624,96 @@ class NotWithinPeriodTest(TestCase):
         validator.validate(reservation)
 
 
-class GivenHoursAndDaysTest(TestCase):
-
+class PeriodsInWeekdaysTest(TestCase):
     def setUp(self):
-        # 0 - 2 ok, 3 - 6 wrong, 7 - 11 ok, 12 - 14 wrong, 15 - 19 ok, 20 - 21 wrong, 22 - 23 ok
-        hours = [1, 1, 1, 0, 0, 0, 0, 1, 1, 1, 1, 1, 0, 0, 0, 1, 1, 1, 1, 1, 0, 0, 1, 1]
+        self.validator = PeriodsInWeekdaysValidator.objects.create()
+        self.almost_whole_week_validator = PeriodsInWeekdaysValidator.objects.create()
 
-        self.validator = GivenHoursAndWeekdaysValidator.create_from_bitlists({
-            'monday': hours,
-            'tuesday': hours,
-            'wednesday': [0] * 24,
-            'thursday': hours,
-            'friday': hours,
-            'saturday': [0] * 24,
-            'sunday': hours
-        })
+        period_params_list = [
+            (0, {'start': time(12, 0), 'end': time(14, 0)}),
+            (1, {'start': time(15, 0), 'end': time(17, 0)}),
+
+            # Wednesday
+            (2, {'start': time(12, 0)}),
+            (3, {}),
+            (4, {'end': time(14, 0)}),
+        ]
+        almost_whole_week_params_list = [
+            (0, {}),
+            (1, {}),
+            (2, {}),
+
+            # Thursday
+            (3, {'end': time(10, 0)}),
+            (3, {'start': time(20, 0)}),
+            (4, {}),
+            (5, {}),
+            (6, {}),
+        ]
+
+        for period_params in period_params_list:
+            WithinDayPeriod.objects.create(weekday=period_params[0], validator=self.validator, **period_params[1])
+
+        for period_params in almost_whole_week_params_list:
+            WithinDayPeriod.objects.create(weekday=period_params[0], validator=self.almost_whole_week_validator,
+                                           **period_params[1])
 
         self.reservation = MockWithoutId()
 
-    def test_valid_hours_one_day_difference(self):
-        #monday - tuesday
-        self.reservation.start = datetime(2012, 11, 26, 22, 15)
-        self.reservation.end = datetime(2012, 11, 27, 2, 45)
+    # Monday: 2013-03-18
+    def test_validation_same_day(self):
+        self.reservation.start = datetime(2013, 03, 18, 12, 00)
+        self.reservation.end = datetime(2013, 03, 18, 14, 00)
         self.validator.validate(self.reservation)
 
-    def test_valid_hours_same_day(self):
-        #thursday
-        self.reservation.start = datetime(2012, 11, 29, 8, 15)
-        self.reservation.end = datetime(2012, 11, 29, 10, 45)
+        self.reservation.start = datetime(2013, 03, 18, 11, 59, 59)
+        self.reservation.end = datetime(2013, 03, 18, 14, 00)
+        with self.assertRaises(ForbiddenHours):
+            self.validator.validate(self.reservation)
+
+        self.reservation.start = datetime(2013, 03, 18, 12, 00)
+        self.reservation.end = datetime(2013, 03, 18, 14, 00, 01)
+        with self.assertRaises(ForbiddenHours):
+            self.validator.validate(self.reservation)
+
+    # Wednesday: 2013-03-20
+    def test_validation_more_days(self):
+        self.reservation.start = datetime(2013, 03, 20, 12, 00)
+        self.reservation.end = datetime(2013, 03, 22, 14, 00)
         self.validator.validate(self.reservation)
 
-    def test_valid_hours_not_the_same_week(self):
-        #sunday - monday
-        self.reservation.start = datetime(2012, 11, 25, 22, 15)
-        self.reservation.end = datetime(2012, 11, 26, 2, 45)
-        self.validator.validate(self.reservation)
-
-    def test_invalid_hours_one_day_difference(self):
-        #monday - tuesday
-        self.reservation.start = datetime(2012, 11, 26, 21, 15)
-        self.reservation.end = datetime(2012, 11, 27, 2, 45)
-        with self.assertRaises(InvalidPeriod):
+        self.reservation.start = datetime(2013, 03, 20, 11, 59, 59)
+        self.reservation.end = datetime(2013, 03, 22, 14, 00)
+        with self.assertRaises(ForbiddenHours):
             self.validator.validate(self.reservation)
 
-    def test_invalid_hours_same_day(self):
-        #thursday
-        self.reservation.start = datetime(2012, 11, 29, 11, 15)
-        self.reservation.end = datetime(2012, 11, 29, 13, 45)
-        with self.assertRaises(InvalidPeriod):
+        self.reservation.start = datetime(2013, 03, 20, 12, 00)
+        self.reservation.end = datetime(2013, 03, 22, 14, 00, 01)
+        with self.assertRaises(ForbiddenHours):
             self.validator.validate(self.reservation)
 
-    def test_invalid_hours_not_the_same_week(self):
-        #sunday - monday
-        self.reservation.start = datetime(2012, 11, 25, 22, 15)
-        self.reservation.end = datetime(2012, 11, 26, 4, 45)
-        with self.assertRaises(InvalidPeriod):
-            self.validator.validate(self.reservation)
+    # Thursday: 2013-03-21, next thursday: 2013-03-28
+    def test_validation_almost_whole_week(self):
+        self.reservation.start = datetime(2013, 03, 21, 20, 00)
+        self.reservation.end = datetime(2013, 03, 28, 10, 00)
+        self.almost_whole_week_validator.validate(self.reservation)
+
+        self.reservation.start = datetime(2013, 03, 21, 19, 59, 59)
+        self.reservation.end = datetime(2013, 03, 28, 10, 00)
+        with self.assertRaises(ForbiddenHours):
+            self.almost_whole_week_validator.validate(self.reservation)
+
+        self.reservation.start = datetime(2013, 03, 21, 20, 00)
+        self.reservation.end = datetime(2013, 03, 28, 10, 00, 01)
+        with self.assertRaises(ForbiddenHours):
+            self.almost_whole_week_validator.validate(self.reservation)
+
+    # Thursday: 2013-03-21, next thursday: 2013-03-28
+    def test_validation_more_then_week(self):
+        self.reservation.start = datetime(2013, 03, 21, 20, 00)
+        self.reservation.end = datetime(2013, 03, 29, 10, 00)
+        with self.assertRaises(ForbiddenHours):
+            self.almost_whole_week_validator.validate(self.reservation)
 
 
 class MaxDurationValidatorTest(TestCase):
