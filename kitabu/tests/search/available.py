@@ -3,7 +3,7 @@ from datetime import datetime, timedelta
 from django.test import TestCase
 
 from kitabu.tests.models import Room, RoomReservation, Hotel, HotelRoom
-from kitabu.search.available import FindPeriod, ClusterFiniteAvailability
+from kitabu.search.available import FindPeriod, Clusters as ClustersSearcher
 
 
 class VaryingDateAndSizeSearchTest(TestCase):
@@ -242,7 +242,7 @@ class ClusterFiniteAvailabilitySearchTest(TestCase):
             'end': end,
             'required_size': 11,
         }
-        searcher = ClusterFiniteAvailability(HotelRoom, Hotel, 'rooms')
+        searcher = ClustersSearcher(HotelRoom, Hotel, 'rooms')
         results = searcher.search(**data)
         self.assertEqual(len(results), 1)
         self.assertEqual(results[0].name, 'Hotel 2')
@@ -263,7 +263,7 @@ class ClusterFiniteAvailabilitySearchTest(TestCase):
             'end': end,
             'required_size': 6,
         }
-        searcher = ClusterFiniteAvailability(HotelRoom, Hotel, 'rooms')
+        searcher = ClustersSearcher(HotelRoom, Hotel, 'rooms')
         results = searcher.search(**data)
 
         self.assertEqual(len(results), 1)
@@ -283,7 +283,7 @@ class ClusterFiniteAvailabilitySearchTest(TestCase):
             'end': end,
             'required_size': 7,
         }
-        searcher = ClusterFiniteAvailability(HotelRoom, Hotel, 'rooms')
+        searcher = ClustersSearcher(HotelRoom, Hotel, 'rooms')
 
         results = searcher.search(**data)
         length = len(results)
@@ -324,7 +324,7 @@ class ClusterAvailabilityWithApprovableReservationsTest(TestCase):
             'end': end,
             'required_size': 6,
         }
-        searcher = ClusterFiniteAvailability(HotelRoom, Hotel, 'rooms')
+        searcher = ClustersSearcher(HotelRoom, Hotel, 'rooms')
         results = searcher.search(**data)
 
         self.assertEqual(len(results), 1)

@@ -1,3 +1,4 @@
+# TODO: code review of whole module
 from collections import defaultdict
 
 from datetime import timedelta
@@ -8,6 +9,15 @@ from kitabu.search.utils import Timeline
 
 
 class Subjects(object):
+    """Searcher for subjects available in certain time period.
+
+    Constructor is used to set subject model and possibly limit subjects on
+    which search should be performed.
+
+    Finite availablity means only certain number of reservations at a time is
+    possible.
+
+    """
 
     def __init__(self, subject_model, subject_manager=None):
         self.subject_model = subject_model
@@ -24,29 +34,6 @@ class Subjects(object):
         self._subject_manager = value
 
     subject_manager = property(_get_subject_manager, _set_subject_manager)
-
-
-class ExclusivelyAvailableSubjects(Subjects):
-    '''
-    orm for searching subjects available in certain time period.
-    Exclusive means only one reservation at a time is possible.
-    '''
-
-    def search(self, start, end):
-        colliding_reservations = self.reservation_model.colliding_reservations_in_subjects(
-            start=start,
-            end=end,
-            subjects=self.subject_manager.all()
-        )
-        disqualified_subjects = colliding_reservations.values('subject_id').distinct()
-        return self.subject_manager.exclude(id__in=disqualified_subjects)
-
-
-class FiniteAvailability(Subjects):
-    '''
-    For searching subjects available in certain time period.
-    Finite availablity means only certain number of reservations at a time is possible.
-    '''
 
     def search(self, start, end, required_size):
         colliding_reservations = self.reservation_model.colliding_reservations_in_subjects(
@@ -77,11 +64,25 @@ class FiniteAvailability(Subjects):
         return self.subject_manager.exclude(id__in=disqualified_subjects, size__lt=required_size)
 
 
+class ExclusivelyAvailableSubjects(Subjects):
+    """Searcher to find subject available for exclusive reservation."""
+
+    def search(self, start, end):
+        colliding_reservations = self.reservation_model.colliding_reservations_in_subjects(
+            start=start,
+            end=end,
+            subjects=self.subject_manager.all()
+        )
+        disqualified_subjects = colliding_reservations.values('subject_id').distinct()
+        return self.subject_manager.exclude(id__in=disqualified_subjects)
+
+
 class FindPeriod(object):
-    '''
+    """Searcher for subperiod with possible reservations.
+
     To search on certain subject for a period when it is available.
     E.g. to search for 7 days availability during May 2012.
-    '''
+    """
 
     def search(self,
                start,
@@ -119,11 +120,8 @@ class FindPeriod(object):
         return available_dates
 
 
-class ClusterFiniteAvailability(Subjects):
-    '''
-    Form for searching clusters available in certain time period.
-    Finite availablity means only certain number of reservations at a time is possible.
-    '''
+class Clusters(Subjects):
+    """Searcher for clusters available in certain time period."""
     def __init__(self, subject_model, cluster_model, subject_related_name='subjects', *args, **kwargs):
         self.reservation_model = subject_model.get_reservation_model()
         self.cluster_model = cluster_model

@@ -2,16 +2,14 @@
 
 from django.shortcuts import render, get_object_or_404
 
-from kitabu.search.available import ClusterFiniteAvailability, FiniteAvailability
+from kitabu.search.available import Clusters as ClustersSearcher, Subjects as SubjectSearcher
 from kitabu.search.reservations import SingleSubjectManagerReservationSearch
 from lanes.models import Lane, LaneReservation
 from models import Pool
 from forms import PoolReservationsSearchForm, ClusterSearchForm
 
 
-cluster_searcher = ClusterFiniteAvailability(subject_model=Lane,
-                                             cluster_model=Pool,
-                                             )
+cluster_searcher = ClustersSearcher(subject_model=Lane, cluster_model=Pool)
 
 
 def index(request):
@@ -41,7 +39,7 @@ def availability(request, pool_id):
 
     form = ClusterSearchForm(request.GET or None)
 
-    searcher = FiniteAvailability(Lane, pool.lanes)
+    searcher = SubjectSearcher(Lane, pool.lanes)
 
     available_lanes = searcher.search(**form.cleaned_data) if form.is_valid() else []
 
