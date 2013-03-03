@@ -28,6 +28,44 @@ HOURS_IN_WEEK = 7 * 24
 
 
 class Validator(models.Model):
+    """Base class for all reservation validators.
+
+    As opposed to most models in Kitabu this is not an abstract model. All
+    validators inherit from it using django multi table inheritance. With this
+    approach it is possible to have many-to-many relationship of Subject and
+    Validator. The actual model that implements validation can be accessed
+    from instance of the ``Validator`` via field named as content of
+    actual_validator_related_name (see implementation of __unicode__).
+
+    This class provides ``validate`` method that takes a fresh (not yet saved)
+    reservation and checks whether it is ok to save, but provides no logic of
+    validation. Validation logic must be implemented in subclasses in method
+    ``_perform_validation``, that shell be called from the ``validate`` method.
+
+    Methods:
+        validate            - called to validate reservation, invodes _perform_validation
+                              from subclass
+        _perform_validation - actual validation logic. Must be overriden in
+                              subclass
+
+    Fields:
+        actual_validator_related_name :: CharField
+            - name of object property linking to subclass with implementation
+        apply_to_all :: BooleanField
+            - Flag to indicate whether this validator should be aplied to
+            all reservations as opposed to applying to reservations on
+            subjects defined by many-to-many relationship
+
+    Subclassing
+    -----------
+
+    To subclass this Model simply inherit from it and implement
+    ``_perform_validation`` method that takes reservation and possibly raises
+    ``kitabu.exceptions.ValidatorError``. It may be desired to add custom
+    subclasses of the ValidatorError to give better information on why
+    reservation is not possible.
+
+    """
     class Meta:
         app_label = 'kitabu'
 
@@ -42,9 +80,18 @@ class Validator(models.Model):
         return getattr(self, self.actual_validator_related_name).__class__.__name__ + ' ' + unicode(self.id)
 
     def validate(self, reservation, allow_reservation_update=False):
-        # Not absolutely sure whether this is such a good idea, but the general
-        # idea is that reservations should not be modified after creation, and
-        # thus there should not be any need to validate existing reservations.
+        """Validate reservation and raise ValidatorError if not valid.
+
+        This method accesses releated submodel instances and runs its
+        ``_perform_validation``.
+
+        Unless explicitely given ``allow_reservation_update`` argument that is
+        True, forbids validation on already saved reservation. The reason for
+        such behavior is not that validating saved reservation is error by
+        itself, but most likely it will cause errors, because if reservation
+        doesn't validate it probably should never make it to the database.
+
+        """
         if not allow_reservation_update:
             assert reservation.id is None, "Reservation must be validated before being saved to database"
         getattr(self, self.actual_validator_related_name)._perform_validation(reservation)
@@ -64,11 +111,27 @@ class Validator(models.Model):
         return super(Validator, self).save(*args, **kwargs)
 
     def _perform_validation(self, reservation):
-        ''' Method meant to be overridden. This one actually runs validations. '''
+        ''' Method meant to be overridden. This one actually runs validation. '''
         raise NotImplementedError('Must be implemented in subclasses!')
 
 
 class FullTimeValidator(Validator):
+    """Validator for full time.
+
+    Allows to ensure that start end end time will have only given precision.
+
+    E.g. to allows only full and half hours, one would use ``interval type``
+    of ``minute`` and interval of 30. If one wanted to allow only reservations
+    for full days one would use ``interval_type`` of 'day' and ``interval`` of 1
+    or 'hour' and 0 respectively.
+
+    ``interval_type`` must be one of 'microsecond', 'second', 'minute', 'hour',
+    'day'.
+
+    ``interval`` is the most granular portion of ``interval_type`` that is
+    allowed.
+
+    """
     class Meta:
         abstract = True
 
@@ -93,6 +156,16 @@ class FullTimeValidator(Validator):
 
 
 class StaticValidator(Validator):
+    """Validator that doesn't require any additional data.
+
+    If a validation function doesn't need any variables that shell customize
+    its behavior (i.e. database fields) then StaticValidator is the way to go.
+
+    Possible usecases could be a forbidding validator that will always raise
+    ValidatorError, to indicate that subject is not available or a validator
+    that can calculate bank holidays.
+
+    """
     class Meta:
         abstract = True
 
@@ -116,6 +189,20 @@ class StaticValidator(Validator):
 
 
 class TimeIntervalValidator(Validator):
+    """Validation for how far in the future reservation is.
+
+    It has two possible functionalities: make sure reservation is far enough
+    if the future or it is not too far.
+
+    Possible usecases: one wants every customer to reserve a room at least
+    a day, and not more than 3 months before the reservation is needed.
+
+    Fields:
+        interval_type: not sooner or not later than given period
+        time_unit: days, hours, minutes, or seconds
+        time_value: numerical value of the time_unit
+
+    """
     class Meta:
         abstract = True
 
@@ -154,7 +241,13 @@ class TimeIntervalValidator(Validator):
 
 
 class WithinPeriodValidator(Validator):
+    """Make sure reservation is in one of given periods.
 
+    This validator requires associated ``Period`` model.
+
+    Validation is simply checking if reservation falls into any of allowed periods.
+
+    """
     class Meta:
         abstract = True
 
@@ -176,12 +269,13 @@ class WithinPeriodValidator(Validator):
 
 
 class Period(models.Model):
-    '''
+    """Period model for WithinPeriodValidator.
+
     In this model implementation it is obligatory to implement foreign key
     pointing to WithinPeriodValidator model with related name of "periods", e.g.:
 
     validator = models.ForeignKey('WithinPeriodValidator', related_name='periods')
-    '''
+    """
 
     class Meta:
         abstract = True
@@ -194,11 +288,7 @@ class Period(models.Model):
 
 
 class NotWithinPeriodValidator(Validator):
-    '''
-    This validator expects only reservations that have "start" and "end" fields.
-    This way it can assure not only that all field are not in period, but also
-    that reservation period does not cover whole validator period.
-    '''
+    """Make sure reservation is not in given period."""
     class Meta:
         abstract = True
 
@@ -213,6 +303,7 @@ class NotWithinPeriodValidator(Validator):
 
 
 class GivenHoursAndWeekdaysValidator(Validator):
+    """Allow only reservation that fall into open hours pattern."""
     class Meta:
         abstract = True
 
@@ -287,16 +378,17 @@ class GivenHoursAndWeekdaysValidator(Validator):
 
 
 class MaxDurationValidator(Validator):
+    """Make sure reservation is not too long.
+
+    Max duration is given is seconds.
+
+    """
     class Meta:
         abstract = True
 
     max_duration_in_seconds = models.PositiveIntegerField()
 
     def _perform_validation(self, reservation):
-        date_field_names = ['start', 'end']
-        dates = [getattr(reservation, field_name) for field_name in date_field_names]
-
-        assert all([isinstance(date, datetime) for date in dates])
         delta = (reservation.end - reservation.start)
         duration = delta.days * 3600 * 24 + delta.seconds
 
@@ -305,10 +397,16 @@ class MaxDurationValidator(Validator):
 
 
 class MaxReservationsPerUserValidator(Validator):
-    '''
-    Requires `Reservation` model to have field `owner`, which can be virtually anything,
-    as long as it uniquely identifies a user. Likely it will be foreign key to `User` model.
-    '''
+    """Make sure specific user doesn't have too many reservations.
+
+    Requires `Reservation` model to have field `owner`, which can be virtually
+    anything, as long as it uniquely identifies a user. Likely it will be
+    foreign key to `User` model.
+
+    Fields:
+        max_reservations_on_current_subject :: PositiveSmallIntegerField
+        max_reservations_on_all_subjects    :: PositiveSmallIntegerField
+    """
     class Meta:
         abstract = True
 
