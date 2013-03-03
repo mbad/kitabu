@@ -37,11 +37,11 @@ class OverlappingReservations(ReservationError):
                 reservation.start, reservation.end, self.reservations))
 
 
-class ValidatorError(ReservationError):
+class ReservationValidationError(ReservationError):
     pass
 
 
-class InvalidPeriod(ValidatorError):
+class InvalidPeriod(ReservationValidationError):
     def __init__(self, *a, **ka):
         pass
 
@@ -88,7 +88,7 @@ class TooLong(InvalidPeriod):
         self.max_allowed_seconds = max_allowed_seconds
 
 
-class TooManyReservations(ValidatorError):
+class TooManyReservations(ReservationValidationError):
     pass
 
 

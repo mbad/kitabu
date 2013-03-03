@@ -61,8 +61,8 @@ class Validator(models.Model):
 
     To subclass this Model simply inherit from it and implement
     ``_perform_validation`` method that takes reservation and possibly raises
-    ``kitabu.exceptions.ValidatorError``. It may be desired to add custom
-    subclasses of the ValidatorError to give better information on why
+    ``kitabu.exceptions.ReservationValidationError``. It may be desired to add custom
+    subclasses of the ReservationValidationError to give better information on why
     reservation is not possible.
 
     """
@@ -80,7 +80,7 @@ class Validator(models.Model):
         return getattr(self, self.actual_validator_related_name).__class__.__name__ + ' ' + unicode(self.id)
 
     def validate(self, reservation, allow_reservation_update=False):
-        """Validate reservation and raise ValidatorError if not valid.
+        """Validate reservation and raise ReservationValidationError if not valid.
 
         This method accesses releated submodel instances and runs its
         ``_perform_validation``.
@@ -162,7 +162,7 @@ class StaticValidator(Validator):
     its behavior (i.e. database fields) then StaticValidator is the way to go.
 
     Possible usecases could be a forbidding validator that will always raise
-    ValidatorError, to indicate that subject is not available or a validator
+    ReservationValidationError, to indicate that subject is not available or a validator
     that can calculate bank holidays.
 
     """
