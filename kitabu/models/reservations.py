@@ -7,6 +7,8 @@ from django.db import models, transaction
 from kitabu.utils import EnsureSize, AtomicReserver
 from kitabu.models.managers import ApprovableReservationsManager
 
+now = datetime.datetime.now
+
 
 class BaseReservation(models.Model, EnsureSize):
     """Base reservation class.
@@ -82,6 +84,8 @@ class ApprovableReservation(models.Model):
     # Verify after implementing all of this.
     """Mixin for BaseReservation adding approval functionality.
 
+    Meant for use with SubjectWithApprovableReservations.
+
     Adds two model fields:
 
         approved :: BooleanField
@@ -105,7 +109,7 @@ class ApprovableReservation(models.Model):
 
     def is_valid(self):
         """Return True, unless reservation is not aproved and outdated."""
-        return self.approved or self.valid_until > datetime.datetime.now()
+        return self.approved or self.valid_until > now()
 
     def approve(self):
         """Mark reservation as approved and save it."""

@@ -5,6 +5,8 @@ from collections import defaultdict
 from django.db import models
 from django.db.models import Q
 
+from django.conf import settings
+
 from kitabu.exceptions import (
     SizeExceeded,
     OverlappingReservations,
@@ -46,7 +48,7 @@ class BaseSubject(models.Model, EnsureSize):
         Otherwise ``ReservationError`` is raised.
 
         """
-        assert 'start' in kwargs and 'end' in kwargs, "start and end dates must be provided"
+        assert kwargs.get('start') and kwargs.get('end'), "start and end dates must be provided"
 
         reservation = self.reservation_model(subject=self, **kwargs)
         self._validate_reservation(reservation)
@@ -102,17 +104,27 @@ class SubjectWithApprovableReservations(models.Model):
 
     """Subject for reservations that require approval - ``ApprovableReservation``s.
 
-    Main purpose of this class is to deliver ``make_preliminary_reservation``
-    method that creates reservation that still needs to approved, otherwise
-    will expire.
+    Main purpose of this class is to modify ``reserve`` method to creat
+    e reservation that still needs to be approved, otherwise will expire.
 
-    Overrides method ``overlapping_reservations`` to discard not not approved
+    Overrides method ``overlapping_reservations`` to discard not approved
     and thus no longer valid reservations.
 
     """
 
+    validity_period = models.CharField(
+        default=getattr(settings, "KITABU_DEFAULT_VALIDITY_PERIOD", "60*60*24*3"),
+        max_length=13,
+        help_text="How long can reservation on this subject wait for approval. "
+                  "You can use digits and ``x`` letter to multiply."
+    )
+
     class Meta:
         abstract = True
+
+    def save(self, *args, **kwargs):
+        map(int, self.validity_period.split("*"))  # just don't save garbage
+        return super(SubjectWithApprovableReservations, self).save(*args, **kwargs)
 
     def overlapping_reservations(self, start, end):
         """
@@ -121,9 +133,24 @@ class SubjectWithApprovableReservations(models.Model):
         extra_filter = Q(approved=True) | Q(valid_until__gt=now())
         return self.reservations.filter(extra_filter, start__lt=end, end__gt=start)
 
-    def make_preliminary_reservation(self, valid_until, start=None, end=None, **kwargs):
-        """ Make *not yet approved* reservation."""
-        return self.reserve(start=start, end=end, valid_until=valid_until, approved=False, **kwargs)
+    # def make_preliminary_reservation(self, valid_until, start=None, end=None, **kwargs):
+    def reserve(self, valid_until=None, validity_period=None, approved=False, **kwargs):
+
+        assert int(bool(valid_until)) + int(bool(validity_period)) + int(approved) <= 1, (
+            "Supply no more than one of the following arguments: valid_until, validity_period, approved. "
+            "Given (%s, %s, %s)." % (valid_until, validity_period, approved))
+
+        if not approved:
+            if valid_until:
+                pass
+            elif validity_period:
+                valid_until = now() + validity_period
+            else:
+                seconds = reduce(lambda acc, x: acc * int(x), self.validity_period.split("*"), 1)
+                valid_until = now() + datetime.timedelta(seconds=seconds)
+
+        return super(SubjectWithApprovableReservations, self).reserve(
+            valid_until=valid_until, approved=approved, **kwargs)
 
 
 class ExclusiveSubjectMixin(models.Model):

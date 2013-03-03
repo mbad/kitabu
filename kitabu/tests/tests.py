@@ -1,4 +1,8 @@
+from datetime import datetime
+from mock import patch
+
 from django.test import TransactionTestCase, TestCase
+
 from kitabu.tests.models import (
     TennisCourt,
     Room,
@@ -16,7 +20,6 @@ from kitabu.exceptions import (
     OverlappingReservations,
 )
 from kitabu.utils import AtomicReserver
-from datetime import datetime
 
 
 class TennisCourtTest(TestCase):
@@ -217,14 +220,14 @@ class ApprovableReservationTest(TestCase):
         self.room1 = RoomWithApprovableReservations.objects.create(size=3)
 
     def test_valid_pre_reservation_and_valid_reservation(self):
-        self.room1.make_preliminary_reservation(start='2012-04-01', end='2012-04-02', size=2, valid_until='2100-10-10')
+        self.room1.reserve(start='2012-04-01', end='2012-04-02', size=2, valid_until=datetime(2100, 10, 10))
         self.room1.reserve(start='2012-04-01', end='2012-04-02', size=1)
 
         self.assertEqual(2, ApprovableRoomReservation.objects.with_invalid().count())
         self.assertEqual(2, ApprovableRoomReservation.objects.count())
 
     def test_valid_pre_reservation_and_invalid_reservation(self):
-        self.room1.make_preliminary_reservation(start='2012-04-01', end='2012-04-02', size=2, valid_until='2100-10-10')
+        self.room1.reserve(start='2012-04-01', end='2012-04-02', size=2, valid_until=datetime(2100, 10, 10))
         with self.assertRaises(SizeExceeded):
             self.room1.reserve(start='2012-04-01', end='2012-04-02', size=2)
 
@@ -232,14 +235,14 @@ class ApprovableReservationTest(TestCase):
         self.assertEqual(1, ApprovableRoomReservation.objects.count())
 
     def test_invalid_pre_reservation_and_valid_reservation(self):
-        self.room1.make_preliminary_reservation(start='2012-04-01', end='2012-04-02', size=2, valid_until='2011-10-10')
+        self.room1.reserve(start='2012-04-01', end='2012-04-02', size=2, valid_until=datetime(2011, 10, 10))
         self.room1.reserve(start='2012-04-01', end='2012-04-02', size=3)
 
         self.assertEqual(1, ApprovableRoomReservation.objects.count())
         self.assertEqual(2, ApprovableRoomReservation.objects.with_invalid().count())
 
     def test_valid_reservation(self):
-        reservation = self.room1.make_preliminary_reservation(
+        reservation = self.room1.reserve(
             start=datetime(2012, 4, 1),
             end=datetime(2012, 4, 2),
             size=2,
@@ -248,7 +251,7 @@ class ApprovableReservationTest(TestCase):
         self.assertTrue(reservation.is_valid())
 
     def test_invalid_reservation(self):
-        reservation = self.room1.make_preliminary_reservation(
+        reservation = self.room1.reserve(
             start=datetime(2012, 4, 1),
             end=datetime(2012, 4, 2),
             size=2,
@@ -258,3 +261,29 @@ class ApprovableReservationTest(TestCase):
 
         reservation.approve()
         self.assertTrue(reservation.is_valid())
+
+    def test_default_validity_period(self):
+        with patch('kitabu.models.subjects.now') as dtmock:
+            dtmock.return_value = datetime(2012, 1, 1)
+
+            reservation = self.room1.reserve(
+                start=datetime(2012, 4, 1),
+                end=datetime(2012, 4, 2),
+                size=2
+            )
+
+        with patch('kitabu.models.reservations.now') as dtmock:
+            dtmock.return_value = datetime(2012, 1, 2)
+            self.assertTrue(reservation.is_valid())
+            self.assertFalse(reservation.approved)
+
+        with patch('kitabu.models.reservations.now') as dtmock:
+            dtmock.return_value = datetime(2012, 1, 10)
+            self.assertFalse(reservation.is_valid())
+            self.assertFalse(reservation.approved)
+
+        with patch('kitabu.models.reservations.now') as dtmock:
+            dtmock.return_value = datetime(2012, 1, 10)
+            reservation.approve()
+            self.assertTrue(reservation.approved)
+            self.assertTrue(reservation.is_valid())

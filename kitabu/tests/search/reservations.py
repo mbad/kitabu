@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from django.test import TestCase
 
 from kitabu.tests.models import (
@@ -54,13 +56,13 @@ class ApprovableReservationSearchTest(TestCase):
         self.room1 = HotelRoom.objects.create(name='Room 1', size=50, cluster=self.hotel1)
         self.room2 = HotelRoom.objects.create(name='Room 2', size=50, cluster=self.hotel2)
 
-        self.room1.make_preliminary_reservation(start='2050-01-01', end='2050-01-15', size=5, valid_until='2100-10-10')
-        self.room1.make_preliminary_reservation(start='2050-01-10', end='2050-01-25', size=5, valid_until='1900-10-10')
-        self.room1.make_preliminary_reservation(start='2050-02-12', end='2050-02-20', size=5, valid_until='2100-10-10')
+        self.room1.reserve(start='2050-01-01', end='2050-01-15', size=5, valid_until=datetime(2100, 10, 10))
+        self.room1.reserve(start='2050-01-10', end='2050-01-25', size=5, valid_until=datetime(1900, 10, 10))
+        self.room1.reserve(start='2050-02-12', end='2050-02-20', size=5, valid_until=datetime(2100, 10, 10))
 
-        self.room2.make_preliminary_reservation(start='2050-01-01', end='2050-01-15', size=5, valid_until='1900-10-10')
-        self.room2.make_preliminary_reservation(start='2050-01-10', end='2050-01-25', size=5, valid_until='2100-10-10')
-        self.room2.make_preliminary_reservation(start='2050-02-12', end='2050-02-20', size=5, valid_until='2100-10-10')
+        self.room2.reserve(start='2050-01-01', end='2050-01-15', size=5, valid_until=datetime(1900, 10, 10))
+        self.room2.reserve(start='2050-01-10', end='2050-01-25', size=5, valid_until=datetime(2100, 10, 10))
+        self.room2.reserve(start='2050-02-12', end='2050-02-20', size=5, valid_until=datetime(2100, 10, 10))
 
     def test_search_in_all_reservations(self):
         results = ReservationSearch(reservation_model=HotelRoomReservation).search('2050-01-05', '2050-01-22')
