@@ -52,9 +52,7 @@ class BaseReservation(models.Model, EnsureSize):
     def colliding_reservations_in_subjects(cls, start, end, subjects, *args, **kwargs):
         """Return reservations on ``subjects`` that overlap <start, end> period.
         """
-        # The following line seems to be an obious bug (unnecessary cluster).
-        # TODO: write a test that shows it, and then fix.
-        kwargs['subject__cluster_id__in'] = subjects
+        kwargs['subject__in'] = subjects
         return cls.colliding_reservations(start=start, end=end, *args, **kwargs)
 
     @classmethod

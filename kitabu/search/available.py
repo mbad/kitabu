@@ -61,7 +61,7 @@ class Subjects(object):
                     if reservations_cnt + required_size > subject.size:
                         disqualified_subjects.append(subject.id)
                         break
-        return self.subject_manager.exclude(id__in=disqualified_subjects, size__lt=required_size)
+        return self.subject_manager.exclude(id__in=disqualified_subjects).filter(size__gte=required_size)
 
 
 class ExclusivelyAvailableSubjects(Subjects):

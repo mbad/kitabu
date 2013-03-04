@@ -3,7 +3,59 @@ from datetime import datetime, timedelta
 from django.test import TestCase
 
 from kitabu.tests.models import Room, RoomReservation, Hotel, HotelRoom
-from kitabu.search.available import FindPeriod, Clusters as ClustersSearcher
+from kitabu.search.available import FindPeriod, Clusters as ClustersSearcher, Subjects as SubjectsSearcher
+
+
+class SearchAvailableSubject(TestCase):
+
+    def setUp(self):
+        self.room1 = Room.objects.create(name='Room 1', size=1)
+
+    def test_find_subject_when_no_reservations_conflicting(self):
+        RoomReservation.objects.create(
+            subject=self.room1,
+            size=1,
+            start=datetime(2001, 1, 1),
+            end=datetime(2001, 1, 8)
+        )
+        start = datetime(2000, 01, 01)
+        end = datetime(2000, 01, 31)
+
+        data = {
+            'start': start,
+            'end': end,
+            'required_size': 1,
+        }
+
+        searcher = SubjectsSearcher(Room)
+
+        self.assertEqual(1, len(searcher.search(**data)))
+
+    def test_find_subject_when_no_reservations_at_all(self):
+        RoomReservation.objects.all().delete()
+
+        data = {
+            'start': datetime(2000, 01, 01),
+            'end': datetime(2000, 01, 31),
+            'required_size': 1,
+        }
+
+        searcher = SubjectsSearcher(Room)
+
+        self.assertEqual(1, len(searcher.search(**data)))
+
+    def test_find_subject_when_no_reservations_at_all_and_not_enough_size(self):
+        RoomReservation.objects.all().delete()
+
+        data = {
+            'start': datetime(2000, 01, 01),
+            'end': datetime(2000, 01, 31),
+            'required_size': 2,
+        }
+
+        searcher = SubjectsSearcher(Room)
+
+        self.assertEqual(0, len(searcher.search(**data)))
 
 
 class VaryingDateAndSizeSearchTest(TestCase):
