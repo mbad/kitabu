@@ -15,3 +15,7 @@ class PoolReservationsSearchForm(SearchForm, PeriodForm):
 
 class ClusterSearchForm(SearchForm, PeriodForm):
     required_size = forms.fields.IntegerField(min_value=1)
+
+
+class PeriodSearchForm(SearchForm, PeriodForm):
+    required_size = forms.fields.IntegerField(min_value=1)

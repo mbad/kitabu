@@ -1,0 +1,33 @@
+{% extends 'pools/base.html' %}
+{% load crispy_forms_tags %}
+
+{% load pools_tags %}
+{% load lanes_tags %}
+
+
+{% block sidebar_content %}
+    {% lanes_list pool %}
+{% endblock %}
+
+{% block content %}
+    <h2>{{ pool }}</h2>
+    <div>
+        {% crispy form %}
+        <ul>
+            {% for lane, periods in lanes_and_periods %}
+                <li>
+                    {{ lane }}
+                    <ul>
+                        {% for p in periods %}
+                            <li>
+                                {{ p }}
+                            </li>
+                        {% endfor %}
+                    </ul>
+                </li>
+            {% endfor %}
+        </ul>
+    </div>
+    
+{% endblock %}
+

@@ -4,11 +4,11 @@ import urllib
 
 from django.shortcuts import render, get_object_or_404
 
-from kitabu.search.available import Clusters as ClustersSearcher, Subjects as SubjectSearcher
+from kitabu.search.available import Clusters as ClustersSearcher, Subjects as SubjectSearcher, FindPeriod
 from kitabu.search.reservations import SingleSubjectManagerReservationSearch
 from lanes.models import Lane, LaneReservation
 from models import Pool
-from forms import PoolReservationsSearchForm, ClusterSearchForm
+from forms import PoolReservationsSearchForm, ClusterSearchForm, PeriodSearchForm
 
 
 cluster_searcher = ClustersSearcher(subject_model=Lane, cluster_model=Pool)
@@ -86,6 +86,26 @@ def reservations(request, pool_id):
         'pools/reservations.html',
         {
             'reservations': reservations,
+            'pool': pool,
+            'form': form,
+        }
+    )
+
+
+def available_periods(request, pool_id):
+    pool = get_object_or_404(Pool, pk=pool_id)
+
+    form = PeriodSearchForm(request.GET) if request.GET else PeriodSearchForm()
+
+    lanes_and_periods = [
+        (subject, FindPeriod().search(subject=subject, **form.cleaned_data))
+        for subject in pool.subjects.all()] if form.is_valid() else []
+
+    return render(
+        request,
+        'pools/periods.html',
+        {
+            'lanes_and_periods': lanes_and_periods,
             'pool': pool,
             'form': form,
         }
