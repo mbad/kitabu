@@ -22,12 +22,17 @@
                         Reservation group: {{ reservation.group.id }}
                     {% endif %}
                 </li>
+            {% empty %}
+                No reservations.
             {% endfor %}
         </ul>
     </div>
 
     <div class="reserve">
         <h3>Reserve</h3>
+        <div>
+            Here you can reserve this lane. If you want several reservations done in one transaction and bound into one reservation group, please change number of reservation forms below and next fill all reservation subforms.
+        </div>
         {% crispy formset formset.form.helper %}
     </div>
     

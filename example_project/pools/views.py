@@ -1,5 +1,7 @@
 #-*- coding=utf-8 -*-
 
+import urllib
+
 from django.shortcuts import render, get_object_or_404
 
 from kitabu.search.available import Clusters as ClustersSearcher, Subjects as SubjectSearcher
@@ -16,14 +18,21 @@ def index(request):
     form = ClusterSearchForm(request.GET or None)
     if form.is_valid():
         results = cluster_searcher.search(**form.cleaned_data)
+        lane_search_query_string = urllib.urlencode({
+            'start': form.cleaned_data['start'],
+            'end': form.cleaned_data['end'],
+            'required_size': 1})
     else:
         results = None
+        lane_search_query_string = ''
+
     return render(
         request,
         'pools/index.html',
         {
             'form': form,
             'available_pools': results,
+            'lane_search_query_string': lane_search_query_string,
         }
     )
 
