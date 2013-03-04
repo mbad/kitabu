@@ -62,7 +62,7 @@ def reservations(request, pool_id):
     form = Form(request.GET) if request.GET else Form()
 
     searcher = SingleSubjectManagerReservationSearch(
-        reservation_model=LaneReservation, subject_manager=pool.lanes)
+        reservation_model=LaneReservation, subject_manager=pool.subjects)
 
     reservations = (
         searcher.search(**form.cleaned_data)

@@ -10,7 +10,7 @@ from pools.models import Pool
 
 class Lane(VariableSizeSubjectMixin, BaseSubject):
     name = models.TextField()
-    cluster = models.ForeignKey(Pool, related_name='lanes')
+    cluster = models.ForeignKey(Pool, related_name='subjects')
 
     def __unicode__(self):
         return self.name
