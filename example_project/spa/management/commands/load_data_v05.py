@@ -8,7 +8,6 @@ from django.contrib.auth.models import User
 from lanes.models import (
     Lane,
     LFullTimeValidator,
-    LGivenHoursAndWeekdaysValidator,
     LTimeIntervalValidator,
     LWithinPeriodValidator,
     Period,
@@ -49,19 +48,6 @@ class DataLoader(object):
 
     def _load_validators(self):
         self.validators['Konopnicka'] = LFullTimeValidator.objects.create(interval=1, interval_type='hour')
-
-        # Monday to Friday
-        hours = [1, 1, 1, 0, 0, 0, 0, 1, 1, 1, 1, 1, 0, 0, 0, 1, 1, 1, 1, 1, 0, 0, 1, 1]
-
-        self.validators['Cygański'] = LGivenHoursAndWeekdaysValidator.create_from_bitlists({
-            'monday': hours,
-            'tuesday': hours,
-            'wednesday': [0] * 24,
-            'thursday': hours,
-            'friday': hours,
-            'saturday': [0] * 24,
-            'sunday': hours
-        })
 
         LTimeIntervalValidator.objects.create(
             time_value='30', time_unit='minute', interval_type='s', apply_to_all=True)
