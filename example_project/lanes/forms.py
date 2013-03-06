@@ -8,12 +8,13 @@ from spa.settings import MAX_LANE_RESERVATIONS_NR
 class LaneReservationForm(PeriodForm, PostForm):
     size = forms.IntegerField(min_value=1, initial=1)
     exclusive = forms.BooleanField(widget=forms.CheckboxInput, required=False)
+    approved = forms.BooleanField(widget=forms.CheckboxInput, initial=True, required=False)
 
     submit_button_text = 'Reserve'
 
     def __init__(self, *args, **kwargs):
         super(LaneReservationForm, self).__init__(*args, **kwargs)
-        self.helper.layout = Layout(Div(HTML('<h4>Reservation</h4>'), 'start', 'end', 'size', 'exclusive',
+        self.helper.layout = Layout(Div(HTML('<h4>Reservation</h4>'), 'start', 'end', 'size', 'exclusive', 'approved',
                                         css_class='reservation-form')
                                     )
 

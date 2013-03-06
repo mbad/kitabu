@@ -1,14 +1,19 @@
 from django.db import models
 from django.contrib.auth.models import User
 
-from kitabu.models.subjects import VariableSizeSubjectMixin, BaseSubject
-from kitabu.models.reservations import ReservationMaybeExclusive, ReservationGroup, BaseReservation
+from kitabu.models.subjects import VariableSizeSubjectMixin, BaseSubject, SubjectWithApprovableReservations
+from kitabu.models.reservations import(
+    ReservationMaybeExclusive,
+    ReservationGroup,
+    BaseReservation,
+    ApprovableReservation
+)
 from kitabu.models import validators
 
 from pools.models import Pool
 
 
-class Lane(VariableSizeSubjectMixin, BaseSubject):
+class Lane(SubjectWithApprovableReservations, VariableSizeSubjectMixin, BaseSubject):
     name = models.TextField()
     cluster = models.ForeignKey(Pool, related_name='subjects')
 
@@ -16,7 +21,7 @@ class Lane(VariableSizeSubjectMixin, BaseSubject):
         return self.name
 
 
-class LaneReservation(ReservationMaybeExclusive, BaseReservation):
+class LaneReservation(ApprovableReservation, ReservationMaybeExclusive, BaseReservation):
     subject = models.ForeignKey('Lane', related_name='reservations')
     group = models.ForeignKey('LaneReservationGroup', related_name='reservations', null=True, blank=True)
     owner = models.ForeignKey(User, null=True)

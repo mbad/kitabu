@@ -19,7 +19,12 @@
                     {{ reservation.start }} - {{ reservation.end }}, with {{ reservation.size }} places 
                     taken{% if reservation.exclusive %} (exlusive){% endif %}.
                     {% if reservation.group %}
-                        Reservation group: {{ reservation.group.id }}
+                        Reservation group: {{ reservation.group.id }}.
+                    {% endif %}
+                    {% if reservation.approved %}
+                        Reservation approved.
+                    {% else %}
+                        Preliminary reservation. Valid until: {{ reservation.valid_until }}
                     {% endif %}
                 </li>
             {% empty %}
@@ -31,7 +36,13 @@
     <div class="reserve">
         <h3>Reserve</h3>
         <div>
-            Here you can reserve this lane. If you want several reservations done in one transaction and bound into one reservation group, please change number of reservation forms below and next fill all reservation subforms.
+            <p>
+                Here you can reserve this lane. If you want several reservations done in one transaction and bound into one reservation group, please change number of reservation forms below and next fill all reservation subforms.
+            </p>
+            <p>
+                You can also make a preliminary reservation. Just uncheck the "Approved" checkbox. 
+                Preliminary reservations for this lane are valid for {{ lane.validity_timedelta }}.
+            </p>
         </div>
         {% crispy formset formset.form.helper %}
     </div>

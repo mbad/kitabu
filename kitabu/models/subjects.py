@@ -146,11 +146,14 @@ class SubjectWithApprovableReservations(models.Model):
             elif validity_period:
                 valid_until = now() + validity_period
             else:
-                seconds = reduce(lambda acc, x: acc * int(x), self.validity_period.split("*"), 1)
-                valid_until = now() + datetime.timedelta(seconds=seconds)
+                valid_until = now() + self.validity_timedelta()
 
         return super(SubjectWithApprovableReservations, self).reserve(
             valid_until=valid_until, approved=approved, **kwargs)
+
+    def validity_timedelta(self):
+        validity_period_as_seconds = reduce(lambda acc, x: acc * int(x), self.validity_period.split("*"), 1)
+        return datetime.timedelta(seconds=validity_period_as_seconds)
 
 
 class ExclusiveSubjectMixin(models.Model):
