@@ -323,6 +323,23 @@ class TimeIntervalValidatorTest(TestCase):
         with self.assertRaises(InvalidPeriod):
             self.validator.validate(self.reservation)
 
+    @setup_and_patch_5_days('at_most')
+    def test_end_can_normally_be_later(self):
+        self.reservation.start = datetime(2000, 1, 3)
+        self.reservation.end = datetime(2000, 1, 30)
+
+        self.validator.validate(self.reservation)
+
+    @setup_and_patch_5_days('at_most')
+    def test_end_cannot_be_later(self):
+        self.validator.check_end = True
+        self.validator.save()
+        self.reservation.start = datetime(2000, 1, 3)
+        self.reservation.end = datetime(2000, 1, 30)
+
+        with self.assertRaises(InvalidPeriod):
+            self.validator.validate(self.reservation)
+
     @setup_and_patch_5_days('at_least')
     def test_past_is_too_soon(self):
         self.reservation.start = datetime(1999, 4, 1)

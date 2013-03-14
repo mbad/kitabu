@@ -216,9 +216,14 @@ class TimeIntervalValidator(Validator):
     time_value = models.PositiveSmallIntegerField(default=1)
     time_unit = models.CharField(max_length=6, choices=[(x, x) for x in TIME_UNITS], default='second')
     interval_type = models.CharField(max_length=2, choices=INTERVAL_TYPES_CHOICES, default=NOT_SOONER)
+    check_end = models.BooleanField(default=False)
 
     def _perform_validation(self, reservation):
-        for (date, field_name) in [(reservation.start, 'start'), (reservation.end, 'end')]:
+        fields_to_validate = [(reservation.start, 'start')]
+        if self.check_end:
+            fields_to_validate.append((reservation.end, 'end'))
+
+        for (date, field_name) in fields_to_validate:
             delta = date - now()
 
             if self.time_unit == 'second':
