@@ -95,6 +95,10 @@ class Validator(models.Model):
             assert reservation.id is None, "Reservation must be validated before being saved to database"
         getattr(self, self.actual_validator_related_name)._perform_validation(reservation)
 
+    def get_forbidden_periods(self, start, end, size=1):
+        """Get all unavailable periods between start and end."""
+        return []
+
     def save(self, *args, **kwargs):
         '''
         This method sets up actual validators related name accordingly to child class
@@ -219,29 +223,43 @@ class TimeIntervalValidator(Validator):
     check_end = models.BooleanField(default=False)
 
     def _perform_validation(self, reservation):
-        fields_to_validate = [(reservation.start, 'start')]
-        if self.check_end:
-            fields_to_validate.append((reservation.end, 'end'))
-
-        for (date, field_name) in fields_to_validate:
-            delta = date - now()
-
-            if self.time_unit == 'second':
-                self._check(delta.total_seconds(), self.time_value)
-            elif self.time_unit == 'minute':
-                self._check(delta.total_seconds(), self.time_value * 60)
-            elif self.time_unit == 'hour':
-                self._check(delta.total_seconds(), self.time_value * 3600)
-            elif self.time_unit == 'day':
-                self._check(delta.days, self.time_value)
+        if self.get_forbidden_periods(reservation.start, reservation.end, check_end=self.check_end):
+            if self.interval_type == self.NOT_SOONER:
+                raise TooSoon((self.time_unit, self.time_value))
+            elif self.interval_type == self.NOT_LATER:
+                raise TooLate((self.time_unit, self.time_value))
             else:
-                raise ValueError("time_unit must be one of (second, minute, hour, day)")
+                raise AssertionError("Interval type must be 'l' or 's', '%s' given" % self.interval_type)
 
-    def _check(self, delta, expected_time):
-        if self.interval_type == self.NOT_SOONER and delta < expected_time:
-            raise TooSoon(expected_time)
-        if self.interval_type == self.NOT_LATER and delta > expected_time:
-            raise TooLate(expected_time)
+    def get_forbidden_periods(self, start, end, size=1, check_end=False):
+        interval_params = (
+            {'seconds': self.time_value}
+            if self.time_unit == 'second' else
+            {'seconds': self.time_value * 60}
+            if self.time_unit == 'minute' else
+            {'seconds': self.time_value * 3600}
+            if self.time_unit == 'hour' else
+            {'days': self.time_value}
+            if self.time_unit == 'day' else
+            None)
+
+        if interval_params:
+            interval = timedelta(**interval_params)
+        else:
+            raise ValueError("time_unit must be one of (second, minute, hour, day)")
+
+        forbidden_periods = []
+
+        if self.interval_type == self.NOT_SOONER and start < now() + interval:
+            forbidden_periods.append((start, now() + interval))
+        if self.interval_type == self.NOT_LATER and start > now() + interval:
+            # if period in question starts after latest possible date return
+            # immediately:
+            return [(start, end)]
+        if check_end and self.interval_type == self.NOT_LATER and end > now() + interval:
+            forbidden_periods.append((now + interval, end))
+
+        return forbidden_periods
 
 
 class WithinPeriodValidator(Validator):
