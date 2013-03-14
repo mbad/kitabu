@@ -136,7 +136,6 @@ INSTALLED_APPS = (
 
 
     # additional apps
-    #'registration_defaults',  # this is moved up so that admin can use its templates
     'django_extensions',
     'crispy_forms',
     'registration',
@@ -184,9 +183,10 @@ LOGGING = {
 
 SOUTH_TESTS_MIGRATE = False
 
-# For django registration:
-ACCOUNT_ACTIVATION_DAYS = 2
+# Override default user's url so django-registration simple redirect to home
+# view
+ABSOLUTE_URL_OVERRIDES = {
+    'auth.user': lambda o: "/",
+}
 
 MAX_LANE_RESERVATIONS_NR = 5
-
-
