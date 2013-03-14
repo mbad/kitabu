@@ -4,18 +4,37 @@
 BASE_DIRECTORY="$(cd  $(dirname "${BASH_SOURCE[0]}"); pwd)"
 cd $BASE_DIRECTORY
 
-echo "=============="
-echo "CHECKING STYLE"
-echo "=============="
-echo
+CHECK_STYLE=1
 
-flake8 --ignore=E501 . | grep -v -e kitabu/tests/__init__.py -e kitabu/tests/settings.py -e spa/settings_*
+for i
+do
+    if [ $i = '-s' ]
+    then
+        CHECK_STYLE=0
+    fi
+done
 
-warnings_status=$?
+if [ $CHECK_STYLE -gt 0 ]
+then
+    echo "=============="
+    echo "CHECKING STYLE"
+    echo "=============="
+    echo
 
-if [ $warnings_status -eq 1 ]; then
-    echo "No style warnings"  # zero lines (grep exit status 1) means no warnings
+    flake8 --ignore=E501 . | grep -v -e kitabu/tests/__init__.py -e kitabu/tests/settings.py -e spa/settings_*
+
+    warnings_status=$?
+
+    if [ $warnings_status -eq 1 ]; then
+        echo "No style warnings"  # zero lines (grep exit status 1) means no warnings
+    fi
+else
+    echo "=================="
+    echo "NOT CHECKING STYLE"
+    echo "=================="
+    echo
 fi
+
 
 echo
 echo "============="
