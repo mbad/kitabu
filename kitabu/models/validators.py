@@ -19,7 +19,6 @@ from kitabu.exceptions import (
 )
 from kitabu import managers
 
-
 # using datetime.now in this way allows to mock it with mock.patch and test nicely
 now = datetime.now
 SECONDS_IN_DAY = 3600 * 24

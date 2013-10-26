@@ -1,4 +1,5 @@
 #-*- coding=utf-8 -*-
+
 import datetime
 import warnings
 
@@ -69,14 +70,6 @@ class BaseReservation(models.Model, EnsureSize):
         return cls.objects.filter(start__lt=end, end__gt=start, *args, **kwargs)
 
 
-class ReservationWithSize(models.Model):
-    """Mixin for BaseReservation providing size field."""
-    class Meta:
-        abstract = True
-
-    size = models.PositiveIntegerField()
-
-
 class ApprovableReservation(models.Model):
     #TODO: this description goes before all that is described is implemented.
     # Verify after implementing all of this.
@@ -113,6 +106,14 @@ class ApprovableReservation(models.Model):
         """Mark reservation as approved and save it."""
         self.approved = True
         self.save()
+
+
+class ReservationWithSize(models.Model):
+    """Mixin for BaseReservation providing size field."""
+    class Meta:
+        abstract = True
+
+    size = models.PositiveIntegerField()
 
 
 class ReservationMaybeExclusive(ReservationWithSize):
