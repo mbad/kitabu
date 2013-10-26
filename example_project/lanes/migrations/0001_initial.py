@@ -1,13 +1,12 @@
 # encoding: utf-8
-import datetime
 from south.db import db
 from south.v2 import SchemaMigration
 from django.db import models
 
+
 class Migration(SchemaMigration):
 
     def forwards(self, orm):
-        
         # Adding model 'Lane'
         db.create_table(u'lanes_lane', (
             (u'id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
@@ -96,9 +95,7 @@ class Migration(SchemaMigration):
         ))
         db.send_create_signal(u'lanes', ['LMaxReservationsPerUserValidator'])
 
-
     def backwards(self, orm):
-        
         # Deleting model 'Lane'
         db.delete_table(u'lanes_lane')
 
@@ -128,7 +125,6 @@ class Migration(SchemaMigration):
 
         # Deleting model 'LMaxReservationsPerUserValidator'
         db.delete_table(u'lanes_lmaxreservationsperuservalidator')
-
 
     models = {
         u'auth.group': {
