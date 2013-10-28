@@ -21,11 +21,6 @@ from forms import LaneReservationForm, AvailableLanesSearchForm, LaneReservation
 from models import Lane, LaneReservationGroup
 
 
-def index(request):
-    lanes = Lane.objects.all()
-    return render(request, 'lanes/index.html', {'lanes': lanes})
-
-
 @login_required
 def reserve(request, lane_id):
     try:

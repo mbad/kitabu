@@ -86,7 +86,7 @@ a:hover, a:active {
 color: #333;
 }
 
-p {
+p, form {
 margin-bottom: 18px;
 }
 
@@ -96,6 +96,7 @@ padding-left: 5px;
 
 .errorlist {
 color: red;
+padding-left: 8px;
 }
 
 /* nav */
@@ -161,8 +162,8 @@ border: none;
 -moz-box-shadow: 3px 3px 7px #777;
 }
 
-#content p, ul, ol, hr {
-margin-bottom: 24px;
+#content p, ul, ol, hr, form {
+margin-bottom: 18px;
 }
 
 #content ul ul, ol ol, ul ol, ol ul {
@@ -171,7 +172,7 @@ margin-bottom: 0;
 
 #content h1, h2, h3, h4, h5, h6 {
 color: #333;
-margin: 0 0 20px 0;
+margin: 0 0 5px 0;
 line-height: 1.5em;
 }
 
@@ -203,7 +204,6 @@ font-size: 18px;
 aside ul {
 list-style: none;
 margin-bottom: 20px;
-margin-top: -15px;
 }
 
 #footer-area {
@@ -245,6 +245,18 @@ margin-top: -15px;
     margin: 0 0 5px 0;
 }
 
-div.reserve {
-    padding-bottom: 30px;
+div.reserve .form-actions {
+    margin: -30px 0 30px;
+}
+
+.form-actions {
+    padding-top: 10px;
+}
+
+.control-group {
+    padding-top: 3px;
+}
+
+ul, ol {
+    list-style: inside;
 }

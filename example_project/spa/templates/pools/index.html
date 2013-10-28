@@ -2,29 +2,30 @@
 {% load crispy_forms_tags %}
 
 {% block content %}
-    <div>
-        On the right there is a list of all pools available in the project at the moment.
-        Pools are <strong>Clusters</strong> of <em>Subjects</em> in <em>kitabu</em> sense.
-    </div>
-    <h2>Find pool</h2>
-    
-    <div>
-        This is a form to find pools that have lanes which have enough places to make reservation of given size. Note however, that it is possible that no single lane have this many places, it might be that it is all of them together.
-    </div>
-
-    <div class="pool-search">
-        {% crispy form %}
-    </div>
-    <div>
-        
-        <ul>
-        {% for pool in available_pools %}
-            <li>
-                <a href="{% url 'show-pool-availability' pool.id %}?{{ lane_search_query_string }}">
-                    {{ pool }}
-                </a>
-            </li>
-        {% endfor %}
-        </ul>
-    </div>
+<h2>Kitabu</h2>
+<p>
+    Hi! This is example project for kitabu library/framework.
+</p>
+<p>
+    On the right there is a list of all pools available in the project at the moment.
+    Pools are <strong>Clusters</strong> of <em>Subjects</em> in <em>kitabu</em> sense.
+</p>
+<h2>Find pool</h2>
+<p>
+    This is a form to find pools that have lanes which have enough places to make reservation of given size.
+    Note however, that it is possible that no single lane have this many places, it might be that it is all of them
+    together.
+</p>
+<p class="pool-search">
+    {% crispy form %}
+</p>
+<ul>
+{% for pool in available_pools %}
+    <li>
+        <a href="{% url 'show-pool-availability' pool.id %}?{{ lane_search_query_string }}">
+            {{ pool }}
+        </a>
+    </li>
+{% endfor %}
+</ul>
 {% endblock %}

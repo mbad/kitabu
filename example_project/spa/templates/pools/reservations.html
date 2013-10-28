@@ -10,26 +10,22 @@
 {% endblock %}
 
 {% block content %}
-    <h2>{{ pool }}</h2>
-    
-    <div>
-        See reservations on this pool. You can limit time period you are interested in.
-    </div>
+<h2>{{ pool }}</h2>
+<p>
+    See reservations on this pool. You can limit time period you are interested in.
+</p>
 
-    <h3>Search reservations</h3>
-    <div class="reservations-search">
-        {% crispy form %}
-    </div>
-    <p></p>
-    <h3>Reservations</h3>
-    {% if reservations %}
-        <ul>
-            {% for reservation in reservations %}
-                <li><a href="{% url 'reserve-lane' reservation.subject_id %}">{{ reservation }}</a></li>
-            {% endfor %}
-        </ul>
-    {% else %}
-        <p>No reservations</p>
-    {% endif %}
-    
+<h3>Search reservations</h3>
+{% crispy form %}
+
+<h3>Reservations</h3>
+{% if reservations %}
+    <ul>
+        {% for reservation in reservations %}
+            <li><a href="{% url 'reserve-lane' reservation.subject_id %}">{{ reservation }}</a></li>
+        {% endfor %}
+    </ul>
+{% else %}
+    <p>No reservations</p>
+{% endif %}
 {% endblock %}

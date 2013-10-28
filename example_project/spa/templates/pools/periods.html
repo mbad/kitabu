@@ -10,24 +10,21 @@
 {% endblock %}
 
 {% block content %}
-    <h2>{{ pool }}</h2>
-    <div>
-        {% crispy form %}
-        <ul>
-            {% for lane, periods in lanes_and_periods %}
-                <li>
-                    {{ lane }}
-                    <ul>
-                        {% for p in periods %}
-                            <li>
-                                {{ p }}
-                            </li>
-                        {% endfor %}
-                    </ul>
-                </li>
-            {% endfor %}
-        </ul>
-    </div>
-    
+<h2>{{ pool }}</h2>
+{% crispy form %}
+<ul>
+    {% for lane, periods in lanes_and_periods %}
+        <li>
+            {{ lane }}
+            <ul>
+                {% for p in periods %}
+                    <li>
+                        {{ p }}
+                    </li>
+                {% endfor %}
+            </ul>
+        </li>
+    {% endfor %}
+</ul>
 {% endblock %}
 

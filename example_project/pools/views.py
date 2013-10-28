@@ -21,7 +21,7 @@ def index(request):
         lane_search_query_string = urllib.urlencode({
             'start': form.cleaned_data['start'],
             'end': form.cleaned_data['end'],
-            'required_size': 1})
+            'required_size': form.cleaned_data['required_size']})
     else:
         results = None
         lane_search_query_string = ''

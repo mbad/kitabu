@@ -10,26 +10,22 @@
 {% endblock %}
 
 {% block content %}
-    <h2>{{ pool }}</h2>
+<h2>{{ pool }}</h2>
+<p>
+    Find lanes in this pool that will have enough places for you to swim with you friends in selected period in selected period.
+</p>
 
-    <div>
-        Find lanes in this pool that will have enough places for you to swim with you friends in selected period in selected period.
-    </div>
-    
-    <h3>Search available</h3>
-    {% crispy form %}
-    
-    <p></p>
+<h3>Search available</h3>
+{% crispy form %}
 
-    <h3>Results</h3>
-    {% if available_lanes %}
-        <ul>
-            {% for lane in available_lanes %}
-                <li><a href="{% url 'reserve-lane' lane.id %}">{{ lane }}</a></li>
-            {% endfor %}
-        </ul>
-    {% else %}
-        <p>No results</p>
-    {% endif %}
-
+<h3>Results</h3>
+{% if available_lanes %}
+    <ul>
+        {% for lane in available_lanes %}
+            <li><a href="{% url 'reserve-lane' lane.id %}">{{ lane }}</a></li>
+        {% endfor %}
+    </ul>
+{% else %}
+    <p>No results</p>
+{% endif %}
 {% endblock %}

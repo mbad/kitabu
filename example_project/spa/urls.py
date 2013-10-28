@@ -7,7 +7,7 @@ admin.autodiscover()
 
 urlpatterns = patterns(
     '',
-    url(r'^$', 'lanes.views.index'),
+    url(r'^$', 'pools.views.index'),
 
     url(r'^admin/', include(admin.site.urls)),
 
