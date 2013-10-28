@@ -22,6 +22,9 @@ class Lane(SubjectWithApprovableReservations, VariableSizeSubjectMixin, BaseSubj
 
 
 class LaneReservation(ApprovableReservation, ReservationMaybeExclusive, BaseReservation):
+    class Meta:
+        ordering = ('start', 'end',)
+
     subject = models.ForeignKey('Lane', related_name='reservations')
     group = models.ForeignKey('LaneReservationGroup', related_name='reservations', null=True, blank=True)
     owner = models.ForeignKey(User, null=True)
