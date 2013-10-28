@@ -11,15 +11,19 @@
 
 {% block content %}
 <h2>{{ pool }}</h2>
+<p>
+    Find lanes with periods in which these lanes can be reserved for the given number of minutes. For example,
+    you may wish to reserve a lane for 60 minutes on the weekend.
+</p>
 {% crispy form %}
 <ul>
     {% for lane, periods in lanes_and_periods %}
         <li>
-            {{ lane }}
+            <a href="{% url 'lanes.views.reserve' lane.id %}">{{ lane }}</a>
             <ul>
                 {% for p in periods %}
                     <li>
-                        {{ p }}
+                        {% nice_period p %}
                     </li>
                 {% endfor %}
             </ul>

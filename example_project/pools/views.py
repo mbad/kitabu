@@ -100,6 +100,7 @@ def available_periods(request, pool_id):
     lanes_and_periods = [
         (subject, FindPeriod().search(subject=subject, **form.cleaned_data))
         for subject in pool.subjects.all()] if form.is_valid() else []
+    lanes_and_periods = filter(lambda t: t[1], lanes_and_periods)  # select only lanes with non empty periods list
 
     return render(
         request,
