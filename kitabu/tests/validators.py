@@ -645,6 +645,7 @@ class PeriodsInWeekdaysTest(TestCase):
     def setUp(self):
         self.validator = PeriodsInWeekdaysValidator.objects.create()
         self.almost_whole_week_validator = PeriodsInWeekdaysValidator.objects.create()
+        self.overlapping_periods_validator = PeriodsInWeekdaysValidator.objects.create()
 
         period_params_list = [
             (0, {'start': time(12, 0), 'end': time(14, 0)}),
@@ -667,12 +668,30 @@ class PeriodsInWeekdaysTest(TestCase):
             (5, {}),
             (6, {}),
         ]
+        # Sunday: 10-12, 14-16 (two periods)
+        overlapping_periods_params_list = [
+            (0, {}),
+            (1, {}),
+            (2, {}),
+            (3, {}),
+            (4, {}),
+            (5, {}),
+            (6, {'start': time(10, 0), 'end': time(12, 0)}),
+            (6, {'start': time(11, 30), 'end': time(13, 0)}),
+            (6, {'start': time(11, 0), 'end': time(11, 30)}),
+            (6, {'start': time(14, 0), 'end': time(15, 0)}),
+            (6, {'start': time(15, 0), 'end': time(16, 0)}),
+        ]
 
         for period_params in period_params_list:
             WithinDayPeriod.objects.create(weekday=period_params[0], validator=self.validator, **period_params[1])
 
         for period_params in almost_whole_week_params_list:
             WithinDayPeriod.objects.create(weekday=period_params[0], validator=self.almost_whole_week_validator,
+                                           **period_params[1])
+
+        for period_params in overlapping_periods_params_list:
+            WithinDayPeriod.objects.create(weekday=period_params[0], validator=self.overlapping_periods_validator,
                                            **period_params[1])
 
         self.reservation = MockWithoutId()
@@ -731,6 +750,26 @@ class PeriodsInWeekdaysTest(TestCase):
         self.reservation.end = datetime(2013, 03, 29, 10, 00)
         with self.assertRaises(ForbiddenHours):
             self.almost_whole_week_validator.validate(self.reservation)
+
+    # Sunday: 2013-11-17
+    def test_validation_for_more_periods_in_the_same_day(self):
+        self.reservation.start = datetime(2013, 11, 17, 10, 00)
+        self.reservation.end = datetime(2013, 11, 17, 13, 00)
+        self.overlapping_periods_validator.validate(self.reservation)
+
+        self.reservation.start = datetime(2013, 11, 17, 14, 00)
+        self.reservation.end = datetime(2013, 11, 17, 16, 00)
+        self.overlapping_periods_validator.validate(self.reservation)
+
+        self.reservation.start = datetime(2013, 11, 17, 10, 00)
+        self.reservation.end = datetime(2013, 11, 17, 13, 00, 01)
+        with self.assertRaises(ForbiddenHours):
+            self.overlapping_periods_validator.validate(self.reservation)
+
+        self.reservation.start = datetime(2013, 11, 17, 13, 59, 59)
+        self.reservation.end = datetime(2013, 11, 17, 15, 00)
+        with self.assertRaises(ForbiddenHours):
+            self.overlapping_periods_validator.validate(self.reservation)
 
 
 class MaxDurationValidatorTest(TestCase):

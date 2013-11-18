@@ -2,6 +2,7 @@
 
 from importlib import import_module
 from datetime import datetime, timedelta, time
+from collections import defaultdict
 
 from django.db import models
 
@@ -332,37 +333,52 @@ class PeriodsInWeekdaysValidator(Validator):
         abstract = True
 
     def _perform_validation(self, reservation):
-        required_period_params_list = self._construct_required_period_params_list(
+        periods_for_days = self._get_periods_for_days()
+        required_periods = self._construct_required_periods(
             start=reservation.start,
             end=reservation.end
         )
 
-        for required_period_params in required_period_params_list:
-            if not self._check_required_period_params(required_period_params):
+        for period_data in required_periods:
+            if not self._check_period(period_data, periods_for_days):
                 raise ForbiddenHours(self.periods.all())
 
-    def _check_required_period_params(self, period_params):
+    def _check_period(self, period_data, periods_for_days):
+        weekday = period_data['weekday']
+        periods_for_weekday = periods_for_days[weekday]
+        return any(
+            (period['start'] <= period_data['start'] and period['end'] >= period_data['end'])
+            for period in periods_for_weekday
+        )
+
+    def _get_periods_for_days(self):
+        timelines = self._construct_timelines()
+        periods = defaultdict(lambda: [])
+
+        for weekday, timeline in timelines.iteritems():
+            current_start = None
+            current_sum = 0
+            for moment in sorted(timeline.keys()):
+                if current_start is None:
+                    current_start = moment
+                current_sum += timeline[moment]
+                if current_sum == 0:
+                    periods[weekday].append({'start': current_start, 'end': moment})
+                    current_start = None
+
+        return periods
+
+    def _construct_timelines(self):
+        timelines = defaultdict(lambda: defaultdict(lambda: 0))
         for period in self.periods.all():
-            if self._check_period_with_required_period_params(period, period_params):
-                return True
+            start = period.start if period.start else time(0)
+            end = period.end if period.end else time(23, 59, 59)
+            timelines[period.weekday][start] += 1
+            timelines[period.weekday][end] -= 1
 
-        return False
+        return timelines
 
-    def _check_period_with_required_period_params(self, period, required_period_params):
-        if period.weekday != required_period_params['weekday']:
-            return False
-
-        for time_val in [required_period_params['start'], required_period_params['end']]:
-            if (
-                (period.end and time_val > period.end)  # after end
-                or
-                (period.start and time_val < period.start)  # before start
-            ):
-                return False
-
-        return True
-
-    def _construct_required_period_params_list(self, start, end, already_constructed=None):
+    def _construct_required_periods(self, start, end, already_constructed=None):
         if already_constructed is None:
             already_constructed = []
 
@@ -382,7 +398,7 @@ class PeriodsInWeekdaysValidator(Validator):
             period_params['end'] = time(23, 59, 59)
             already_constructed.append(period_params)
             new_start = datetime.combine(start.date(), time()) + timedelta(days=1)
-            return self._construct_required_period_params_list(
+            return self._construct_required_periods(
                 start=new_start,
                 end=end,
                 already_constructed=already_constructed
