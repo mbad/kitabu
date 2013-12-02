@@ -1,7 +1,10 @@
 from datetime import datetime
 from mock import patch
+from threading import Thread
+from time import sleep
 
 from django.test import TransactionTestCase, TestCase
+from django.db import transaction
 
 from kitabu.tests.models import (
     TennisCourt,
@@ -287,3 +290,30 @@ class ApprovableReservationTest(TestCase):
             reservation.approve()
             self.assertTrue(reservation.approved)
             self.assertTrue(reservation.is_valid())
+
+
+class SimultaneousReservationsTest(TransactionTestCase):
+    def setUp(self):
+        self.room = Room.objects.create(name="room", size=2)
+
+    def test_simultaneous_reservations(self):
+        @transaction.commit_manually
+        def reserve():
+            try:
+                self.room.reserve_without_transaction(start='2014-04-01', end='2014-04-02', size=2)
+                sleep(1)
+                transaction.commit()
+            except SizeExceeded:
+                transaction.rollback()
+                raise
+
+        def reserve_with_error():
+            sleep(0.5)
+            with self.assertRaises(SizeExceeded):
+                reserve()
+
+        threads = [Thread(target=reserve), Thread(target=reserve_with_error)]
+        [t.start() for t in threads]
+        [t.join() for t in threads]
+        count = self.room.reservations.count()
+        self.assertEqual(count, 1, "Should have only one reservation. Has {0} instead.".format(count))

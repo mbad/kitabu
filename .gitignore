@@ -5,3 +5,4 @@ inheritance.py
 settings_local.py
 tags
 Session.vim
+kitabu/tests/db_settings.py

@@ -48,7 +48,7 @@ class AtomicReserver(object):
         for (subject, specific_kwargs) in args:
             reserve_kwargs = common_kwargs.copy()
             reserve_kwargs.update(specific_kwargs)
-            reservation = subject.reserve(**reserve_kwargs)
+            reservation = subject.reserve_without_transaction(**reserve_kwargs)
             reservations.append(reservation)
 
         return reservations

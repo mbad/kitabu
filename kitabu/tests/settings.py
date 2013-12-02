@@ -1,8 +1,8 @@
-SECRET_KEY = 'dfjakslfjo398490f*()&*(J&()*u9p*&pu*(7(Hui(*&(Uiu67*(*'
+import db_settings
 
-DATABASES = {'default': {
-    'ENGINE': 'django.db.backends.sqlite3',
-    'NAME': 'autotest.db'}}
+DATABASES = db_settings.DATABASES
+
+SECRET_KEY = 'dfjakslfjo398490f*()&*(J&()*u9p*&pu*(7(Hui(*&(Uiu67*(*'
 
 INSTALLED_APPS = ('kitabu', 'kitabu.tests',)
 

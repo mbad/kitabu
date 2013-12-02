@@ -2,7 +2,7 @@
 
 from collections import defaultdict
 
-from django.db import models
+from django.db import models, transaction
 from django.db.models import Q
 
 from django.conf import settings
@@ -39,7 +39,18 @@ class BaseSubject(models.Model, EnsureSize):
 
     validators = models.ManyToManyField(Validator, blank=True)
 
+    @transaction.commit_manually
     def reserve(self, **kwargs):
+        reservation = self.reserve_without_transaction(**kwargs)
+        transaction.commit()
+        return reservation
+
+    def reserve_without_transaction(self, **kwargs):
+        # explicitly lock this object before reserving it
+        list(self.__class__.objects.select_for_update().filter(pk=self.pk))
+        return self.create_reservation(**kwargs)
+
+    def create_reservation(self, **kwargs):
         """Make a reservation on current subject and return the reservation.
 
         The core method of Subject. Creates a reservation and validates
@@ -134,7 +145,7 @@ class SubjectWithApprovableReservations(models.Model):
         return self.reservations.filter(extra_filter, start__lt=end, end__gt=start)
 
     # def make_preliminary_reservation(self, valid_until, start=None, end=None, **kwargs):
-    def reserve(self, valid_until=None, validity_period=None, approved=False, **kwargs):
+    def create_reservation(self, valid_until=None, validity_period=None, approved=False, **kwargs):
 
         assert int(bool(valid_until)) + int(bool(validity_period)) + int(approved) <= 1, (
             "Supply no more than one of the following arguments: valid_until, validity_period, approved. "
@@ -148,7 +159,7 @@ class SubjectWithApprovableReservations(models.Model):
             else:
                 valid_until = now() + self.validity_timedelta()
 
-        return super(SubjectWithApprovableReservations, self).reserve(
+        return super(SubjectWithApprovableReservations, self).create_reservation(
             valid_until=valid_until, approved=approved, **kwargs)
 
     def validity_timedelta(self):
@@ -182,7 +193,7 @@ class FiniteSizeSubjectMixin(models.Model):
     class Meta:
         abstract = True
 
-    def reserve(self, start=None, end=None, **kwargs):
+    def create_reservation(self, start=None, end=None, **kwargs):
         """Make a reservation on current subject and return the reservation.
 
         Check if reservation with given number of slots can be made. If yes,
@@ -215,7 +226,7 @@ class FiniteSizeSubjectMixin(models.Model):
                     overlapping_reservations=overlapping_reservations
                 )
 
-        return super(FiniteSizeSubjectMixin, self).reserve(start=start, end=end, **kwargs)
+        return super(FiniteSizeSubjectMixin, self).create_reservation(start=start, end=end, **kwargs)
 
 
 class FixedSizeSubject(FiniteSizeSubjectMixin):
@@ -282,8 +293,8 @@ class ExclusivableVariableSizeSubjectMixin(VariableSizeSubjectMixin):
             self.reservation_model.objects.filter(end__gte=now(), exclusive=True).update(size=self.size)
             delattr(self, '_old_size')
 
-    def reserve(self, start=None, end=None, **kwargs):
+    def create_reservation(self, start=None, end=None, **kwargs):
         """Forbid exclusive reservation with size set, then call super."""
         if 'size' in kwargs and kwargs.get('exclusive'):
             raise AttributeError('Cannot explicitly set size for exclusive reservation')
-        return super(ExclusivableVariableSizeSubjectMixin, self).reserve(start=start, end=end, **kwargs)
+        return super(ExclusivableVariableSizeSubjectMixin, self).create_reservation(start=start, end=end, **kwargs)
