@@ -1,4 +1,5 @@
 from collections import defaultdict
+from time import sleep
 
 from django.db.models import Q
 from django.db import transaction
@@ -45,11 +46,15 @@ class AtomicReserver(object):
     @classmethod
     def non_transactional_reserve(cls, *args, **common_kwargs):
         reservations = []
+        delay_time = common_kwargs.pop('delay_between_reservations', None)
+
         for (subject, specific_kwargs) in args:
             reserve_kwargs = common_kwargs.copy()
             reserve_kwargs.update(specific_kwargs)
             reservation = subject.reserve_without_transaction(**reserve_kwargs)
             reservations.append(reservation)
+            if delay_time is not None:
+                sleep(delay_time)
 
         return reservations
 

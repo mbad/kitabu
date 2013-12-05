@@ -15,6 +15,7 @@ from kitabu.utils import EnsureSize
 from kitabu.models.validators import Validator
 
 import datetime
+from time import sleep
 
 now = datetime.datetime.utcnow
 
@@ -41,12 +42,16 @@ class BaseSubject(models.Model, EnsureSize):
 
     @transaction.commit_manually
     def reserve(self, **kwargs):
-        reservation = self.reserve_without_transaction(**kwargs)
-        transaction.commit()
-        return reservation
+        try:
+            reservation = self.reserve_without_transaction(**kwargs)
+            transaction.commit()
+            return reservation
+        except:
+            transaction.rollback()
+            raise
 
     def reserve_without_transaction(self, **kwargs):
-        # explicitly lock this object before reserving it
+        # explicitly lock this subject before reserving it
         list(self.__class__.objects.select_for_update().filter(pk=self.pk))
         return self.create_reservation(**kwargs)
 
@@ -61,11 +66,15 @@ class BaseSubject(models.Model, EnsureSize):
         """
         assert kwargs.get('start') and kwargs.get('end'), "start and end dates must be provided"
 
+        delay_time = kwargs.pop('delay_time', None)
+
         reservation = self.reservation_model(subject=self, **kwargs)
         self._validate_reservation(reservation)
         if kwargs.get('exclusive') or self._only_exclusive_reservations():
             self._validate_exclusive(reservation)
         reservation.save()
+        if delay_time is not None:
+            sleep(delay_time)
         return reservation
 
     def overlapping_reservations(self, start, end):

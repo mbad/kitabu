@@ -4,7 +4,7 @@ from threading import Thread
 from time import sleep
 
 from django.test import TransactionTestCase, TestCase
-from django.db import transaction
+from django.db import DatabaseError
 
 from kitabu.tests.models import (
     TennisCourt,
@@ -295,25 +295,77 @@ class ApprovableReservationTest(TestCase):
 class SimultaneousReservationsTest(TransactionTestCase):
     def setUp(self):
         self.room = Room.objects.create(name="room", size=2)
+        self.room2 = Room.objects.create(name="room", size=2)
 
     def test_simultaneous_reservations(self):
-        @transaction.commit_manually
-        def reserve():
+        exceptions = []
+
+        def reserve(skip_append=False):
             try:
-                self.room.reserve_without_transaction(start='2014-04-01', end='2014-04-02', size=2)
-                sleep(1)
-                transaction.commit()
-            except SizeExceeded:
-                transaction.rollback()
+                self.room.reserve(start='2014-04-01', end='2014-04-02', size=2, delay_time=1)
+            except Exception, e:
+                if not skip_append:
+                    exceptions.append(e)
                 raise
 
         def reserve_with_error():
             sleep(0.5)
-            with self.assertRaises(SizeExceeded):
-                reserve()
+            try:
+                with self.assertRaises(SizeExceeded):
+                    reserve(skip_append=True)
+            except Exception, e:
+                exceptions.append(e)
+                raise
 
         threads = [Thread(target=reserve), Thread(target=reserve_with_error)]
         [t.start() for t in threads]
         [t.join() for t in threads]
+
+        if exceptions:
+            raise Exception("Intercepted {0} exceptions: {1}".format(len(exceptions), exceptions))
+
         count = self.room.reservations.count()
         self.assertEqual(count, 1, "Should have only one reservation. Has {0} instead.".format(count))
+
+    def test_simultaneous_group_reservations(self):
+        exceptions = []
+
+        def concurrent_reserve(func):
+            def wrapper():
+                try:
+                    func()
+                except Exception, e:
+                    exceptions.append(e)
+                    raise
+
+            return wrapper
+
+        @concurrent_reserve
+        def reserve1():
+            RoomReservationGroup.reserve(
+                (self.room, {'start': '2014-05-01', 'end': '2014-05-02', 'size': 2}),
+                (self.room2, {'start': '2014-05-01', 'end': '2014-05-02', 'size': 2}),
+                delay_between_reservations=1,
+            )
+
+        @concurrent_reserve
+        def reserve2():
+            RoomReservationGroup.reserve(
+                (self.room2, {'start': '2014-05-01', 'end': '2014-05-02', 'size': 2}),
+                (self.room, {'start': '2014-05-01', 'end': '2014-05-02', 'size': 2}),
+                delay_between_reservations=1,
+            )
+
+        threads = [Thread(target=reserve1), Thread(target=reserve2)]
+        [t.start() for t in threads]
+        [t.join() for t in threads]
+
+        if len(exceptions) != 1 or not isinstance(exceptions[0], DatabaseError):
+            raise Exception(
+                "Only database error should be raised (deadlock detected). Raised exceptions: {0}".format(exceptions))
+
+        res_count = RoomReservation.objects.count()
+        self.assertEqual(res_count, 2, "There should be only two reservations. {0} instead.".format(res_count))
+
+        group_count = RoomReservationGroup.objects.count()
+        self.assertEqual(group_count, 1, "There should be only one reservation group. {0} instead.".format(group_count))
