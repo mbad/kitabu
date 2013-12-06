@@ -41,13 +41,23 @@ class Room(VariableSizeSubjectMixin, BaseSubject):
     name = models.TextField()
 
 
-class RoomReservationGroup(ReservationGroup):
+# A different room class, for concurrent group reservations test
+class OtherRoom(VariableSizeSubjectMixin, BaseSubject):
+    name = models.TextField()
+
+
+class TestReservationGroup(ReservationGroup):
     pass
 
 
 class RoomReservation(ReservationWithSize, BaseReservation):
     subject = models.ForeignKey(Room, related_name='reservations')
-    group = models.ForeignKey(RoomReservationGroup, related_name='reservations', blank=True, null=True)
+    group = models.ForeignKey(TestReservationGroup, related_name='reservations', blank=True, null=True)
+
+
+class OtherRoomReservation(ReservationWithSize, BaseReservation):
+    subject = models.ForeignKey(OtherRoom, related_name='reservations')
+    group = models.ForeignKey(TestReservationGroup, related_name='other_reservations', blank=True, null=True)
 
 
 class Hotel(BaseCluster):

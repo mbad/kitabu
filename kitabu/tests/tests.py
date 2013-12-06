@@ -4,13 +4,14 @@ from threading import Thread
 from time import sleep
 
 from django.test import TransactionTestCase, TestCase
-from django.db import DatabaseError
 
 from kitabu.tests.models import (
     TennisCourt,
     Room,
+    OtherRoom,
     RoomReservation,
-    RoomReservationGroup,
+    OtherRoomReservation,
+    TestReservationGroup,
     FiveSeatsBus,
     ConferenceRoom,
     ConferenceRoomReservation,
@@ -133,9 +134,9 @@ class GroupReservationTest(TransactionTestCase):
 
     def test_proper_group_reservation(self):
         initial_reservation_count = RoomReservation.objects.count()
-        initial_group_count = RoomReservationGroup.objects.count()
+        initial_group_count = TestReservationGroup.objects.count()
 
-        group = RoomReservationGroup.reserve(
+        group = TestReservationGroup.reserve(
             (self.room5, {'start': '2012-04-01', 'end': '2012-05-12', 'size': 3}),
             (self.room1, {'start': '2012-04-01', 'end': '2012-05-12', 'size': 1}),
             (self.room3, {'start': '2012-04-01', 'end': '2012-05-12', 'size': 2})
@@ -146,15 +147,15 @@ class GroupReservationTest(TransactionTestCase):
         self.assertEqual(reservations[0].size, 3, 'First reservation should have size equal to 3')
         self.assertEqual(RoomReservation.objects.count(), initial_reservation_count + 3,
                          'There should be 3 reservation objects added to the database')
-        self.assertEqual(RoomReservationGroup.objects.count(), initial_group_count + 1,
+        self.assertEqual(TestReservationGroup.objects.count(), initial_group_count + 1,
                          'There should be 1 group object added to the database')
 
     def test_improper_group_reservation(self):
         initial_reservation_count = RoomReservation.objects.count()
-        initial_group_count = RoomReservationGroup.objects.count()
+        initial_group_count = TestReservationGroup.objects.count()
 
         with self.assertRaises(ReservationError):
-            RoomReservationGroup.reserve(
+            TestReservationGroup.reserve(
                 (self.room5, {'start': '2012-04-01', 'end': '2012-05-12', 'size': 3}),
                 (self.room1, {'start': '2012-04-01', 'end': '2012-05-12', 'size': 1}),
                 (self.room3, {'start': '2012-04-01', 'end': '2012-05-12', 'size': 5})
@@ -162,7 +163,7 @@ class GroupReservationTest(TransactionTestCase):
 
         self.assertEqual(RoomReservation.objects.count(), initial_reservation_count,
                          'There should be no reservation objects added to the database')
-        self.assertEqual(RoomReservationGroup.objects.count(), initial_group_count,
+        self.assertEqual(TestReservationGroup.objects.count(), initial_group_count,
                          'There should be no group objects added to the database')
 
 
@@ -292,6 +293,18 @@ class ApprovableReservationTest(TestCase):
             self.assertTrue(reservation.is_valid())
 
 
+def concurrent_reserve(exceptions):
+    def real_decorator(func):
+        def wrapper():
+            try:
+                func()
+            except Exception, e:
+                exceptions.append(e)
+                raise
+        return wrapper
+    return real_decorator
+
+
 class SimultaneousReservationsTest(TransactionTestCase):
     def setUp(self):
         self.room = Room.objects.create(name="room", size=2)
@@ -300,24 +313,17 @@ class SimultaneousReservationsTest(TransactionTestCase):
     def test_simultaneous_reservations(self):
         exceptions = []
 
-        def reserve(skip_append=False):
-            try:
-                self.room.reserve(start='2014-04-01', end='2014-04-02', size=2, delay_time=1)
-            except Exception, e:
-                if not skip_append:
-                    exceptions.append(e)
-                raise
+        @concurrent_reserve(exceptions)
+        def reserve1():
+            self.room.reserve(start='2014-04-01', end='2014-04-02', size=2, delay_time=1)
 
-        def reserve_with_error():
+        @concurrent_reserve(exceptions)
+        def reserve2():
             sleep(0.5)
-            try:
-                with self.assertRaises(SizeExceeded):
-                    reserve(skip_append=True)
-            except Exception, e:
-                exceptions.append(e)
-                raise
+            with self.assertRaises(SizeExceeded):
+                self.room.reserve(start='2014-04-01', end='2014-04-02', size=2, delay_time=1)
 
-        threads = [Thread(target=reserve), Thread(target=reserve_with_error)]
+        threads = [Thread(target=reserve1), Thread(target=reserve2)]
         [t.start() for t in threads]
         [t.join() for t in threads]
 
@@ -330,42 +336,79 @@ class SimultaneousReservationsTest(TransactionTestCase):
     def test_simultaneous_group_reservations(self):
         exceptions = []
 
-        def concurrent_reserve(func):
-            def wrapper():
-                try:
-                    func()
-                except Exception, e:
-                    exceptions.append(e)
-                    raise
-
-            return wrapper
-
-        @concurrent_reserve
+        @concurrent_reserve(exceptions)
         def reserve1():
-            RoomReservationGroup.reserve(
+            TestReservationGroup.reserve(
                 (self.room, {'start': '2014-05-01', 'end': '2014-05-02', 'size': 2}),
                 (self.room2, {'start': '2014-05-01', 'end': '2014-05-02', 'size': 2}),
                 delay_between_reservations=1,
             )
 
-        @concurrent_reserve
+        @concurrent_reserve(exceptions)
         def reserve2():
-            RoomReservationGroup.reserve(
-                (self.room2, {'start': '2014-05-01', 'end': '2014-05-02', 'size': 2}),
-                (self.room, {'start': '2014-05-01', 'end': '2014-05-02', 'size': 2}),
-                delay_between_reservations=1,
-            )
+            sleep(0.5)
+            with self.assertRaises(SizeExceeded):
+                TestReservationGroup.reserve(
+                    (self.room2, {'start': '2014-05-01', 'end': '2014-05-02', 'size': 2}),
+                    (self.room, {'start': '2014-05-01', 'end': '2014-05-02', 'size': 2}),
+                    delay_between_reservations=1,
+                )
 
         threads = [Thread(target=reserve1), Thread(target=reserve2)]
         [t.start() for t in threads]
         [t.join() for t in threads]
 
-        if len(exceptions) != 1 or not isinstance(exceptions[0], DatabaseError):
-            raise Exception(
-                "Only database error should be raised (deadlock detected). Raised exceptions: {0}".format(exceptions))
+        if exceptions:
+            raise Exception("Intercepted {0} exceptions: {1}".format(len(exceptions), exceptions))
 
         res_count = RoomReservation.objects.count()
         self.assertEqual(res_count, 2, "There should be only two reservations. {0} instead.".format(res_count))
 
-        group_count = RoomReservationGroup.objects.count()
+        group_count = TestReservationGroup.objects.count()
+        self.assertEqual(group_count, 1, "There should be only one reservation group. {0} instead.".format(group_count))
+
+
+class SimultaneousReservationsWithDifferentClassesTest(TransactionTestCase):
+    def setUp(self):
+        self.room = Room.objects.create(name="room", size=2)
+        self.other_room = OtherRoom.objects.create(name="room", size=2)
+
+    def test_simultaneous_group_reservations_with_different_classes(self):
+        exceptions = []
+
+        @concurrent_reserve(exceptions)
+        def reserve1():
+            TestReservationGroup.reserve(
+                (self.room, {'start': '2014-05-01', 'end': '2014-05-02', 'size': 2}),
+                (self.other_room, {'start': '2014-05-01', 'end': '2014-05-02', 'size': 2}),
+                delay_between_reservations=1,
+            )
+
+        @concurrent_reserve(exceptions)
+        def reserve2():
+            sleep(0.5)
+            with self.assertRaises(SizeExceeded):
+                TestReservationGroup.reserve(
+                    (self.other_room, {'start': '2014-05-01', 'end': '2014-05-02', 'size': 2}),
+                    (self.room, {'start': '2014-05-01', 'end': '2014-05-02', 'size': 2}),
+                    delay_between_reservations=1,
+                )
+
+        threads = [Thread(target=reserve1), Thread(target=reserve2)]
+        [t.start() for t in threads]
+        [t.join() for t in threads]
+
+        if exceptions:
+            raise Exception("Intercepted {0} exceptions: {1}".format(len(exceptions), exceptions))
+
+        res_count = RoomReservation.objects.count()
+        self.assertEqual(
+            res_count, 1, "There should be only one reservation for Room class. {0} instead.".format(res_count))
+
+        other_res_count = OtherRoomReservation.objects.count()
+        self.assertEqual(
+            other_res_count, 1,
+            "There should be only one reservation for OtherRoom class. {0} instead.".format(other_res_count))
+
+        group_count = TestReservationGroup.objects.count()
         self.assertEqual(group_count, 1, "There should be only one reservation group. {0} instead.".format(group_count))

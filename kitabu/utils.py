@@ -48,10 +48,13 @@ class AtomicReserver(object):
         reservations = []
         delay_time = common_kwargs.pop('delay_between_reservations', None)
 
+        # explicitly lock these subjects before reserving them
+        cls._lock_subjects(map(lambda t: t[0], args))
+
         for (subject, specific_kwargs) in args:
             reserve_kwargs = common_kwargs.copy()
             reserve_kwargs.update(specific_kwargs)
-            reservation = subject.reserve_without_transaction(**reserve_kwargs)
+            reservation = subject.create_reservation(**reserve_kwargs)
             reservations.append(reservation)
             if delay_time is not None:
                 sleep(delay_time)
@@ -68,3 +71,12 @@ class AtomicReserver(object):
         except:
             transaction.rollback()
             raise
+
+    @classmethod
+    def _lock_subjects(cls, subjects):
+        subjects_dict = defaultdict(lambda: [])
+        for subject in subjects:
+            subjects_dict[subject.__class__].append(subject.pk)
+
+        for klass, pks in subjects_dict.iteritems():
+            list(klass.objects.select_for_update().filter(pk__in=pks))
