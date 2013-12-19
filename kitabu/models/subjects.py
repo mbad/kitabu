@@ -73,7 +73,7 @@ class BaseSubject(models.Model, EnsureSize):
         if kwargs.get('exclusive') or self._only_exclusive_reservations():
             self._validate_exclusive(reservation)
         reservation.save()
-        if delay_time is not None:
+        if delay_time:
             sleep(delay_time)
         return reservation
 
