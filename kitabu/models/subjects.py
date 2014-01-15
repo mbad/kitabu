@@ -137,7 +137,7 @@ class SubjectWithApprovableReservations(models.Model):
         default=getattr(settings, "KITABU_DEFAULT_VALIDITY_PERIOD", "60*60*24*3"),
         max_length=13,
         help_text="How long can reservation on this subject wait for approval. "
-                  "You can use digits and ``x`` letter to multiply."
+                  "You can use digits and ``*`` sign to multiply."
     )
 
     class Meta:

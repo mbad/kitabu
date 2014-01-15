@@ -37,8 +37,8 @@ class BaseReservation(models.Model, EnsureSize):
     class Meta:
         abstract = True
 
-    start = models.DateTimeField()
-    end = models.DateTimeField()
+    start = models.DateTimeField(db_index=True)
+    end = models.DateTimeField(db_index=True)
 
     def is_valid(self):
         """Indicate if the reservation is valid. Alway true in this class."""
@@ -95,8 +95,8 @@ class ApprovableReservation(models.Model):
 
     objects = ApprovableReservationsManager()
 
-    approved = models.BooleanField(default=True)
-    valid_until = models.DateTimeField(null=True)
+    approved = models.BooleanField(default=True, db_index=True)
+    valid_until = models.DateTimeField(null=True, db_index=True)
 
     def is_valid(self):
         """Return True, unless reservation is not aproved and outdated."""
@@ -134,7 +134,7 @@ class ReservationMaybeExclusive(ReservationWithSize):
     class Meta:
         abstract = True
 
-    exclusive = models.BooleanField(default=False)
+    exclusive = models.BooleanField(default=False, db_index=True)
 
     def __init__(self, *args, **kwargs):
         super(ReservationMaybeExclusive, self).__init__(*args, **kwargs)

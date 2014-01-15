@@ -42,7 +42,7 @@ class Validator(models.Model):
     ``_perform_validation``, that shell be called from the ``validate`` method.
 
     Methods:
-        validate            - called to validate reservation, invodes _perform_validation
+        validate            - called to validate reservation, invokes _perform_validation
                               from subclass
         _perform_validation - actual validation logic. Must be overriden in
                               subclass
@@ -164,7 +164,7 @@ class StaticValidator(Validator):
     If a validation function doesn't need any variables that shell customize
     its behavior (i.e. database fields) then StaticValidator is the way to go.
 
-    Possible usecases could be a forbidding validator that will always raise
+    Possible use cases could be a forbidding validator that will always raise
     ReservationValidationError, to indicate that subject is not available or a validator
     that can calculate bank holidays.
 

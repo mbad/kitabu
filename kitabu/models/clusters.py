@@ -22,4 +22,4 @@ class BaseCluster(models.Model):
     class Meta:
         abstract = True
 
-    name = models.TextField(null=True, blank=True)
+    name = models.TextField(blank=True)
