@@ -3,6 +3,7 @@ from time import sleep
 
 from django.db.models import Q
 from django.db import transaction
+from django.conf import settings
 
 
 class Timeline(list):
@@ -48,8 +49,9 @@ class AtomicReserver(object):
         reservations = []
         delay_time = common_kwargs.pop('delay_between_reservations', None)
 
-        # explicitly lock these subjects before reserving them
-        cls._lock_subjects(map(lambda t: t[0], args))
+        if settings.SECURE_RESERVATIONS:
+            # explicitly lock these subjects before reserving them
+            cls._lock_subjects(map(lambda t: t[0], args))
 
         for (subject, specific_kwargs) in args:
             reserve_kwargs = common_kwargs.copy()
@@ -78,5 +80,5 @@ class AtomicReserver(object):
         for subject in subjects:
             subjects_dict[subject.__class__].append(subject.pk)
 
-        for klass, pks in subjects_dict.iteritems():
+        for klass, pks in sorted(subjects_dict.iteritems()):
             list(klass.objects.select_for_update().filter(pk__in=pks))

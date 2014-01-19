@@ -51,8 +51,9 @@ class BaseSubject(models.Model, EnsureSize):
             raise
 
     def reserve_without_transaction(self, **kwargs):
-        # explicitly lock this subject before reserving it
-        list(self.__class__.objects.select_for_update().filter(pk=self.pk))
+        if settings.SECURE_RESERVATIONS:
+            # explicitly lock this subject before reserving it
+            list(self.__class__.objects.select_for_update().filter(pk=self.pk))
         return self.create_reservation(**kwargs)
 
     def create_reservation(self, **kwargs):
