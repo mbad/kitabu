@@ -17,10 +17,10 @@ MANAGERS = ADMINS
 DATABASES = {
     'default': {
         # Add 'postgresql_psycopg2', 'mysql', 'sqlite3' or 'oracle'.
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': 'dev.db',
-        'USER': '',
-        'PASSWORD': '',
+        'ENGINE': 'django.db.backends.postgresql_psycopg2',
+        'NAME': 'kitabu',
+        'USER': 'kitabu',
+        'PASSWORD': 'kitabu',
         'HOST': '',       # Set to empty string for localhost
         'PORT': '',       # Set to empty string for default
     }
