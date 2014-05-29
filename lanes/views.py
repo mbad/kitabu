@@ -19,8 +19,7 @@ def reserve(request, lane_id):
     if request.POST:
         form = LaneReservationForm(request.POST)
         if form.is_valid():
-            reservation = form.make_reservation(owner=request.user,
-                    subject=lane)
+            reservation = form.make_reservation(subject=lane)
             if reservation:
                 form = LaneReservationForm()
                 success_msg = "Reservation successful"
