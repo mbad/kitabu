@@ -6,7 +6,7 @@ from pools.models import Pool
 
 
 class Command(BaseCommand):
-    help = 'Loades initial data for kitabu v0.2'
+    help = 'Loades initial data for kitabu'
 
     def handle(self, *args, **options):
         DataLoader().load_all()
