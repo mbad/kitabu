@@ -5,6 +5,10 @@ from south.v2 import SchemaMigration
 
 class Migration(SchemaMigration):
 
+    needed_by = (
+        ("lanes", "0001_initial"),
+    )
+
     def forwards(self, orm):
         # Adding model 'Pool'
         db.create_table('pools_pool', (
