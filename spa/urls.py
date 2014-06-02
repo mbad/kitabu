@@ -13,5 +13,5 @@ urlpatterns = patterns(
     url(r'^lanes/', include('lanes.urls')),
     url(r'^pools/', include('pools.urls')),
 
-    (r'^accounts/', include('registration.backends.default.urls')),
+    (r'^accounts/', include('registration.backends.simple.urls')),
 )
