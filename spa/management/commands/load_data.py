@@ -1,7 +1,7 @@
 #-*- coding: utf-8 -*-
 
 from django.core.management.base import BaseCommand
-from lanes.models import Lane, LaneFullTimeValidator, LaneGivenHoursAndWeekdaysValidator
+from lanes.models import Lane, LaneFullTimeValidator
 from pools.models import Pool
 
 
@@ -35,10 +35,6 @@ class DataLoader(object):
 
     def _load_validators(self):
         self.validators['Konopnicka'] = LaneFullTimeValidator.objects.create(interval=1, interval_type='hour')
-
-        # Monday to Friday
-        self.validators['Cygański'] = LaneGivenHoursAndWeekdaysValidator.create_from_bitlists(
-            hours=[1] * 24, days=[1, 1, 1, 1, 1, 0, 0])
 
     def _load_lanes(self):
         for pool in self.pools.values():
