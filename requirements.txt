@@ -1,5 +1,4 @@
 .
-uWSGI==1.4.6
 Django==1.5.1
 South==0.7.3
 argparse==1.2.1
@@ -12,3 +11,4 @@ psycopg2==2.4.5
 wsgiref==0.1.2
 Werkzeug==0.8.3
 django-debug-toolbar==0.9.4
+uWSGI==1.4.10
