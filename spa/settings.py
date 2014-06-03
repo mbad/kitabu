@@ -190,6 +190,12 @@ SOUTH_TESTS_MIGRATE = False
 # For django registration:
 ACCOUNT_ACTIVATION_DAYS = 2
 
+# Override default user's url so django-registration simple redirect to home
+# view
+ABSOLUTE_URL_OVERRIDES = {
+    'auth.user': lambda o: "/",
+}
+
 # spa/settings_local.py can be used to override environment-specific settings
 # like database and email that differ between development and production.
 try:
