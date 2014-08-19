@@ -7,6 +7,8 @@ from django.db.models import Q, Sum
 
 from kitabu.search.utils import Timeline
 
+from kitabu.exceptions import ReservationValidationError
+
 
 class Subjects(object):
     """Searcher for subjects available in certain time period.
@@ -62,6 +64,21 @@ class Subjects(object):
                         disqualified_subjects.append(subject.id)
                         break
         return self.subject_manager.exclude(id__in=disqualified_subjects).filter(size__gte=required_size)
+
+    def valid_search(self, *args, **kwargs):
+        pre_results = self.search(*args, **kwargs)
+        final_results = []
+        for subject in pre_results:
+            reservation = subject.reservation_model(subject=subject, **kwargs)
+            try:
+                subject._validate_reservation(reservation)
+                if kwargs.get('exclusive') or subject._only_exclusive_reservations():
+                    subject._validate_exclusive(reservation)
+            except ReservationValidationError:
+                pass
+            else:
+                final_results.append(subject)
+        return final_results
 
 
 class ExclusivelyAvailableSubjects(Subjects):
