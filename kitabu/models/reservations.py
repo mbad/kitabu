@@ -7,6 +7,9 @@ from django.db import models, transaction
 
 from kitabu.utils import EnsureSize, AtomicReserver
 from kitabu.models.managers import ApprovableReservationsManager
+from kitabu.exceptions import OutdatedReservationError
+
+from django.conf import settings
 
 now = datetime.datetime.now
 
@@ -104,8 +107,20 @@ class ApprovableReservation(models.Model):
 
     def approve(self):
         """Mark reservation as approved and save it."""
-        self.approved = True
-        self.save()
+        with transaction.commit_manually():
+            if settings.SECURE_RESERVATIONS:
+                # explicitly lock subject before reserving it
+                list(self.subject.__class__.objects.select_for_update().filter(pk=self.subject.pk))
+            self.approved = True
+            if not self.save():
+                return False
+
+            if self.valid_until > now():
+                transaction.commit()
+                return True
+            else:
+                transaction.rollback()
+                raise OutdatedReservationError
 
 
 class ReservationWithSize(models.Model):

@@ -100,3 +100,7 @@ class TooManyReservationsForUser(TooManyReservations):
 class TooManyReservationsOnSubjectForUser(TooManyReservations):
     def __init__(self, max_allowed):
         self.max_allowed = max_allowed
+
+
+class OutdatedReservationError(ReservationError):
+    pass
