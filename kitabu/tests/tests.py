@@ -22,6 +22,7 @@ from kitabu.exceptions import (
     SizeExceeded,
     ReservationError,
     OverlappingReservations,
+    OutdatedReservationError,
 )
 from kitabu.utils import AtomicReserver
 
@@ -263,8 +264,8 @@ class ApprovableReservationTest(TestCase):
         )
         self.assertFalse(reservation.is_valid())
 
-        reservation.approve()
-        self.assertTrue(reservation.is_valid())
+        with self.assertRaises(OutdatedReservationError):
+            reservation.approve()
 
     def test_default_validity_period(self):
         with patch('kitabu.models.subjects.now') as dtmock:
@@ -288,9 +289,8 @@ class ApprovableReservationTest(TestCase):
 
         with patch('kitabu.models.reservations.now') as dtmock:
             dtmock.return_value = datetime(2012, 1, 10)
-            reservation.approve()
-            self.assertTrue(reservation.approved)
-            self.assertTrue(reservation.is_valid())
+            with self.assertRaises(OutdatedReservationError):
+                reservation.approve()
 
 
 def concurrent_reserve(exceptions):

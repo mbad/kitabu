@@ -110,13 +110,11 @@ class ApprovableReservation(models.Model):
         with transaction.commit_manually():
             try:
                 if settings.SECURE_RESERVATIONS:
-                    # explicitly lock subject before reserving it
+                    # explicitly lock subject before approving the reservation
                     list(self.subject.__class__.objects.select_for_update().filter(pk=self.subject.pk))
 
                 self.approved = True
-                if not self.save():
-                    transaction.rollback()
-                    return False
+                self.save()
 
                 if self.valid_until > now():
                     transaction.commit()
