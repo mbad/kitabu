@@ -76,6 +76,8 @@ class Validator(models.Model):
     universal = managers.Universal()
 
     def __unicode__(self):
+        if '__unicode__' in getattr(self, self.actual_validator_related_name).__class__.__dict__:
+            return unicode(getattr(self, self.actual_validator_related_name))
         return getattr(self, self.actual_validator_related_name).__class__.__name__ + ' ' + unicode(self.id)
 
     def validate(self, reservation, allow_reservation_update=False):
@@ -257,7 +259,7 @@ class TimeIntervalValidator(Validator):
             # immediately:
             return [(start, end)]
         if check_end and self.interval_type == self.NOT_LATER and end > now() + interval:
-            forbidden_periods.append((now + interval, end))
+            forbidden_periods.append((now() + interval, end))
 
         return forbidden_periods
 
@@ -418,8 +420,8 @@ class WithinDayPeriod(models.Model):
         abstract = True
 
     weekday = models.IntegerField()
-    start = models.TimeField(null=True, blank=True)
-    end = models.TimeField(null=True, blank=True)
+    start = models.TimeField()
+    end = models.TimeField()
 
 
 class MaxDurationValidator(Validator):
