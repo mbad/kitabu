@@ -1,6 +1,5 @@
 #-*- coding=utf-8 -*-
 
-import datetime
 import warnings
 
 from django.db import models, transaction
@@ -10,8 +9,9 @@ from kitabu.models.managers import ApprovableReservationsManager
 from kitabu.exceptions import OutdatedReservationError
 
 from django.conf import settings
+from django.utils import timezone
 
-now = datetime.datetime.now
+now = timezone.now
 
 
 class BaseReservation(models.Model, EnsureSize):

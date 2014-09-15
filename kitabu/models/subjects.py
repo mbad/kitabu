@@ -16,8 +16,9 @@ from kitabu.models.validators import Validator
 
 import datetime
 from time import sleep
+from django.utils import timezone
 
-now = datetime.datetime.utcnow
+now = timezone.now
 
 
 class BaseSubject(models.Model, EnsureSize):

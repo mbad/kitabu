@@ -19,9 +19,10 @@ from kitabu.exceptions import (
     TooManyReservationsOnSubjectForUser,
 )
 from kitabu import managers
+from django.utils import timezone
 
 # using datetime.now in this way allows to mock it with mock.patch and test nicely
-now = datetime.now
+now = timezone.now
 SECONDS_IN_DAY = 3600 * 24
 HOURS_IN_WEEK = 7 * 24
 
