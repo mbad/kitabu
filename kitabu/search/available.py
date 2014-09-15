@@ -37,7 +37,13 @@ class Subjects(object):
 
     subject_manager = property(_get_subject_manager, _set_subject_manager)
 
-    def search(self, start, end, required_size):
+    def search(self, start, end, required_size=None, size=None):
+        if required_size is None:
+            required_size = size
+
+        if required_size is None:
+            raise Exception('required_size or size must be provided')
+
         colliding_reservations = self.reservation_model.colliding_reservations_in_subjects(
             start=start,
             end=end,
