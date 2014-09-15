@@ -4,6 +4,10 @@ from time import sleep
 from django.db.models import Q
 from django.db import transaction
 from django.conf import settings
+from django.utils import timezone
+
+
+now = timezone.now
 
 
 class Timeline(list):
